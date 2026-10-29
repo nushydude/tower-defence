@@ -246,13 +246,15 @@ export class GameModel {
                 });
               });
             } else {
-              // Standard homing bullet
+              // Standard or exploding bullet
               this.state.bullets.push({
                 x: tower.x,
                 y: tower.y,
                 target,
                 dmg: def.dmg,
-                speed: 330
+                speed: 330,
+                burstShards: def.burstShards || 0,
+                shardDmg: def.shardDmg || 0
               });
             }
             tower.cool = def.rate;
@@ -263,11 +265,13 @@ export class GameModel {
 
     // 2. Bullets simulation (Runs even if stage just finished, allowing in-flight bullets to complete flight)
     if (this.state.bullets.length > 0) {
+      const newShards = [];
+
       this.state.bullets.forEach((bullet) => {
         if (bullet.dead) return;
 
         if (bullet.vx !== undefined && bullet.vy !== undefined) {
-          // Directional projectile (Side Turret / Fourway / Eightway)
+          // Directional projectile or cluster shard
           const moveDist = bullet.speed * scaledDt;
           bullet.x += bullet.vx * moveDist;
           bullet.y += bullet.vy * moveDist;
@@ -289,7 +293,7 @@ export class GameModel {
           for (const enemy of this.state.enemies) {
             if (!enemy.dead) {
               const hitDist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
-              if (hitDist <= 4 + enemy.r) {
+              if (hitDist <= (bullet.r || 4) + enemy.r) {
                 enemy.hp -= bullet.dmg;
                 bullet.dead = true;
                 break;
@@ -297,7 +301,7 @@ export class GameModel {
             }
           }
         } else {
-          // Standard targeted bullet
+          // Targeted bullet
           const target = bullet.target;
 
           // If target is already gone or dead, fly forward along trajectory to fade naturally
@@ -333,12 +337,41 @@ export class GameModel {
           if (dist < bullet.speed * scaledDt + target.r) {
             target.hp -= bullet.dmg;
             bullet.dead = true;
+
+            // Explode into non-exploding outward shards if configured (Scatter = 5, Cluster = 10)
+            if (bullet.burstShards > 0) {
+              const shardCount = bullet.burstShards;
+              const angleStep = (Math.PI * 2) / shardCount;
+              // Add slight random rotation offset so each burst feels organic
+              const baseAngle = Math.random() * Math.PI;
+
+              for (let i = 0; i < shardCount; i++) {
+                const angle = baseAngle + i * angleStep;
+                const vx = Math.cos(angle);
+                const vy = Math.sin(angle);
+                newShards.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx,
+                  vy,
+                  dmg: bullet.shardDmg || 14,
+                  speed: 280,
+                  rangeLeft: 125,
+                  r: 2.5,
+                  isShard: true
+                });
+              }
+            }
           } else {
             bullet.x += (dx / dist) * bullet.speed * scaledDt;
             bullet.y += (dy / dist) * bullet.speed * scaledDt;
           }
         }
       });
+
+      if (newShards.length > 0) {
+        this.state.bullets.push(...newShards);
+      }
     }
 
     // 3. Enemy deaths & rewards

@@ -6,11 +6,12 @@ export const TOWER_DEFINITIONS = {
   Harpy: { cost: 100, dmg: 5, rate: 0.12, range: 110, color: '#e9b7ff', next: ['Thunder'] },
   Thunder: { cost: 180, dmg: 4, rate: 0.05, range: 120, color: '#fff18a' },
 
-  // Precision / sniper branch
+  // Precision / sniper / shotgun / scatter branch
   Scout: { cost: 100, dmg: 12, rate: 0.56, range: 155, color: '#c4ff6a', next: ['Ace', 'Shotgun', 'Scatter'] },
   Ace: { cost: 150, dmg: 19, rate: 0.46, range: 190, color: '#faff7c' },
   Shotgun: { cost: 180, dmg: 85, rate: 1.03, range: 175, color: '#ffb65b' },
-  Scatter: { cost: 220, dmg: 65, rate: 0.92, range: 190, color: '#ff6eae' },
+  Scatter: { cost: 220, dmg: 65, rate: 0.92, range: 190, color: '#ff6eae', burstShards: 5, shardDmg: 16, next: ['Cluster'] },
+  Cluster: { cost: 320, dmg: 80, rate: 0.88, range: 210, color: '#f43f5e', burstShards: 10, shardDmg: 20, abbr: 'CLUS' },
 
   // Spike area branch
   Spiker: { cost: 80, dmg: 9, rate: 0.38, range: 120, color: '#ffa45c', next: ['Double Spiker'] },

@@ -234,13 +234,34 @@ export function renderGame(ctx, state, towerDefs) {
   // Draw bullets
   state.bullets.forEach((bullet) => {
     ctx.beginPath();
-    ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = bullet.vx !== undefined ? '#a5f3fc' : '#fff7c2';
-    ctx.fill();
-    if (bullet.vx !== undefined) {
+    const r = bullet.r || 4;
+    ctx.arc(bullet.x, bullet.y, r, 0, Math.PI * 2);
+
+    if (bullet.isShard) {
+      // Outward bursting shards (warm fiery spark)
+      ctx.fillStyle = '#ff7b72';
+      ctx.fill();
+      ctx.strokeStyle = '#ffa657';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else if (bullet.burstShards > 0) {
+      // Main Scatter / Cluster shell (larger glowing hot projectile)
+      ctx.fillStyle = '#ff3366';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (bullet.vx !== undefined) {
+      // Directional multi-turret shot
+      ctx.fillStyle = '#a5f3fc';
+      ctx.fill();
       ctx.strokeStyle = '#0284c7';
       ctx.lineWidth = 1;
       ctx.stroke();
+    } else {
+      // Standard bullet
+      ctx.fillStyle = '#fff7c2';
+      ctx.fill();
     }
   });
 

@@ -18,7 +18,7 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
   - 🛑 **Red Pentagon Boss (Round 10)**: Massive slow titan with 2,200 HP and huge bounty rewards.
 - **Turrets & Upgrade Trees**:
   - **Spammer** → Blaster → Rotary, Harpy → Thunder
-  - **Scout** → Ace, Shotgun, Scatter
+  - **Scout** → Ace, Shotgun, **Scatter** (bursts into 5 outward shards on impact) → **Cluster** (bursts into 10 outward shards on impact)
   - **Spiker** → Double Spiker → ALLSPIKER
   - **Double** → Triple → Quadruple
   - 🆕 **Multi-Directional Turret Branch**:
