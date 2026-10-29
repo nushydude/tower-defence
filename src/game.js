@@ -159,154 +159,179 @@ export class GameModel {
   }
 
   update(dt, towerDefs) {
-    if (!this.state || !this.state.running) return;
+    if (!this.state) return;
 
     const map = this.getCurrentMap();
     const path = map.path;
     const scaledDt = dt * this.state.speed;
 
-    // Enemy wave spawning
-    if (this.state.spawned < this.state.total) {
-      this.state.clock -= scaledDt;
-      if (this.state.clock <= 0) {
-        this.spawnEnemy();
-        this.state.spawned++;
-        this.state.clock = this.state.wave === 10
-          ? 999
-          : Math.max(0.22, 1.05 - this.state.wave * 0.03);
-      }
-    }
-
-    // Move enemies along waypoints
-    this.state.enemies.forEach((enemy) => {
-      if (enemy.dead) return;
-      const a = path[enemy.seg];
-      const b = path[Math.min(enemy.seg + 1, path.length - 1)];
-      const dx = b[0] - a[0];
-      const dy = b[1] - a[1];
-      const length = Math.hypot(dx, dy) || 1;
-
-      // Track facing angle for directional rendering
-      enemy.angle = Math.atan2(dy, dx);
-
-      enemy.x += (dx / length) * enemy.speed * scaledDt;
-      enemy.y += (dy / length) * enemy.speed * scaledDt;
-
-      if (Math.hypot(b[0] - enemy.x, b[1] - enemy.y) < enemy.speed * scaledDt + 1) {
-        enemy.seg++;
-        if (enemy.seg >= path.length - 1) {
-          enemy.dead = true;
-          this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
-          if (enemy.boss) {
-            this.state.over = true;
-            this.state.running = false;
-            this.onMessage('The boss reached your base! Game over.');
-          }
+    // 1. Spawning & Movement when stage is actively running
+    if (this.state.running) {
+      // Enemy wave spawning
+      if (this.state.spawned < this.state.total) {
+        this.state.clock -= scaledDt;
+        if (this.state.clock <= 0) {
+          this.spawnEnemy();
+          this.state.spawned++;
+          this.state.clock = this.state.wave === 10
+            ? 999
+            : Math.max(0.22, 1.05 - this.state.wave * 0.03);
         }
       }
-    });
 
-    // Towers acquire targets and fire
-    this.state.towers.forEach((tower) => {
-      tower.cool = (tower.cool || 0) - scaledDt;
-      if (tower.cool <= 0) {
-        const def = towerDefs[tower.type];
-        const target = this.state.enemies
-          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
-          .sort((a, b) => b.seg - a.seg)[0];
+      // Move enemies along waypoints
+      this.state.enemies.forEach((enemy) => {
+        if (enemy.dead) return;
+        const a = path[enemy.seg];
+        const b = path[Math.min(enemy.seg + 1, path.length - 1)];
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const length = Math.hypot(dx, dy) || 1;
 
-        if (target) {
-          const aimAngle = Math.atan2(target.y - tower.y, target.x - tower.x);
-          tower.angle = aimAngle; // Store rotation for tank barrels
+        enemy.angle = Math.atan2(dy, dx);
+        enemy.x += (dx / length) * enemy.speed * scaledDt;
+        enemy.y += (dy / length) * enemy.speed * scaledDt;
 
-          if (def.multiDir) {
-            // Multi-directional Tank: Spawns bullets in each configured offset angle
-            def.multiDir.forEach((offsetAngle) => {
-              const shotAngle = aimAngle + offsetAngle;
-              const vx = Math.cos(shotAngle);
-              const vy = Math.sin(shotAngle);
-              this.state.bullets.push({
-                x: tower.x + vx * 14,
-                y: tower.y + vy * 14,
-                vx,
-                vy,
-                dmg: def.dmg,
-                speed: 330,
-                rangeLeft: def.range + 30
-              });
-            });
-          } else {
-            // Standard homing bullet
-            this.state.bullets.push({
-              x: tower.x,
-              y: tower.y,
-              target,
-              dmg: def.dmg,
-              speed: 330
-            });
-          }
-          tower.cool = def.rate;
-        }
-      }
-    });
-
-    // Bullets movement & collision
-    this.state.bullets.forEach((bullet) => {
-      if (bullet.dead) return;
-
-      if (bullet.vx !== undefined && bullet.vy !== undefined) {
-        // Directional projectile (Side Tank / Fourway / Eightway)
-        const moveDist = bullet.speed * scaledDt;
-        bullet.x += bullet.vx * moveDist;
-        bullet.y += bullet.vy * moveDist;
-        bullet.rangeLeft -= moveDist;
-
-        // Check if out of bounds or range
-        if (
-          bullet.rangeLeft <= 0 ||
-          bullet.x < -20 ||
-          bullet.x > CANVAS_WIDTH + 20 ||
-          bullet.y < -20 ||
-          bullet.y > CANVAS_HEIGHT + 20
-        ) {
-          bullet.dead = true;
-          return;
-        }
-
-        // Collision check against all active enemies in radius
-        for (const enemy of this.state.enemies) {
-          if (!enemy.dead) {
-            const hitDist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
-            if (hitDist <= 4 + enemy.r) {
-              enemy.hp -= bullet.dmg;
-              bullet.dead = true;
-              break;
+        if (Math.hypot(b[0] - enemy.x, b[1] - enemy.y) < enemy.speed * scaledDt + 1) {
+          enemy.seg++;
+          if (enemy.seg >= path.length - 1) {
+            enemy.dead = true;
+            this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
+            if (enemy.boss) {
+              this.state.over = true;
+              this.state.running = false;
+              this.onMessage('The boss reached your base! Game over.');
             }
           }
         }
-      } else {
-        // Standard homing bullet
-        const target = bullet.target;
-        if (!target || target.dead) {
-          bullet.dead = true;
-          return;
+      });
+
+      // Towers acquire targets and fire
+      this.state.towers.forEach((tower) => {
+        tower.cool = (tower.cool || 0) - scaledDt;
+        if (tower.cool <= 0) {
+          const def = towerDefs[tower.type];
+          const target = this.state.enemies
+            .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
+            .sort((a, b) => b.seg - a.seg)[0];
+
+          if (target) {
+            const aimAngle = Math.atan2(target.y - tower.y, target.x - tower.x);
+            tower.angle = aimAngle;
+
+            if (def.multiDir) {
+              // Multi-directional Turret
+              def.multiDir.forEach((offsetAngle) => {
+                const shotAngle = aimAngle + offsetAngle;
+                const vx = Math.cos(shotAngle);
+                const vy = Math.sin(shotAngle);
+                this.state.bullets.push({
+                  x: tower.x + vx * 14,
+                  y: tower.y + vy * 14,
+                  vx,
+                  vy,
+                  dmg: def.dmg,
+                  speed: 330,
+                  rangeLeft: def.range + 30
+                });
+              });
+            } else {
+              // Standard homing bullet
+              this.state.bullets.push({
+                x: tower.x,
+                y: tower.y,
+                target,
+                dmg: def.dmg,
+                speed: 330
+              });
+            }
+            tower.cool = def.rate;
+          }
         }
+      });
+    }
 
-        const dx = target.x - bullet.x;
-        const dy = target.y - bullet.y;
-        const dist = Math.hypot(dx, dy) || 1;
+    // 2. Bullets simulation (Runs even if stage just finished, allowing in-flight bullets to complete flight)
+    if (this.state.bullets.length > 0) {
+      this.state.bullets.forEach((bullet) => {
+        if (bullet.dead) return;
 
-        if (dist < bullet.speed * scaledDt + target.r) {
-          target.hp -= bullet.dmg;
-          bullet.dead = true;
+        if (bullet.vx !== undefined && bullet.vy !== undefined) {
+          // Directional projectile (Side Turret / Fourway / Eightway)
+          const moveDist = bullet.speed * scaledDt;
+          bullet.x += bullet.vx * moveDist;
+          bullet.y += bullet.vy * moveDist;
+          bullet.rangeLeft = (bullet.rangeLeft ?? 200) - moveDist;
+
+          // Check if out of bounds or range
+          if (
+            bullet.rangeLeft <= 0 ||
+            bullet.x < -20 ||
+            bullet.x > CANVAS_WIDTH + 20 ||
+            bullet.y < -20 ||
+            bullet.y > CANVAS_HEIGHT + 20
+          ) {
+            bullet.dead = true;
+            return;
+          }
+
+          // Collision check against remaining active enemies
+          for (const enemy of this.state.enemies) {
+            if (!enemy.dead) {
+              const hitDist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
+              if (hitDist <= 4 + enemy.r) {
+                enemy.hp -= bullet.dmg;
+                bullet.dead = true;
+                break;
+              }
+            }
+          }
         } else {
-          bullet.x += (dx / dist) * bullet.speed * scaledDt;
-          bullet.y += (dy / dist) * bullet.speed * scaledDt;
-        }
-      }
-    });
+          // Standard targeted bullet
+          const target = bullet.target;
 
-    // Check enemy deaths & rewards
+          // If target is already gone or dead, fly forward along trajectory to fade naturally
+          if (!target || target.dead) {
+            if (bullet.vx === undefined && bullet.vy === undefined) {
+              const targetX = target ? target.x : bullet.x;
+              const targetY = target ? target.y : bullet.y;
+              const angle = Math.atan2(targetY - bullet.y, targetX - bullet.x) || 0;
+              bullet.vx = Math.cos(angle);
+              bullet.vy = Math.sin(angle);
+              bullet.rangeLeft = 140;
+            }
+            const moveDist = bullet.speed * scaledDt;
+            bullet.x += bullet.vx * moveDist;
+            bullet.y += bullet.vy * moveDist;
+            bullet.rangeLeft -= moveDist;
+            if (
+              bullet.rangeLeft <= 0 ||
+              bullet.x < -20 ||
+              bullet.x > CANVAS_WIDTH + 20 ||
+              bullet.y < -20 ||
+              bullet.y > CANVAS_HEIGHT + 20
+            ) {
+              bullet.dead = true;
+            }
+            return;
+          }
+
+          const dx = target.x - bullet.x;
+          const dy = target.y - bullet.y;
+          const dist = Math.hypot(dx, dy) || 1;
+
+          if (dist < bullet.speed * scaledDt + target.r) {
+            target.hp -= bullet.dmg;
+            bullet.dead = true;
+          } else {
+            bullet.x += (dx / dist) * bullet.speed * scaledDt;
+            bullet.y += (dy / dist) * bullet.speed * scaledDt;
+          }
+        }
+      });
+    }
+
+    // 3. Enemy deaths & rewards
     this.state.enemies.forEach((enemy) => {
       if (enemy.hp <= 0 && !enemy.dead) {
         enemy.dead = true;
@@ -325,7 +350,7 @@ export class GameModel {
     this.state.enemies = this.state.enemies.filter((e) => !e.dead);
     this.state.bullets = this.state.bullets.filter((b) => !b.dead);
 
-    // Wave completion
+    // 4. Wave completion
     if (this.state.spawned >= this.state.total && !this.state.enemies.length && this.state.running) {
       this.state.running = false;
       this.state.coins += 25;
