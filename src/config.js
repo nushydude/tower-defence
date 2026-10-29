@@ -21,6 +21,79 @@ export const BASE_TOWERS = ['Spammer', 'Scout', 'Spiker', 'Double'];
 export const CANVAS_WIDTH = 720;
 export const CANVAS_HEIGHT = 470;
 
+export const ENEMY_TYPES = {
+  square: {
+    type: 'square',
+    name: 'Blue Square',
+    shape: 'square',
+    color: '#318cff',
+    borderColor: '#184f94',
+    baseHp: 32,
+    hpPerWave: 14,
+    speed: 36,
+    speedPerWave: 1.2,
+    r: 9,
+    reward: 5,
+    minWave: 1
+  },
+  triangle: {
+    type: 'triangle',
+    name: 'Purple Triangle (Speedy)',
+    shape: 'triangle',
+    color: '#c242fc',
+    borderColor: '#6b1991',
+    baseHp: 24,
+    hpPerWave: 11,
+    speed: 68,
+    speedPerWave: 1.6,
+    r: 9,
+    reward: 7,
+    minWave: 3
+  },
+  hexagon: {
+    type: 'hexagon',
+    name: 'Amber Hexagon (Armored)',
+    shape: 'hexagon',
+    color: '#f59e0b',
+    borderColor: '#92400e',
+    baseHp: 85,
+    hpPerWave: 28,
+    speed: 25,
+    speedPerWave: 0.8,
+    r: 13,
+    reward: 12,
+    minWave: 5
+  },
+  diamond: {
+    type: 'diamond',
+    name: 'Emerald Diamond (Elite)',
+    shape: 'diamond',
+    color: '#10b981',
+    borderColor: '#065f46',
+    baseHp: 150,
+    hpPerWave: 36,
+    speed: 52,
+    speedPerWave: 1.4,
+    r: 11,
+    reward: 16,
+    minWave: 7
+  },
+  boss: {
+    type: 'boss',
+    name: 'Red Pentagon Boss',
+    shape: 'pentagon',
+    color: '#ed202d',
+    borderColor: '#790b17',
+    baseHp: 2200,
+    hpPerWave: 0,
+    speed: 13,
+    speedPerWave: 0,
+    r: 29,
+    reward: 100,
+    minWave: 10
+  }
+};
+
 export const MAP_CONFIGS = {
   grassland: {
     id: 'grassland',

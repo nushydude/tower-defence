@@ -1,4 +1,4 @@
-import { MAP_CONFIGS } from './config.js';
+import { MAP_CONFIGS, ENEMY_TYPES } from './config.js';
 
 export function createInitialState(mapId = 'grassland') {
   return {
@@ -70,20 +70,57 @@ export class GameModel {
     this.saves[slotIndex] = null;
   }
 
+  chooseEnemyTypeForWave() {
+    const wave = this.state.wave;
+    if (wave === 10) return 'boss';
+
+    // Weighted pool depending on wave
+    const pool = [];
+
+    // Wave 1-2: Pure blue squares
+    // Wave 3-4: Blue squares + fast purple triangles
+    // Wave 5-6: Triangles + armored hexagons + squares
+    // Wave 7-9: Mix of all including emerald diamonds
+    pool.push('square', 'square');
+
+    if (wave >= 3) {
+      pool.push('triangle', 'triangle', 'triangle');
+    }
+    if (wave >= 5) {
+      pool.push('hexagon', 'hexagon');
+    }
+    if (wave >= 7) {
+      pool.push('diamond', 'diamond');
+    }
+
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    return chosen;
+  }
+
   spawnEnemy() {
     const map = this.getCurrentMap();
-    const isBoss = this.state.wave === 10;
-    const hp = isBoss ? 2200 : 28 + this.state.wave * 15;
+    const typeKey = this.chooseEnemyTypeForWave();
+    const def = ENEMY_TYPES[typeKey];
+    const isBoss = typeKey === 'boss';
+
+    const waveFactor = Math.max(0, this.state.wave - 1);
+    const hp = isBoss ? def.baseHp : Math.round(def.baseHp + waveFactor * def.hpPerWave);
+    const speed = isBoss ? def.speed : Math.round(def.speed + Math.min(waveFactor * def.speedPerWave, 35));
+
     this.state.enemies.push({
       x: map.path[0][0],
       y: map.path[0][1],
       seg: 0,
+      type: typeKey,
+      shape: def.shape,
+      color: def.color,
+      borderColor: def.borderColor,
       boss: isBoss,
       hp,
       max: hp,
-      speed: isBoss ? 13 : 35 + Math.min(this.state.wave * 2, 28),
-      reward: 5 + Math.floor(this.state.wave / 3),
-      r: isBoss ? 29 : 10,
+      speed,
+      reward: def.reward + Math.floor(this.state.wave / 4),
+      r: def.r,
       dead: false
     });
   }
@@ -105,10 +142,16 @@ export class GameModel {
     this.state.running = true;
     this.state.spawned = 0;
     this.state.clock = 0;
-    this.state.total = this.state.wave === 10 ? 1 : Math.min(7 + this.state.wave * 2, 28);
+    this.state.total = this.state.wave === 10 ? 1 : Math.min(8 + this.state.wave * 2, 32);
 
     if (this.state.wave === 10) {
-      this.onMessage('BOSS BATTLE! Defeat the pentagon!');
+      this.onMessage('⚠️ BOSS BATTLE! Defeat the giant red pentagon!');
+    } else if (this.state.wave === 3) {
+      this.onMessage(`Stage 3: Fast Purple Triangles have arrived!`);
+    } else if (this.state.wave === 5) {
+      this.onMessage(`Stage 5: Armored Amber Hexagons incoming!`);
+    } else if (this.state.wave === 7) {
+      this.onMessage(`Stage 7: Elite Emerald Diamonds detected!`);
     } else {
       this.onMessage(`Stage ${this.state.wave} started!`);
     }
@@ -137,7 +180,7 @@ export class GameModel {
         this.state.spawned++;
         this.state.clock = this.state.wave === 10
           ? 999
-          : Math.max(0.25, 1.05 - this.state.wave * 0.025);
+          : Math.max(0.22, 1.05 - this.state.wave * 0.03);
       }
     }
 
@@ -150,6 +193,9 @@ export class GameModel {
       const dy = b[1] - a[1];
       const length = Math.hypot(dx, dy) || 1;
 
+      // Track facing angle for directional shapes like triangles
+      enemy.angle = Math.atan2(dy, dx);
+
       enemy.x += (dx / length) * enemy.speed * scaledDt;
       enemy.y += (dy / length) * enemy.speed * scaledDt;
 
@@ -157,7 +203,7 @@ export class GameModel {
         enemy.seg++;
         if (enemy.seg >= path.length - 1) {
           enemy.dead = true;
-          this.state.hp -= enemy.boss ? 100 : 10;
+          this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
           if (enemy.boss) {
             this.state.over = true;
             this.state.running = false;

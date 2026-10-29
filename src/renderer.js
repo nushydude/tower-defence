@@ -1,9 +1,9 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, MAP_CONFIGS } from './config.js';
 
-export function drawPolygon(ctx, x, y, r, n) {
+export function drawPolygon(ctx, x, y, r, n, rotation = 0) {
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
-    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n + rotation;
     const xx = x + Math.cos(a) * r;
     const yy = y + Math.sin(a) * r;
     if (i === 0) {
@@ -60,6 +60,48 @@ function renderEnvironment(ctx, map) {
     for (let y = 10; y < CANVAS_HEIGHT; y += 32) {
       ctx.fillStyle = map.gridColor;
       ctx.fillRect(x, y, 15, 15);
+    }
+  }
+}
+
+function drawEnemyShape(ctx, enemy) {
+  ctx.fillStyle = enemy.color;
+  ctx.strokeStyle = enemy.borderColor || '#184f94';
+  ctx.lineWidth = 2;
+
+  switch (enemy.shape) {
+    case 'square': {
+      ctx.fillRect(enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
+      ctx.strokeRect(enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
+      break;
+    }
+    case 'triangle': {
+      // Rotate triangle towards direction of motion
+      const rot = (enemy.angle !== undefined ? enemy.angle : 0) + Math.PI / 2;
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r + 2, 3, rot);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case 'hexagon': {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 6);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case 'diamond': {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 4);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case 'pentagon':
+    default: {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 5);
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      break;
     }
   }
 }
@@ -132,33 +174,33 @@ export function renderGame(ctx, state, towerDefs) {
 
   // Draw enemies
   state.enemies.forEach((enemy) => {
-    if (enemy.boss) {
-      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 5);
-      ctx.fillStyle = '#ed202d';
-      ctx.fill();
-      ctx.strokeStyle = '#790b17';
-      ctx.lineWidth = 3;
-      ctx.stroke();
+    drawEnemyShape(ctx, enemy);
 
-      // Boss health bar
+    const healthFraction = Math.max(0, enemy.hp / enemy.max);
+
+    if (enemy.boss) {
+      // Boss health bar & label
       ctx.fillStyle = '#28070b';
       ctx.fillRect(enemy.x - 34, enemy.y - 48, 68, 8);
       ctx.fillStyle = '#ff4652';
-      ctx.fillRect(enemy.x - 33, enemy.y - 47, 66 * Math.max(0, enemy.hp / enemy.max), 6);
+      ctx.fillRect(enemy.x - 33, enemy.y - 47, 66 * healthFraction, 6);
 
       ctx.fillStyle = 'white';
       ctx.font = 'bold 12px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText('BOSS', enemy.x, enemy.y - 55);
     } else {
-      ctx.fillStyle = '#318cff';
-      ctx.fillRect(enemy.x - 9, enemy.y - 9, 18, 18);
+      // Standard / elite enemy health bar
+      const barWidth = Math.max(18, enemy.r * 2);
+      const barHeight = 4;
+      const barY = enemy.y - enemy.r - 7;
 
-      // Enemy health bar
       ctx.fillStyle = '#1d2937';
-      ctx.fillRect(enemy.x - 11, enemy.y - 16, 22, 4);
-      ctx.fillStyle = '#69f29b';
-      ctx.fillRect(enemy.x - 10, enemy.y - 15, 20 * Math.max(0, enemy.hp / enemy.max), 2);
+      ctx.fillRect(enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
+
+      // Color code health bar based on enemy type
+      ctx.fillStyle = enemy.shape === 'triangle' ? '#d97706' : enemy.shape === 'hexagon' ? '#f59e0b' : '#69f29b';
+      ctx.fillRect(enemy.x - barWidth / 2, barY, barWidth * healthFraction, barHeight);
     }
   });
 
