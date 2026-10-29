@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tower Defence</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:14px;background:#101827;color:#f5f7ff;font:15px system-ui,sans-serif}main{max-width:900px;margin:auto}.panel{background:#1a2639;border:1px solid #354660;border-radius:12px;padding:12px;margin:10px 0}h1{text-align:center;font-size:clamp(28px,6vw,44px);margin:12px 0 3px}.small{color:#bdc9db;font-size:12px}button{background:#263750;color:white;border:1px solid #526681;border-radius:9px;padding:10px 12px;font-weight:750;cursor:pointer;margin:3px}button:disabled{opacity:.4}.row{display:flex;gap:8px;flex-wrap:wrap}.row>.panel{flex:1;min-width:90px;margin:0}#home{text-align:center;padding:10px 0 24px}#game{display:none}canvas{width:100%;height:auto;display:block;border-radius:10px;touch-action:manipulation}.actions{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}.active{border-color:#ffd166}
+</style>
+</head>
+<body><main>
+<section id="home"><h1>TOWER DEFENCE</h1><div class="small">Build your defence. Survive the waves.</div>
+<div style="font-size:48px;margin:14px">🛡️ 💥 🛡️</div>
+<div class="panel"><b>Choose a save slot</b><div id="slots" class="actions" style="justify-content:center"></div><div id="slotinfo" class="small">Choose a slot, then create or continue your game.</div><button id="play">Create / Continue Game</button><button id="del">Delete Slot</button></div>
+<div class="panel"><b>Boss Update</b><p class="small">Stage 10 features one huge, slow red pentagon boss. Defeat it for bonus coins and gems!</p></div></section>
+<section id="game"><div class="row"><div class="panel">🪙 <span id="coins">300</span></div><div class="panel">💎 <span id="gems">0</span></div><div class="panel">STAGE <span id="stage">1</span></div><div class="panel">BASE HP <span id="hp">100</span></div></div>
+<div id="boss" class="panel" style="display:none;color:#ff6875;font-weight:900">⚠️ BOSS BATTLE — RED PENTAGON</div>
+<canvas id="map" width="720" height="470"></canvas>
+<div class="actions"><button id="start">Start Stage</button><button id="speed">Speed: 1×</button><button id="homebtn">Home</button></div>
+<div class="panel"><b>Build a tower</b><div id="shop" class="actions"></div><div class="small">Choose a tower, then tap clear grass to place it. Tap an existing tower to upgrade it.</div><div id="selected" class="small"></div><div id="upgrades" class="actions"></div></div><div id="msg" class="small">Build your defence!</div>
+</section></main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),canvas=$('map'),ctx=canvas.getContext('2d');
+const D={
+Spammer:{cost:60,dmg:5,rate:.25,range:105,color:'#57d6ff',next:['Blaster','Harpy']},
+Blaster:{cost:100,dmg:10,rate:.25,range:115,color:'#52e5ff',next:['Rotary']},
+Rotary:{cost:180,dmg:7,rate:.2,range:235,color:'#35b9e9'},
+Harpy:{cost:100,dmg:5,rate:.12,range:110,color:'#e9b7ff',next:['Thunder']},
+Thunder:{cost:180,dmg:4,rate:.05,range:120,color:'#fff18a'},
+Scout:{cost:100,dmg:12,rate:.56,range:155,color:'#c4ff6a',next:['Ace','Shotgun','Scatter']},
+Ace:{cost:150,dmg:19,rate:.46,range:190,color:'#faff7c'},
+Shotgun:{cost:180,dmg:85,rate:1.03,range:175,color:'#ffb65b'},
+Scatter:{cost:220,dmg:65,rate:.92,range:190,color:'#ff6eae'},
+Spiker:{cost:80,dmg:9,rate:.38,range:120,color:'#ffa45c',next:['Double Spiker']},
+'Double Spiker':{cost:130,dmg:10,rate:.36,range:130,color:'#ff9c53',next:['ALLSPIKER']},
+ALLSPIKER:{cost:200,dmg:12,rate:.33,range:140,color:'#ff674d'},
+Double:{cost:120,dmg:12,rate:.46,range:135,color:'#e7a1ff',next:['Triple']},
+Triple:{cost:170,dmg:13,rate:.45,range:145,color:'#d6a6ff',next:['Quadruple']},
+Quadruple:{cost:240,dmg:14,rate:.43,range:155,color:'#b28aff'}
+};
+const path=[[ -20,95],[145,95],[145,205],[310,205],[310,105],[490,105],[490,320],[630,320],[630,405],[740,405]];
+let saves=[null,null,null],slot=0,S=null,nextId=1,last=0;
+const fresh=()=>({coins:300,gems:0,wave:0,hp:100,towers:[],enemies:[],bullets:[],running:false,over:false,sel:null,build:null,speed:1,spawned:0,total:0,clock:0});
+function msg(t){$('msg').textContent=t}
+function save(){if(S)saves[slot]=JSON.parse(JSON.stringify({...S,running:false,bullets:[]}));slots()}
+function slots(){$('slots').innerHTML='';saves.forEach((s,i)=>{let b=document.createElement('button');b.className=slot===i?'active':'';b.innerHTML=`Slot ${i+1}<br><span class="small">${s?`Stage ${s.wave+1} · ${s.coins} coins`:'Empty'}</span>`;b.onclick=()=>{slot=i;slots();$('slotinfo').textContent=s?`Stage ${s.wave+1} · ${s.coins} coins · ${s.gems} gems`:'Empty slot — create a new game.'};$('slots').appendChild(b)})}
+function ui(){if(!S)return;$('coins').textContent=Math.floor(S.coins);$('gems').textContent=S.gems;$('stage').textContent=S.wave+1;$('hp').textContent=S.hp;$('start').disabled=S.running;$('start').textContent=S.over?'Restart Game':S.running?'Stage in progress':'Start Stage';let t=S.towers.find(t=>t.id===S.sel);$('selected').textContent=t?`Selected: ${t.type} · Damage ${D[t.type].dmg} · Range ${D[t.type].range}`:'No tower selected';$('upgrades').innerHTML='';if(t)(D[t.type].next||[]).forEach(n=>{let b=document.createElement('button');b.textContent=`Upgrade to ${n} · ${D[n].cost}`;b.onclick=()=>{if(S.coins<D[n].cost)return msg('Not enough coins!');S.coins-=D[n].cost;t.type=n;ui();save();msg('Upgraded to '+n+'!')};$('upgrades').appendChild(b)})}
+function shop(){$('shop').innerHTML='';['Spammer','Scout','Spiker','Double'].forEach(n=>{let b=document.createElement('button');b.textContent=`${n} · ${D[n].cost}`;b.onclick=()=>{S.build=n;S.sel=null;ui();msg('Tap clear grass to place '+n+'.')};$('shop').appendChild(b)})}
+$('play').onclick=()=>{S=saves[slot]?{...fresh(),...saves[slot],running:false,over:false,bullets:[],sel:null,build:null}:fresh();$('home').style.display='none';$('game').style.display='block';shop();ui();msg('Build towers, then start the stage.')};
+$('del').onclick=()=>{saves[slot]=null;slots();$('slotinfo').textContent='Slot deleted.'};
+$('homebtn').onclick=()=>{S.running=false;save();$('game').style.display='none';$('home').style.display='block'};
+$('speed').onclick=()=>{S.speed=S.speed===1?2:S.speed===2?3:1;$('speed').textContent='Speed: '+S.speed+'×'};
+$('start').onclick=()=>{if(S.over){S=fresh();ui();msg('New game! Build your towers.');return}if(S.running)return;S.wave++;S.running=true;S.spawned=0;S.clock=0;S.total=S.wave===10?1:Math.min(7+S.wave*2,28);$('boss').style.display=S.wave===10?'block':'none';msg(S.wave===10?'BOSS BATTLE! Defeat the pentagon!':'Stage '+S.wave+' started!');ui();save()};
+function spawn(){let boss=S.wave===10,hp=boss?2200:28+S.wave*15;S.enemies.push({x:path[0][0],y:path[0][1],seg:0,boss,hp,max:hp,speed:boss?13:35+Math.min(S.wave*2,28),reward:5+Math.floor(S.wave/3),r:boss?29:10,dead:false})}
+function update(dt){if(!S||!S.running)return;let d=dt*S.speed;if(S.spawned<S.total){S.clock-=d;if(S.clock<=0){spawn();S.spawned++;S.clock=S.wave===10?999:Math.max(.25,1.05-S.wave*.025)}}
+S.enemies.forEach(e=>{if(e.dead)return;let a=path[e.seg],b=path[Math.min(e.seg+1,path.length-1)],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;e.x+=dx/l*e.speed*d;e.y+=dy/l*e.speed*d;if(Math.hypot(b[0]-e.x,b[1]-e.y)<e.speed*d+1){e.seg++;if(e.seg>=path.length-1){e.dead=true;S.hp-=e.boss?100:10;if(e.boss){S.over=true;S.running=false;msg('The boss reached your base! Game over.')}}}});
+S.towers.forEach(t=>{t.cool=(t.cool||0)-d;if(t.cool<=0){let def=D[t.type],e=S.enemies.filter(e=>!e.dead&&Math.hypot(e.x-t.x,e.y-t.y)<=def.range).sort((a,b)=>b.seg-a.seg)[0];if(e){S.bullets.push({x:t.x,y:t.y,target:e,dmg:def.dmg,speed:330});t.cool=def.rate}}});
+S.bullets.forEach(b=>{if(b.dead)return;let e=b.target;if(!e||e.dead){b.dead=true;return}let dx=e.x-b.x,dy=e.y-b.y,l=Math.hypot(dx,dy)||1;if(l<b.speed*d+e.r){e.hp-=b.dmg;b.dead=true}else{b.x+=dx/l*b.speed*d;b.y+=dy/l*b.speed*d}});
+S.enemies.forEach(e=>{if(e.hp<=0&&!e.dead){e.dead=true;if(e.boss){S.gems+=10;S.coins+=100;S.running=false;msg('BOSS DEFEATED! +10 gems and +100 coins!');$('boss').style.display='none'}else S.coins+=e.reward}});
+S.enemies=S.enemies.filter(e=>!e.dead);S.bullets=S.bullets.filter(b=>!b.dead);if(S.spawned>=S.total&&!S.enemies.length&&S.running){S.running=false;S.coins+=25;$('boss').style.display='none';msg('Stage cleared! +25 bonus coins.')}if(S.hp<=0){S.hp=0;S.running=false;S.over=true;msg('Base destroyed! Game over.')}ui()}
+function pent(x,y,r,n){ctx.beginPath();for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n,xx=x+Math.cos(a)*r,yy=y+Math.sin(a)*r;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)}ctx.closePath()}
+function draw(){ctx.clearRect(0,0,720,470);ctx.fillStyle='#83b65d';ctx.fillRect(0,0,720,470);for(let x=10;x<720;x+=32)for(let y=10;y<470;y+=32){ctx.fillStyle='rgba(255,255,255,.04)';ctx.fillRect(x,y,15,15)}ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();path.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.strokeStyle='#59626a';ctx.lineWidth=48;ctx.stroke();ctx.strokeStyle='#c5c6ba';ctx.lineWidth=39;ctx.stroke();ctx.setLineDash([12,12]);ctx.strokeStyle='#f2e5a4';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
+if(!S)return;S.towers.forEach(t=>{ctx.beginPath();ctx.arc(t.x,t.y,12,0,Math.PI*2);ctx.fillStyle=D[t.type].color;ctx.fill();ctx.lineWidth=S.sel===t.id?4:2;ctx.strokeStyle=S.sel===t.id?'white':'#263448';ctx.stroke();ctx.fillStyle='#142030';ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.fillText(t.type==='ALLSPIKER'?'ALL':t.type.slice(0,3).toUpperCase(),t.x,t.y+3)});S.enemies.forEach(e=>{if(e.boss){pent(e.x,e.y,e.r,5);ctx.fillStyle='#ed202d';ctx.fill();ctx.strokeStyle='#790b17';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#28070b';ctx.fillRect(e.x-34,e.y-48,68,8);ctx.fillStyle='#ff4652';ctx.fillRect(e.x-33,e.y-47,66*Math.max(0,e.hp/e.max),6);ctx.fillStyle='white';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText('BOSS',e.x,e.y-55)}else{ctx.fillStyle='#318cff';ctx.fillRect(e.x-9,e.y-9,18,18);ctx.fillStyle='#1d2937';ctx.fillRect(e.x-11,e.y-16,22,4);ctx.fillStyle='#69f29b';ctx.fillRect(e.x-10,e.y-15,20*Math.max(0,e.hp/e.max),2)}});S.bullets.forEach(b=>{ctx.beginPath();ctx.arc(b.x,b.y,4,0,Math.PI*2);ctx.fillStyle='#fff7c2';ctx.fill()});if(S.over){ctx.fillStyle='rgba(5,10,20,.65)';ctx.fillRect(0,0,720,470);ctx.fillStyle='white';ctx.textAlign='center';ctx.font='bold 30px system-ui';ctx.fillText('GAME OVER',360,220);ctx.font='16px system-ui';ctx.fillText('Press Restart Game to try again',360,252)}ctx.textAlign='left'}
+canvas.addEventListener('pointerdown',ev=>{if(!S||$('game').style.display==='none'||S.over)return;let r=canvas.getBoundingClientRect(),x=(ev.clientX-r.left)*720/r.width,y=(ev.clientY-r.top)*470/r.height,t=[...S.towers].reverse().find(t=>Math.hypot(t.x-x,t.y-y)<18);if(t){S.sel=t.id;S.build=null;ui();return}if(S.build){let n=S.build,def=D[n];if(S.coins<def.cost)return msg('Not enough coins!');if(path.some(p=>Math.hypot(p[0]-x,p[1]-y)<34)||S.towers.some(t=>Math.hypot(t.x-x,t.y-y)<28))return msg('Place towers on clear grass, away from the road.');S.coins-=def.cost;S.towers.push({id:nextId++,x,y,type:n,cool:0});S.sel=S.towers.at(-1).id;S.build=null;ui();save();msg(n+' placed!');return}S.sel=null;ui()});
+function frame(now){let dt=Math.min(.05,(now-last)/1000||0);last=now;update(dt);draw();requestAnimationFrame(frame)}slots();requestAnimationFrame(frame)
+})();
+</script></body></html>

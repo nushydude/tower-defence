@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 14px;
+  background: #101827;
+  color: #f5f7ff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 15px;
+}
+
+main {
+  max-width: 900px;
+  margin: auto;
+}
+
+.panel {
+  background: #1a2639;
+  border: 1px solid #354660;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+}
+
+h1 {
+  text-align: center;
+  font-size: clamp(28px, 6vw, 44px);
+  margin: 12px 0 3px;
+}
+
+.small {
+  color: #bdc9db;
+  font-size: 12px;
+}
+
+button {
+  background: #263750;
+  color: white;
+  border: 1px solid #526681;
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-weight: 750;
+  cursor: pointer;
+  margin: 3px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: #324765;
+  border-color: #6a82a3;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.row > .panel {
+  flex: 1;
+  min-width: 90px;
+  margin: 0;
+}
+
+#home {
+  text-align: center;
+  padding: 10px 0 24px;
+}
+
+#game {
+  display: none;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  touch-action: manipulation;
+  background: #83b65d;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.active {
+  border-color: #ffd166;
+}

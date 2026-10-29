@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tower Defence</title>
+</head>
+<body>
+  <main>
+    <section id="home">
+      <h1>TOWER DEFENCE</h1>
+      <div class="small">Build your defence. Survive the waves.</div>
+      <div style="font-size: 48px; margin: 14px">🛡️ 💥 🛡️</div>
+      <div class="panel">
+        <b>Choose a save slot</b>
+        <div id="slots" class="actions" style="justify-content: center"></div>
+        <div id="slotinfo" class="small">Choose a slot, then create or continue your game.</div>
+        <button id="play">Create / Continue Game</button>
+        <button id="del">Delete Slot</button>
+      </div>
+      <div class="panel">
+        <b>Boss Update</b>
+        <p class="small">Stage 10 features one huge, slow red pentagon boss. Defeat it for bonus coins and gems!</p>
+      </div>
+    </section>
+
+    <section id="game">
+      <div class="row">
+        <div class="panel">🪙 <span id="coins">300</span></div>
+        <div class="panel">💎 <span id="gems">0</span></div>
+        <div class="panel">STAGE <span id="stage">1</span></div>
+        <div class="panel">BASE HP <span id="hp">100</span></div>
+      </div>
+      <div id="boss" class="panel" style="display: none; color: #ff6875; font-weight: 900">
+        ⚠️ BOSS BATTLE — RED PENTAGON
+      </div>
+      <canvas id="map" width="720" height="470"></canvas>
+      <div class="actions">
+        <button id="start">Start Stage</button>
+        <button id="speed">Speed: 1×</button>
+        <button id="homebtn">Home</button>
+      </div>
+      <div class="panel">
+        <b>Build a tower</b>
+        <div id="shop" class="actions"></div>
+        <div class="small">Choose a tower, then tap clear grass to place it. Tap an existing tower to upgrade it.</div>
+        <div id="selected" class="small"></div>
+        <div id="upgrades" class="actions"></div>
+      </div>
+      <div id="msg" class="small">Build your defence!</div>
+    </section>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+import { PATH, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
+
+export function createInitialState() {
+  return {
+    coins: 300,
+    gems: 0,
+    wave: 0,
+    hp: 100,
+    towers: [],
+    enemies: [],
+    bullets: [],
+    running: false,
+    over: false,
+    sel: null,
+    build: null,
+    speed: 1,
+    spawned: 0,
+    total: 0,
+    clock: 0
+  };
+}
+
+export class GameModel {
+  constructor(onMessage, onUIUpdate) {
+    this.onMessage = onMessage || (() => {});
+    this.onUIUpdate = onUIUpdate || (() => {});
+    this.saves = [null, null, null];
+    this.activeSlot = 0;
+    this.state = null;
+    this.nextTowerId = 1;
+  }
+
+  saveGame() {
+    if (this.state) {
+      this.saves[this.activeSlot] = JSON.parse(
+        JSON.stringify({ ...this.state, running: false, bullets: [] })
+      );
+    }
+  }
+
+  loadSlot(slotIndex) {
+    this.activeSlot = slotIndex;
+    const saved = this.saves[slotIndex];
+    this.state = saved
+      ? { ...createInitialState(), ...saved, running: false, over: false, bullets: [], sel: null, build: null }
+      : createInitialState();
+  }
+
+  deleteSlot(slotIndex) {
+    this.saves[slotIndex] = null;
+  }
+
+  spawnEnemy() {
+    const isBoss = this.state.wave === 10;
+    const hp = isBoss ? 2200 : 28 + this.state.wave * 15;
+    this.state.enemies.push({
+      x: PATH[0][0],
+      y: PATH[0][1],
+      seg: 0,
+      boss: isBoss,
+      hp,
+      max: hp,
+      speed: isBoss ? 13 : 35 + Math.min(this.state.wave * 2, 28),
+      reward: 5 + Math.floor(this.state.wave / 3),
+      r: isBoss ? 29 : 10,
+      dead: false
+    });
+  }
+
+  startStage() {
+    if (!this.state) return;
+
+    if (this.state.over) {
+      this.state = createInitialState();
+      this.onUIUpdate();
+      this.onMessage('New game! Build your towers.');
+      return;
+    }
+
+    if (this.state.running) return;
+
+    this.state.wave++;
+    this.state.running = true;
+    this.state.spawned = 0;
+    this.state.clock = 0;
+    this.state.total = this.state.wave === 10 ? 1 : Math.min(7 + this.state.wave * 2, 28);
+
+    if (this.state.wave === 10) {
+      this.onMessage('BOSS BATTLE! Defeat the pentagon!');
+    } else {
+      this.onMessage(`Stage ${this.state.wave} started!`);
+    }
+
+    this.onUIUpdate();
+    this.saveGame();
+  }
+
+  cycleSpeed() {
+    if (!this.state) return;
+    this.state.speed = this.state.speed === 1 ? 2 : this.state.speed === 2 ? 3 : 1;
+  }
+
+  update(dt, towerDefs) {
+    if (!this.state || !this.state.running) return;
+
+    const scaledDt = dt * this.state.speed;
+
+    // Enemy wave spawning
+    if (this.state.spawned < this.state.total) {
+      this.state.clock -= scaledDt;
+      if (this.state.clock <= 0) {
+        this.spawnEnemy();
+        this.state.spawned++;
+        this.state.clock = this.state.wave === 10
+          ? 999
+          : Math.max(0.25, 1.05 - this.state.wave * 0.025);
+      }
+    }
+
+    // Move enemies along waypoints
+    this.state.enemies.forEach((enemy) => {
+      if (enemy.dead) return;
+      const a = PATH[enemy.seg];
+      const b = PATH[Math.min(enemy.seg + 1, PATH.length - 1)];
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const length = Math.hypot(dx, dy) || 1;
+
+      enemy.x += (dx / length) * enemy.speed * scaledDt;
+      enemy.y += (dy / length) * enemy.speed * scaledDt;
+
+      if (Math.hypot(b[0] - enemy.x, b[1] - enemy.y) < enemy.speed * scaledDt + 1) {
+        enemy.seg++;
+        if (enemy.seg >= PATH.length - 1) {
+          enemy.dead = true;
+          this.state.hp -= enemy.boss ? 100 : 10;
+          if (enemy.boss) {
+            this.state.over = true;
+            this.state.running = false;
+            this.onMessage('The boss reached your base! Game over.');
+          }
+        }
+      }
+    });
+
+    // Towers acquire targets and fire
+    this.state.towers.forEach((tower) => {
+      tower.cool = (tower.cool || 0) - scaledDt;
+      if (tower.cool <= 0) {
+        const def = towerDefs[tower.type];
+        const target = this.state.enemies
+          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
+          .sort((a, b) => b.seg - a.seg)[0];
+
+        if (target) {
+          this.state.bullets.push({
+            x: tower.x,
+            y: tower.y,
+            target,
+            dmg: def.dmg,
+            speed: 330
+          });
+          tower.cool = def.rate;
+        }
+      }
+    });
+
+    // Bullets movement & collision
+    this.state.bullets.forEach((bullet) => {
+      if (bullet.dead) return;
+      const target = bullet.target;
+      if (!target || target.dead) {
+        bullet.dead = true;
+        return;
+      }
+
+      const dx = target.x - bullet.x;
+      const dy = target.y - bullet.y;
+      const dist = Math.hypot(dx, dy) || 1;
+
+      if (dist < bullet.speed * scaledDt + target.r) {
+        target.hp -= bullet.dmg;
+        bullet.dead = true;
+      } else {
+        bullet.x += (dx / dist) * bullet.speed * scaledDt;
+        bullet.y += (dy / dist) * bullet.speed * scaledDt;
+      }
+    });
+
+    // Check enemy deaths & rewards
+    this.state.enemies.forEach((enemy) => {
+      if (enemy.hp <= 0 && !enemy.dead) {
+        enemy.dead = true;
+        if (enemy.boss) {
+          this.state.gems += 10;
+          this.state.coins += 100;
+          this.state.running = false;
+          this.onMessage('BOSS DEFEATED! +10 gems and +100 coins!');
+        } else {
+          this.state.coins += enemy.reward;
+        }
+      }
+    });
+
+    // Cleanup dead entities
+    this.state.enemies = this.state.enemies.filter((e) => !e.dead);
+    this.state.bullets = this.state.bullets.filter((b) => !b.dead);
+
+    // Wave completion
+    if (this.state.spawned >= this.state.total && !this.state.enemies.length && this.state.running) {
+      this.state.running = false;
+      this.state.coins += 25;
+      this.onMessage('Stage cleared! +25 bonus coins.');
+    }
+
+    // Base destroyed
+    if (this.state.hp <= 0) {
+      this.state.hp = 0;
+      this.state.running = false;
+      this.state.over = true;
+      this.onMessage('Base destroyed! Game over.');
+    }
+
+    this.onUIUpdate();
+  }
+
+  handleCanvasClick(x, y, towerDefs) {
+    if (!this.state || this.state.over) return;
+
+    // Check if an existing tower was clicked
+    const clickedTower = [...this.state.towers].reverse().find(
+      (t) => Math.hypot(t.x - x, t.y - y) < 18
+    );
+
+    if (clickedTower) {
+      this.state.sel = clickedTower.id;
+      this.state.build = null;
+      this.onUIUpdate();
+      return;
+    }
+
+    // Placing a selected tower
+    if (this.state.build) {
+      const type = this.state.build;
+      const def = towerDefs[type];
+
+      if (this.state.coins < def.cost) {
+        this.onMessage('Not enough coins!');
+        return;
+      }
+
+      const isOnRoad = PATH.some((p) => Math.hypot(p[0] - x, p[1] - y) < 34);
+      const isNearTower = this.state.towers.some((t) => Math.hypot(t.x - x, t.y - y) < 28);
+
+      if (isOnRoad || isNearTower) {
+        this.onMessage('Place towers on clear grass, away from the road.');
+        return;
+      }
+
+      this.state.coins -= def.cost;
+      this.state.towers.push({
+        id: this.nextTowerId++,
+        x,
+        y,
+        type,
+        cool: 0
+      });
+      this.state.sel = this.state.towers.at(-1).id;
+      this.state.build = null;
+      this.onUIUpdate();
+      this.saveGame();
+      this.onMessage(`${type} placed!`);
+      return;
+    }
+
+    // Deselect if clicked empty area
+    this.state.sel = null;
+    this.onUIUpdate();
+  }
+}
