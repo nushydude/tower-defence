@@ -68,6 +68,7 @@ function updateUI() {
         const upgradeDef = TOWER_DEFINITIONS[nextName];
         const btn = document.createElement('button');
         btn.textContent = `Upgrade to ${nextName} · ${upgradeDef.cost}`;
+        btn.dataset.cost = upgradeDef.cost;
         btn.onclick = (e) => {
           e.stopPropagation();
           if (S.coins < upgradeDef.cost) {
@@ -84,6 +85,22 @@ function updateUI() {
       });
     }
   }
+
+  // Update disabled state for upgrade buttons in real time based on coin balance
+  const upgradeButtons = $('upgrades').querySelectorAll('button');
+  upgradeButtons.forEach((btn) => {
+    const cost = Number(btn.dataset.cost);
+    btn.disabled = S.coins < cost;
+  });
+
+  // Update disabled state for shop build buttons based on coin balance
+  const shopButtons = $('shop').querySelectorAll('button');
+  shopButtons.forEach((btn) => {
+    const cost = Number(btn.dataset.cost);
+    if (!isNaN(cost)) {
+      btn.disabled = S.coins < cost;
+    }
+  });
 }
 
 function renderSlotList() {
@@ -169,8 +186,10 @@ function enterGameScreen() {
 function renderShop() {
   $('shop').innerHTML = '';
   BASE_TOWERS.forEach((towerName) => {
+    const cost = TOWER_DEFINITIONS[towerName].cost;
     const btn = document.createElement('button');
-    btn.textContent = `${towerName} · ${TOWER_DEFINITIONS[towerName].cost}`;
+    btn.textContent = `${towerName} · ${cost}`;
+    btn.dataset.cost = cost;
     btn.onclick = () => {
       if (!game.state) return;
       game.state.build = towerName;
