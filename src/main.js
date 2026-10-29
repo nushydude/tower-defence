@@ -8,6 +8,8 @@ const canvas = $('map');
 const ctx = canvas.getContext('2d');
 
 let lastTime = 0;
+let lastRenderedTowerId = null;
+let lastRenderedTowerType = null;
 
 function showMessage(text) {
   $('msg').textContent = text;
@@ -44,27 +46,36 @@ function updateUI() {
     $('selected').textContent = 'No tower selected';
   }
 
-  // Render upgrade options
-  $('upgrades').innerHTML = '';
-  if (selectedTower) {
-    const nextUpgrades = TOWER_DEFINITIONS[selectedTower.type].next || [];
-    nextUpgrades.forEach((nextName) => {
-      const upgradeDef = TOWER_DEFINITIONS[nextName];
-      const btn = document.createElement('button');
-      btn.textContent = `Upgrade to ${nextName} · ${upgradeDef.cost}`;
-      btn.onclick = () => {
-        if (S.coins < upgradeDef.cost) {
-          showMessage('Not enough coins!');
-          return;
-        }
-        S.coins -= upgradeDef.cost;
-        selectedTower.type = nextName;
-        updateUI();
-        game.saveGame();
-        showMessage(`Upgraded to ${nextName}!`);
-      };
-      $('upgrades').appendChild(btn);
-    });
+  // Render upgrade options ONLY when selection changes or tower upgrades
+  const currentTowerId = selectedTower ? selectedTower.id : null;
+  const currentTowerType = selectedTower ? selectedTower.type : null;
+
+  if (currentTowerId !== lastRenderedTowerId || currentTowerType !== lastRenderedTowerType) {
+    lastRenderedTowerId = currentTowerId;
+    lastRenderedTowerType = currentTowerType;
+
+    $('upgrades').innerHTML = '';
+    if (selectedTower) {
+      const nextUpgrades = TOWER_DEFINITIONS[selectedTower.type].next || [];
+      nextUpgrades.forEach((nextName) => {
+        const upgradeDef = TOWER_DEFINITIONS[nextName];
+        const btn = document.createElement('button');
+        btn.textContent = `Upgrade to ${nextName} · ${upgradeDef.cost}`;
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          if (S.coins < upgradeDef.cost) {
+            showMessage('Not enough coins!');
+            return;
+          }
+          S.coins -= upgradeDef.cost;
+          selectedTower.type = nextName;
+          updateUI();
+          game.saveGame();
+          showMessage(`Upgraded to ${nextName}!`);
+        };
+        $('upgrades').appendChild(btn);
+      });
+    }
   }
 }
 
@@ -139,6 +150,8 @@ function startNewGameWithMap(mapId) {
 }
 
 function enterGameScreen() {
+  lastRenderedTowerId = null;
+  lastRenderedTowerType = null;
   $('home').style.display = 'none';
   $('game').style.display = 'block';
   renderShop();
