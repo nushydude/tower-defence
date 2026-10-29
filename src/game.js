@@ -1,5 +1,27 @@
 import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 
+export function distToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+  const projX = x1 + t * dx;
+  const projY = y1 + t * dy;
+  return Math.hypot(px - projX, py - projY);
+}
+
+export function isPointNearPath(px, py, path, threshold = 34) {
+  for (let i = 0; i < path.length - 1; i++) {
+    const [x1, y1] = path[i];
+    const [x2, y2] = path[i + 1];
+    if (distToSegment(px, py, x1, y1, x2, y2) < threshold) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function createInitialState(mapId = 'grassland') {
   return {
     mapId,
@@ -102,10 +124,17 @@ export class GameModel {
     const hp = isBoss ? def.baseHp : Math.round(def.baseHp + waveFactor * def.hpPerWave);
     const speed = isBoss ? def.speed : Math.round(def.speed + Math.min(waveFactor * def.speedPerWave, 35));
 
+    const startX = map.path[0][0];
+    const startY = map.path[0][1];
+    const nextPoint = map.path[1] || map.path[0];
+    const initialAngle = Math.atan2(nextPoint[1] - startY, nextPoint[0] - startX);
+
     this.state.enemies.push({
-      x: map.path[0][0],
-      y: map.path[0][1],
+      x: startX,
+      y: startY,
       seg: 0,
+      distance: 0,
+      angle: initialAngle,
       type: typeKey,
       shape: def.shape,
       color: def.color,
@@ -189,21 +218,13 @@ export class GameModel {
         }
       }
 
-      // Move enemies along waypoints
+      // Move enemies along waypoints with precise segment clamping (zero drift)
       this.state.enemies.forEach((enemy) => {
         if (enemy.dead) return;
-        const a = path[enemy.seg];
-        const b = path[Math.min(enemy.seg + 1, path.length - 1)];
-        const dx = b[0] - a[0];
-        const dy = b[1] - a[1];
-        const length = Math.hypot(dx, dy) || 1;
 
-        enemy.angle = Math.atan2(dy, dx);
-        enemy.x += (dx / length) * enemy.speed * scaledDt;
-        enemy.y += (dy / length) * enemy.speed * scaledDt;
+        let moveDist = enemy.speed * scaledDt;
 
-        if (Math.hypot(b[0] - enemy.x, b[1] - enemy.y) < enemy.speed * scaledDt + 1) {
-          enemy.seg++;
+        while (moveDist > 0 && !enemy.dead) {
           if (enemy.seg >= path.length - 1) {
             enemy.dead = true;
             this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
@@ -212,18 +233,55 @@ export class GameModel {
               this.state.running = false;
               this.onMessage('The boss reached your base! Game over.');
             }
+            break;
+          }
+
+          const targetPoint = path[enemy.seg + 1];
+          const dx = targetPoint[0] - enemy.x;
+          const dy = targetPoint[1] - enemy.y;
+          const distToTarget = Math.hypot(dx, dy);
+
+          if (distToTarget <= 0.001) {
+            enemy.seg++;
+            continue;
+          }
+
+          enemy.angle = Math.atan2(dy, dx);
+
+          if (moveDist < distToTarget) {
+            enemy.x += (dx / distToTarget) * moveDist;
+            enemy.y += (dy / distToTarget) * moveDist;
+            enemy.distance = (enemy.distance || 0) + moveDist;
+            moveDist = 0;
+          } else {
+            enemy.x = targetPoint[0];
+            enemy.y = targetPoint[1];
+            enemy.distance = (enemy.distance || 0) + distToTarget;
+            moveDist -= distToTarget;
+            enemy.seg++;
+
+            if (enemy.seg >= path.length - 1) {
+              enemy.dead = true;
+              this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
+              if (enemy.boss) {
+                this.state.over = true;
+                this.state.running = false;
+                this.onMessage('The boss reached your base! Game over.');
+              }
+              break;
+            }
           }
         }
       });
 
-      // Towers acquire targets and fire
+      // Towers acquire targets and fire (prioritizes furthest along track)
       this.state.towers.forEach((tower) => {
         tower.cool = (tower.cool || 0) - scaledDt;
         if (tower.cool <= 0) {
           const def = towerDefs[tower.type];
           const target = this.state.enemies
             .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
-            .sort((a, b) => b.seg - a.seg)[0];
+            .sort((a, b) => (b.distance || 0) - (a.distance || 0))[0];
 
           if (target) {
             const aimAngle = Math.atan2(target.y - tower.y, target.x - tower.x);
@@ -450,8 +508,8 @@ export class GameModel {
         return;
       }
 
-      // Check distance from path segments
-      const isOnRoad = path.some((p) => Math.hypot(p[0] - x, p[1] - y) < 34);
+      // Check distance from all road segments
+      const isOnRoad = isPointNearPath(x, y, path, 34);
       const isNearTower = this.state.towers.some((t) => Math.hypot(t.x - x, t.y - y) < 28);
 
       if (isOnRoad || isNearTower) {
