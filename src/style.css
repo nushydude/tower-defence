@@ -97,3 +97,44 @@ canvas {
 .active {
   border-color: #ffd166;
 }
+
+/* Map Selection Cards */
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.map-card {
+  background: #213047;
+  border: 2px solid #3a4d6b;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.map-card:hover {
+  transform: translateY(-2px);
+  border-color: #ffd166;
+  background: #2a3c58;
+}
+
+.map-card .map-icon {
+  font-size: 38px;
+  margin-bottom: 6px;
+}
+
+.map-card .map-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.map-card .map-desc {
+  font-size: 12px;
+  color: #bdc9db;
+  line-height: 1.4;
+}

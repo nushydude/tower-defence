@@ -11,13 +11,25 @@
       <h1>TOWER DEFENCE</h1>
       <div class="small">Build your defence. Survive the waves.</div>
       <div style="font-size: 48px; margin: 14px">🛡️ 💥 🛡️</div>
+      
       <div class="panel">
         <b>Choose a save slot</b>
         <div id="slots" class="actions" style="justify-content: center"></div>
         <div id="slotinfo" class="small">Choose a slot, then create or continue your game.</div>
-        <button id="play">Create / Continue Game</button>
+        <button id="play">Open Slot</button>
         <button id="del">Delete Slot</button>
       </div>
+
+      <!-- Map Selector for empty save slot -->
+      <div id="map-select" class="panel" style="display: none">
+        <h3 style="margin: 4px 0 8px">Select a Map for Slot <span id="target-slot-num">1</span></h3>
+        <p class="small">This slot is empty. Choose a map theme to start your journey:</p>
+        <div id="map-cards" class="map-grid"></div>
+        <div style="margin-top: 10px">
+          <button id="cancel-map-select">Back</button>
+        </div>
+      </div>
+
       <div class="panel">
         <b>Boss Update</b>
         <p class="small">Stage 10 features one huge, slow red pentagon boss. Defeat it for bonus coins and gems!</p>
@@ -30,6 +42,7 @@
         <div class="panel">💎 <span id="gems">0</span></div>
         <div class="panel">STAGE <span id="stage">1</span></div>
         <div class="panel">BASE HP <span id="hp">100</span></div>
+        <div class="panel">MAP <span id="active-map-name">Plains</span></div>
       </div>
       <div id="boss" class="panel" style="display: none; color: #ff6875; font-weight: 900">
         ⚠️ BOSS BATTLE — RED PENTAGON
@@ -43,7 +56,7 @@
       <div class="panel">
         <b>Build a tower</b>
         <div id="shop" class="actions"></div>
-        <div class="small">Choose a tower, then tap clear grass to place it. Tap an existing tower to upgrade it.</div>
+        <div class="small">Choose a tower, then tap clear terrain to place it. Tap an existing tower to upgrade it.</div>
         <div id="selected" class="small"></div>
         <div id="upgrades" class="actions"></div>
       </div>

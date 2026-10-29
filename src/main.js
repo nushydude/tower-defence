@@ -1,5 +1,5 @@
 import './style.css';
-import { TOWER_DEFINITIONS, BASE_TOWERS } from './config.js';
+import { TOWER_DEFINITIONS, BASE_TOWERS, MAP_CONFIGS } from './config.js';
 import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
 
@@ -19,10 +19,13 @@ function updateUI() {
   const S = game.state;
   if (!S) return;
 
+  const currentMap = game.getCurrentMap();
+
   $('coins').textContent = Math.floor(S.coins);
   $('gems').textContent = S.gems;
   $('stage').textContent = S.wave + 1;
   $('hp').textContent = S.hp;
+  $('active-map-name').textContent = currentMap.name.split(' ')[0];
 
   $('start').disabled = S.running;
   $('start').textContent = S.over
@@ -70,19 +73,77 @@ function renderSlotList() {
   game.saves.forEach((saved, index) => {
     const btn = document.createElement('button');
     btn.className = game.activeSlot === index ? 'active' : '';
-    btn.innerHTML = `Slot ${index + 1}<br><span class="small">${
-      saved ? `Stage ${saved.wave + 1} · ${saved.coins} coins` : 'Empty'
-    }</span>`;
+    
+    let slotSubtitle = 'Empty';
+    if (saved) {
+      const mapName = MAP_CONFIGS[saved.mapId]?.name.split(' ')[0] || 'Grassland';
+      slotSubtitle = `${mapName} · Stg ${saved.wave + 1} · ${saved.coins}c`;
+    }
+
+    btn.innerHTML = `Slot ${index + 1}<br><span class="small">${slotSubtitle}</span>`;
 
     btn.onclick = () => {
       game.activeSlot = index;
       renderSlotList();
-      $('slotinfo').textContent = saved
-        ? `Stage ${saved.wave + 1} · ${saved.coins} coins · ${saved.gems} gems`
-        : 'Empty slot — create a new game.';
+      hideMapSelection();
+
+      if (saved) {
+        const mapName = MAP_CONFIGS[saved.mapId]?.name || 'Grassland';
+        $('slotinfo').textContent = `Stage ${saved.wave + 1} (${mapName}) · ${saved.coins} coins · ${saved.gems} gems`;
+        $('play').textContent = 'Continue Game';
+      } else {
+        $('slotinfo').textContent = 'Empty slot — open to select a map and start.';
+        $('play').textContent = 'Create Game';
+      }
     };
     $('slots').appendChild(btn);
   });
+
+  const activeSaved = game.saves[game.activeSlot];
+  $('play').textContent = activeSaved ? 'Continue Game' : 'Create Game';
+}
+
+function showMapSelection() {
+  $('target-slot-num').textContent = game.activeSlot + 1;
+  const container = $('map-cards');
+  container.innerHTML = '';
+
+  Object.values(MAP_CONFIGS).forEach((map) => {
+    const card = document.createElement('div');
+    card.className = 'map-card';
+    card.innerHTML = `
+      <div class="map-icon">${map.icon}</div>
+      <div class="map-title">${map.name}</div>
+      <div class="map-desc">${map.description}</div>
+    `;
+
+    card.onclick = () => {
+      startNewGameWithMap(map.id);
+    };
+
+    container.appendChild(card);
+  });
+
+  $('map-select').style.display = 'block';
+}
+
+function hideMapSelection() {
+  $('map-select').style.display = 'none';
+}
+
+function startNewGameWithMap(mapId) {
+  hideMapSelection();
+  game.loadSlot(game.activeSlot, mapId);
+  game.saveGame();
+  enterGameScreen();
+}
+
+function enterGameScreen() {
+  $('home').style.display = 'none';
+  $('game').style.display = 'block';
+  renderShop();
+  updateUI();
+  showMessage(`Welcome to ${game.getCurrentMap().name}! Build your towers.`);
 }
 
 function renderShop() {
@@ -95,7 +156,7 @@ function renderShop() {
       game.state.build = towerName;
       game.state.sel = null;
       updateUI();
-      showMessage(`Tap clear grass to place ${towerName}.`);
+      showMessage(`Tap clear terrain to place ${towerName}.`);
     };
     $('shop').appendChild(btn);
   });
@@ -103,17 +164,23 @@ function renderShop() {
 
 // Event Listeners
 $('play').onclick = () => {
-  game.loadSlot(game.activeSlot);
-  $('home').style.display = 'none';
-  $('game').style.display = 'block';
-  renderShop();
-  updateUI();
-  showMessage('Build towers, then start the stage.');
+  const hasExistingSave = game.hasSave(game.activeSlot);
+  if (hasExistingSave) {
+    game.loadSlot(game.activeSlot);
+    enterGameScreen();
+  } else {
+    showMapSelection();
+  }
+};
+
+$('cancel-map-select').onclick = () => {
+  hideMapSelection();
 };
 
 $('del').onclick = () => {
   game.deleteSlot(game.activeSlot);
   renderSlotList();
+  hideMapSelection();
   $('slotinfo').textContent = 'Slot deleted.';
 };
 

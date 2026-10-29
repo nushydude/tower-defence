@@ -1,4 +1,4 @@
-import { PATH, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, MAP_CONFIGS } from './config.js';
 
 export function drawPolygon(ctx, x, y, r, n) {
   ctx.beginPath();
@@ -15,38 +15,81 @@ export function drawPolygon(ctx, x, y, r, n) {
   ctx.closePath();
 }
 
+function renderEnvironment(ctx, map) {
+  // Base background
+  ctx.fillStyle = map.bgColor;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  // Special island background with sandy atoll landmasses
+  if (map.id === 'island') {
+    // Large central sandy island
+    ctx.fillStyle = '#e4c489';
+    ctx.beginPath();
+    ctx.ellipse(360, 240, 310, 190, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner tropical greenery
+    ctx.fillStyle = '#6ab85e';
+    ctx.beginPath();
+    ctx.ellipse(360, 240, 250, 140, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Water wave highlights
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 2;
+    for (let i = 25; i < CANVAS_WIDTH; i += 70) {
+      ctx.beginPath();
+      ctx.arc(i, 40, 15, 0, Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(i + 35, 435, 15, 0, Math.PI);
+      ctx.stroke();
+    }
+  } else if (map.id === 'desert') {
+    // Subtle desert dunes / rocks
+    ctx.fillStyle = 'rgba(168, 107, 43, 0.18)';
+    ctx.beginPath();
+    ctx.arc(100, 80, 50, 0, Math.PI * 2);
+    ctx.arc(620, 260, 70, 0, Math.PI * 2);
+    ctx.arc(280, 420, 60, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Terrain grid texture
+  for (let x = 10; x < CANVAS_WIDTH; x += 32) {
+    for (let y = 10; y < CANVAS_HEIGHT; y += 32) {
+      ctx.fillStyle = map.gridColor;
+      ctx.fillRect(x, y, 15, 15);
+    }
+  }
+}
+
 export function renderGame(ctx, state, towerDefs) {
   // Clear canvas
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Background grass
-  ctx.fillStyle = '#83b65d';
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  const mapId = state?.mapId || 'grassland';
+  const map = MAP_CONFIGS[mapId] || MAP_CONFIGS.grassland;
 
-  // Grass grid texture
-  for (let x = 10; x < CANVAS_WIDTH; x += 32) {
-    for (let y = 10; y < CANVAS_HEIGHT; y += 32) {
-      ctx.fillStyle = 'rgba(255,255,255,.04)';
-      ctx.fillRect(x, y, 15, 15);
-    }
-  }
+  // Render themed terrain
+  renderEnvironment(ctx, map);
 
-  // Draw winding path
+  // Draw themed path
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
-  PATH.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
+  map.path.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
 
-  ctx.strokeStyle = '#59626a';
+  ctx.strokeStyle = map.pathOuter;
   ctx.lineWidth = 48;
   ctx.stroke();
 
-  ctx.strokeStyle = '#c5c6ba';
+  ctx.strokeStyle = map.pathInner;
   ctx.lineWidth = 39;
   ctx.stroke();
 
   ctx.setLineDash([12, 12]);
-  ctx.strokeStyle = '#f2e5a4';
+  ctx.strokeStyle = map.pathDash;
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.setLineDash([]);
@@ -62,7 +105,7 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.arc(selectedTower.x, selectedTower.y, def.range, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.lineWidth = 1;
       ctx.stroke();
     }

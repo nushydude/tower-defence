@@ -18,18 +18,77 @@ export const TOWER_DEFINITIONS = {
 
 export const BASE_TOWERS = ['Spammer', 'Scout', 'Spiker', 'Double'];
 
-export const PATH = [
-  [-20, 95],
-  [145, 95],
-  [145, 205],
-  [310, 205],
-  [310, 105],
-  [490, 105],
-  [490, 320],
-  [630, 320],
-  [630, 405],
-  [740, 405]
-];
-
 export const CANVAS_WIDTH = 720;
 export const CANVAS_HEIGHT = 470;
+
+export const MAP_CONFIGS = {
+  grassland: {
+    id: 'grassland',
+    name: 'Grassland Plains',
+    icon: '🌱',
+    description: 'Classic lush green fields with a winding stone path.',
+    bgColor: '#83b65d',
+    gridColor: 'rgba(255, 255, 255, 0.04)',
+    pathOuter: '#59626a',
+    pathInner: '#c5c6ba',
+    pathDash: '#f2e5a4',
+    waterFeatures: false,
+    path: [
+      [-20, 95],
+      [145, 95],
+      [145, 205],
+      [310, 205],
+      [310, 105],
+      [490, 105],
+      [490, 320],
+      [630, 320],
+      [630, 405],
+      [740, 405]
+    ]
+  },
+  desert: {
+    id: 'desert',
+    name: 'Desert Dunes',
+    icon: '🏜️',
+    description: 'Golden sands with a sandstone canyon path.',
+    bgColor: '#d4a359',
+    gridColor: 'rgba(180, 110, 30, 0.08)',
+    pathOuter: '#805934',
+    pathInner: '#e8ca92',
+    pathDash: '#b58348',
+    waterFeatures: false,
+    path: [
+      [-20, 350],
+      [180, 350],
+      [180, 150],
+      [360, 150],
+      [360, 370],
+      [550, 370],
+      [550, 120],
+      [740, 120]
+    ]
+  },
+  island: {
+    id: 'island',
+    name: 'Tropical Atoll',
+    icon: '🏝️',
+    description: 'Deep ocean surrounding sandy shores and wooden boardwalks.',
+    bgColor: '#3490cf',
+    gridColor: 'rgba(255, 255, 255, 0.09)',
+    pathOuter: '#4a301d',
+    pathInner: '#dfb77d',
+    pathDash: '#fff6d6',
+    waterFeatures: true,
+    path: [
+      [360, -20],
+      [360, 120],
+      [140, 120],
+      [140, 310],
+      [450, 310],
+      [450, 210],
+      [580, 210],
+      [580, 400],
+      [740, 400]
+    ]
+  }
+};

@@ -1,7 +1,8 @@
-import { PATH, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
+import { MAP_CONFIGS } from './config.js';
 
-export function createInitialState() {
+export function createInitialState(mapId = 'grassland') {
   return {
+    mapId,
     coins: 300,
     gems: 0,
     wave: 0,
@@ -30,6 +31,15 @@ export class GameModel {
     this.nextTowerId = 1;
   }
 
+  getCurrentMap() {
+    const mapId = this.state?.mapId || 'grassland';
+    return MAP_CONFIGS[mapId] || MAP_CONFIGS.grassland;
+  }
+
+  hasSave(slotIndex) {
+    return Boolean(this.saves[slotIndex]);
+  }
+
   saveGame() {
     if (this.state) {
       this.saves[this.activeSlot] = JSON.parse(
@@ -38,12 +48,22 @@ export class GameModel {
     }
   }
 
-  loadSlot(slotIndex) {
+  loadSlot(slotIndex, chosenMapId = 'grassland') {
     this.activeSlot = slotIndex;
     const saved = this.saves[slotIndex];
-    this.state = saved
-      ? { ...createInitialState(), ...saved, running: false, over: false, bullets: [], sel: null, build: null }
-      : createInitialState();
+    if (saved) {
+      this.state = {
+        ...createInitialState(saved.mapId || 'grassland'),
+        ...saved,
+        running: false,
+        over: false,
+        bullets: [],
+        sel: null,
+        build: null
+      };
+    } else {
+      this.state = createInitialState(chosenMapId);
+    }
   }
 
   deleteSlot(slotIndex) {
@@ -51,11 +71,12 @@ export class GameModel {
   }
 
   spawnEnemy() {
+    const map = this.getCurrentMap();
     const isBoss = this.state.wave === 10;
     const hp = isBoss ? 2200 : 28 + this.state.wave * 15;
     this.state.enemies.push({
-      x: PATH[0][0],
-      y: PATH[0][1],
+      x: map.path[0][0],
+      y: map.path[0][1],
       seg: 0,
       boss: isBoss,
       hp,
@@ -71,7 +92,8 @@ export class GameModel {
     if (!this.state) return;
 
     if (this.state.over) {
-      this.state = createInitialState();
+      const currentMapId = this.state.mapId || 'grassland';
+      this.state = createInitialState(currentMapId);
       this.onUIUpdate();
       this.onMessage('New game! Build your towers.');
       return;
@@ -103,6 +125,8 @@ export class GameModel {
   update(dt, towerDefs) {
     if (!this.state || !this.state.running) return;
 
+    const map = this.getCurrentMap();
+    const path = map.path;
     const scaledDt = dt * this.state.speed;
 
     // Enemy wave spawning
@@ -120,8 +144,8 @@ export class GameModel {
     // Move enemies along waypoints
     this.state.enemies.forEach((enemy) => {
       if (enemy.dead) return;
-      const a = PATH[enemy.seg];
-      const b = PATH[Math.min(enemy.seg + 1, PATH.length - 1)];
+      const a = path[enemy.seg];
+      const b = path[Math.min(enemy.seg + 1, path.length - 1)];
       const dx = b[0] - a[0];
       const dy = b[1] - a[1];
       const length = Math.hypot(dx, dy) || 1;
@@ -131,7 +155,7 @@ export class GameModel {
 
       if (Math.hypot(b[0] - enemy.x, b[1] - enemy.y) < enemy.speed * scaledDt + 1) {
         enemy.seg++;
-        if (enemy.seg >= PATH.length - 1) {
+        if (enemy.seg >= path.length - 1) {
           enemy.dead = true;
           this.state.hp -= enemy.boss ? 100 : 10;
           if (enemy.boss) {
@@ -243,17 +267,20 @@ export class GameModel {
     if (this.state.build) {
       const type = this.state.build;
       const def = towerDefs[type];
+      const map = this.getCurrentMap();
+      const path = map.path;
 
       if (this.state.coins < def.cost) {
         this.onMessage('Not enough coins!');
         return;
       }
 
-      const isOnRoad = PATH.some((p) => Math.hypot(p[0] - x, p[1] - y) < 34);
+      // Check distance from path segments
+      const isOnRoad = path.some((p) => Math.hypot(p[0] - x, p[1] - y) < 34);
       const isNearTower = this.state.towers.some((t) => Math.hypot(t.x - x, t.y - y) < 28);
 
       if (isOnRoad || isNearTower) {
-        this.onMessage('Place towers on clear grass, away from the road.');
+        this.onMessage('Place towers on clear terrain, away from the path.');
         return;
       }
 
