@@ -106,6 +106,29 @@ function drawEnemyShape(ctx, enemy) {
   }
 }
 
+function drawTowerBarrels(ctx, tower, def) {
+  if (!def.multiDir) return;
+
+  const baseAngle = tower.angle || 0;
+  ctx.strokeStyle = '#263448';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'butt';
+
+  def.multiDir.forEach((offset) => {
+    const angle = baseAngle + offset;
+    const barrelLength = 17;
+    const startX = tower.x + Math.cos(angle) * 7;
+    const startY = tower.y + Math.sin(angle) * 7;
+    const endX = tower.x + Math.cos(angle) * barrelLength;
+    const endY = tower.y + Math.sin(angle) * barrelLength;
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  });
+}
+
 export function renderGame(ctx, state, towerDefs) {
   // Clear canvas
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -153,11 +176,16 @@ export function renderGame(ctx, state, towerDefs) {
     }
   }
 
-  // Draw towers
+  // Draw towers & multi-directional barrels
   state.towers.forEach((tower) => {
+    const def = towerDefs[tower.type];
+
+    // Draw visible barrels for multi-directional turrets
+    drawTowerBarrels(ctx, tower, def);
+
     ctx.beginPath();
     ctx.arc(tower.x, tower.y, 12, 0, Math.PI * 2);
-    ctx.fillStyle = towerDefs[tower.type].color;
+    ctx.fillStyle = def.color;
     ctx.fill();
 
     const isSelected = state.sel === tower.id;
@@ -168,7 +196,7 @@ export function renderGame(ctx, state, towerDefs) {
     ctx.fillStyle = '#142030';
     ctx.font = 'bold 9px system-ui';
     ctx.textAlign = 'center';
-    const label = tower.type === 'ALLSPIKER' ? 'ALL' : tower.type.slice(0, 3).toUpperCase();
+    const label = def.abbr || (tower.type === 'ALLSPIKER' ? 'ALL' : tower.type.slice(0, 3).toUpperCase());
     ctx.fillText(label, tower.x, tower.y + 3);
   });
 
@@ -198,7 +226,6 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.fillStyle = '#1d2937';
       ctx.fillRect(enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
 
-      // Color code health bar based on enemy type
       ctx.fillStyle = enemy.shape === 'triangle' ? '#d97706' : enemy.shape === 'hexagon' ? '#f59e0b' : '#69f29b';
       ctx.fillRect(enemy.x - barWidth / 2, barY, barWidth * healthFraction, barHeight);
     }
@@ -208,8 +235,13 @@ export function renderGame(ctx, state, towerDefs) {
   state.bullets.forEach((bullet) => {
     ctx.beginPath();
     ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff7c2';
+    ctx.fillStyle = bullet.vx !== undefined ? '#a5f3fc' : '#fff7c2';
     ctx.fill();
+    if (bullet.vx !== undefined) {
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   });
 
   // Game over overlay

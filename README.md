@@ -16,16 +16,20 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
   - ⬡ **Amber Hexagons (Rounds 5+)**: Heavy armored tanks that take reduced damage and deal extra damage if reaching base.
   - 🔷 **Emerald Diamonds (Rounds 7+)**: High-speed, high-health elite threats.
   - 🛑 **Red Pentagon Boss (Round 10)**: Massive slow titan with 2,200 HP and huge bounty rewards.
-- **Towers & Upgrades**:
+- **Turrets & Upgrade Trees**:
   - **Spammer** → Blaster → Rotary, Harpy → Thunder
   - **Scout** → Ace, Shotgun, Scatter
   - **Spiker** → Double Spiker → ALLSPIKER
   - **Double** → Triple → Quadruple
+  - 🆕 **Multi-Directional Turret Branch**:
+    - **Side Turret**: Fires 2 simultaneous shots (front and back in opposite directions).
+    - **Fourway**: Upgrades to 4 barrels firing in 4 perpendicular directions.
+    - **Eightway**: Ultimate 8-barrel omni-turret firing across all 8 compass directions.
 - **Wave Progression & Boss Battles**: 
   - Dynamic enemy waves with increasing speed and health along custom map paths.
   - Stage 10 Boss Encounter featuring a high-HP red pentagon boss.
 - **Game Controls**: Variable speed toggling (1x, 2x, 3x), real-time base health tracking, coins, and gems rewards.
-- **Range Preview**: Visual indicator highlighting the attack range of selected towers.
+- **Visuals**: Realistic rotating multi-barrel graphics on turrets and trajectory range previews.
 
 ---
 
@@ -75,10 +79,10 @@ tower-defense-game-basic/
 ├── index.html            # Main HTML entry point & map selector UI
 ├── package.json          # Project configuration & scripts
 ├── src/
-│   ├── config.js         # Tower stats, upgrade paths, map themes, enemy definitions
-│   ├── game.js           # Core state management, save slots, enemy wave logic & spawning
-│   ├── renderer.js       # HTML5 Canvas drawing routines for enemies (shapes & rotation), maps & towers
-│   ├── main.js           # UI event listeners, slot management, map picker, animation loop
+│   ├── config.js         # Turret stats, multi-dir barrels, map themes, enemy definitions
+│   ├── game.js           # Core state management, directional projectile physics & targeting
+│   ├── renderer.js       # HTML5 Canvas drawing routines for turrets (barrels), enemies & maps
+│   ├── main.js           # UI event listeners, shop, slot management, animation loop
 │   └── style.css         # Styling for HUD, panels, buttons, map cards, and canvas
 ├── Tower_Defence_Game.html # Original standalone single-file prototype
 └── README.md             # Project documentation
@@ -90,8 +94,7 @@ tower-defense-game-basic/
 
 1. Pick an empty slot and click **Create Game**.
 2. Select your desired map theme: **Grassland Plains**, **Desert Dunes**, or **Tropical Atoll**.
-3. Select a tower from the build menu at the bottom.
-4. Click on clear terrain away from the path to place your tower.
+3. Purchase a starter turret such as **Side Turret**, **Spammer**, **Scout**, or **Double**.
+4. Click on clear terrain away from the path to place your turret.
 5. Click **Start Stage** to unleash the wave.
-6. Click on placed towers to view their stats and purchase upgrades when you have enough coins.
-7. Prepare for fast purple triangles at Wave 3, armored amber hexagons at Wave 5, emerald elites at Wave 7, and defeat the Stage 10 Boss!
+6. Upgrade the **Side Turret** to **Fourway** and then **Eightway** to cover multiple tracks simultaneously!

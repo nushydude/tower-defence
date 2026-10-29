@@ -1,4 +1,4 @@
-import { MAP_CONFIGS, ENEMY_TYPES } from './config.js';
+import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
 
 export function createInitialState(mapId = 'grassland') {
   return {
@@ -74,14 +74,7 @@ export class GameModel {
     const wave = this.state.wave;
     if (wave === 10) return 'boss';
 
-    // Weighted pool depending on wave
-    const pool = [];
-
-    // Wave 1-2: Pure blue squares
-    // Wave 3-4: Blue squares + fast purple triangles
-    // Wave 5-6: Triangles + armored hexagons + squares
-    // Wave 7-9: Mix of all including emerald diamonds
-    pool.push('square', 'square');
+    const pool = ['square', 'square'];
 
     if (wave >= 3) {
       pool.push('triangle', 'triangle', 'triangle');
@@ -193,7 +186,7 @@ export class GameModel {
       const dy = b[1] - a[1];
       const length = Math.hypot(dx, dy) || 1;
 
-      // Track facing angle for directional shapes like triangles
+      // Track facing angle for directional rendering
       enemy.angle = Math.atan2(dy, dx);
 
       enemy.x += (dx / length) * enemy.speed * scaledDt;
@@ -223,13 +216,35 @@ export class GameModel {
           .sort((a, b) => b.seg - a.seg)[0];
 
         if (target) {
-          this.state.bullets.push({
-            x: tower.x,
-            y: tower.y,
-            target,
-            dmg: def.dmg,
-            speed: 330
-          });
+          const aimAngle = Math.atan2(target.y - tower.y, target.x - tower.x);
+          tower.angle = aimAngle; // Store rotation for tank barrels
+
+          if (def.multiDir) {
+            // Multi-directional Tank: Spawns bullets in each configured offset angle
+            def.multiDir.forEach((offsetAngle) => {
+              const shotAngle = aimAngle + offsetAngle;
+              const vx = Math.cos(shotAngle);
+              const vy = Math.sin(shotAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 14,
+                y: tower.y + vy * 14,
+                vx,
+                vy,
+                dmg: def.dmg,
+                speed: 330,
+                rangeLeft: def.range + 30
+              });
+            });
+          } else {
+            // Standard homing bullet
+            this.state.bullets.push({
+              x: tower.x,
+              y: tower.y,
+              target,
+              dmg: def.dmg,
+              speed: 330
+            });
+          }
           tower.cool = def.rate;
         }
       }
@@ -238,22 +253,56 @@ export class GameModel {
     // Bullets movement & collision
     this.state.bullets.forEach((bullet) => {
       if (bullet.dead) return;
-      const target = bullet.target;
-      if (!target || target.dead) {
-        bullet.dead = true;
-        return;
-      }
 
-      const dx = target.x - bullet.x;
-      const dy = target.y - bullet.y;
-      const dist = Math.hypot(dx, dy) || 1;
+      if (bullet.vx !== undefined && bullet.vy !== undefined) {
+        // Directional projectile (Side Tank / Fourway / Eightway)
+        const moveDist = bullet.speed * scaledDt;
+        bullet.x += bullet.vx * moveDist;
+        bullet.y += bullet.vy * moveDist;
+        bullet.rangeLeft -= moveDist;
 
-      if (dist < bullet.speed * scaledDt + target.r) {
-        target.hp -= bullet.dmg;
-        bullet.dead = true;
+        // Check if out of bounds or range
+        if (
+          bullet.rangeLeft <= 0 ||
+          bullet.x < -20 ||
+          bullet.x > CANVAS_WIDTH + 20 ||
+          bullet.y < -20 ||
+          bullet.y > CANVAS_HEIGHT + 20
+        ) {
+          bullet.dead = true;
+          return;
+        }
+
+        // Collision check against all active enemies in radius
+        for (const enemy of this.state.enemies) {
+          if (!enemy.dead) {
+            const hitDist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
+            if (hitDist <= 4 + enemy.r) {
+              enemy.hp -= bullet.dmg;
+              bullet.dead = true;
+              break;
+            }
+          }
+        }
       } else {
-        bullet.x += (dx / dist) * bullet.speed * scaledDt;
-        bullet.y += (dy / dist) * bullet.speed * scaledDt;
+        // Standard homing bullet
+        const target = bullet.target;
+        if (!target || target.dead) {
+          bullet.dead = true;
+          return;
+        }
+
+        const dx = target.x - bullet.x;
+        const dy = target.y - bullet.y;
+        const dist = Math.hypot(dx, dy) || 1;
+
+        if (dist < bullet.speed * scaledDt + target.r) {
+          target.hp -= bullet.dmg;
+          bullet.dead = true;
+        } else {
+          bullet.x += (dx / dist) * bullet.speed * scaledDt;
+          bullet.y += (dy / dist) * bullet.speed * scaledDt;
+        }
       }
     });
 
@@ -336,7 +385,8 @@ export class GameModel {
         x,
         y,
         type,
-        cool: 0
+        cool: 0,
+        angle: 0
       });
       this.state.sel = this.state.towers.at(-1).id;
       this.state.build = null;
