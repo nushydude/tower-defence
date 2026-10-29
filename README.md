@@ -28,7 +28,10 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
 - **Wave Progression & Boss Battles**: 
   - Dynamic enemy waves with increasing speed and health along custom map paths.
   - Stage 10 Boss Encounter featuring a high-HP red pentagon boss.
-- **Game Controls**: Variable speed toggling (1x, 2x, 3x), real-time base health tracking, coins, and gems rewards.
+- **Game Controls**: 
+  - **Auto-Start**: Toggleable auto-start mode (`Auto-Start: ON / OFF`) that automatically launches successive rounds with a brief intermission countdown after clearing each wave.
+  - **Speed**: Variable speed toggling (1x, 2x, 3x).
+  - Real-time base health tracking, coins, and gems rewards.
 - **Visuals**: Realistic rotating multi-barrel graphics on turrets and trajectory range previews.
 
 ---

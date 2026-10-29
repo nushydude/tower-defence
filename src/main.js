@@ -34,7 +34,14 @@ function updateUI() {
     ? 'Restart Game'
     : S.running
     ? 'Stage in progress'
+    : (S.autoStart && S.autoCountdown > 0)
+    ? `Auto starting (${S.autoCountdown.toFixed(1)}s)...`
     : 'Start Stage';
+
+  if ($('auto')) {
+    $('auto').textContent = `Auto-Start: ${S.autoStart ? 'ON' : 'OFF'}`;
+    $('auto').className = S.autoStart ? 'active' : '';
+  }
 
   $('boss').style.display = S.wave === 10 ? 'block' : 'none';
 
@@ -209,6 +216,13 @@ $('speed').onclick = () => {
   game.cycleSpeed();
   $('speed').textContent = `Speed: ${game.state.speed}×`;
 };
+
+if ($('auto')) {
+  $('auto').onclick = () => {
+    game.toggleAutoStart();
+    updateUI();
+  };
+}
 
 $('start').onclick = () => {
   game.startStage();

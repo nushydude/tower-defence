@@ -17,7 +17,9 @@ export function createInitialState(mapId = 'grassland') {
     speed: 1,
     spawned: 0,
     total: 0,
-    clock: 0
+    clock: 0,
+    autoStart: false,
+    autoCountdown: 0
   };
 }
 
@@ -156,6 +158,14 @@ export class GameModel {
   cycleSpeed() {
     if (!this.state) return;
     this.state.speed = this.state.speed === 1 ? 2 : this.state.speed === 2 ? 3 : 1;
+  }
+
+  toggleAutoStart() {
+    if (!this.state) return;
+    this.state.autoStart = !this.state.autoStart;
+    if (this.state.autoStart && !this.state.running && !this.state.over) {
+      this.state.autoCountdown = 1.0;
+    }
   }
 
   update(dt, towerDefs) {
@@ -355,6 +365,18 @@ export class GameModel {
       this.state.running = false;
       this.state.coins += 25;
       this.onMessage('Stage cleared! +25 bonus coins.');
+      if (this.state.autoStart && !this.state.over) {
+        this.state.autoCountdown = 1.5; // Brief intermission before launching next wave
+      }
+    }
+
+    // Auto-start countdown when idle between rounds
+    if (this.state.autoStart && !this.state.running && !this.state.over && this.state.autoCountdown > 0) {
+      this.state.autoCountdown -= scaledDt;
+      if (this.state.autoCountdown <= 0) {
+        this.startStage();
+        return;
+      }
     }
 
     // Base destroyed
