@@ -350,6 +350,26 @@ export class GameModel {
                   rangeLeft: def.range + 30
                 });
               });
+            } else if (def.isAtomic) {
+              // Atomic Turret: Fires an atomic core that multiplies into more the further it goes
+              const vx = Math.cos(aimAngle);
+              const vy = Math.sin(aimAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 14,
+                y: tower.y + vy * 14,
+                vx,
+                vy,
+                angle: aimAngle,
+                dmg: def.dmg,
+                speed: 340,
+                rangeLeft: def.range + 30,
+                isAtomic: true,
+                distTraveled: 0,
+                nextSplitDist: 60,
+                splitCount: 0,
+                maxSplits: 3,
+                r: 5.5
+              });
             } else {
               // Standard or exploding bullet
               this.state.bullets.push({
@@ -370,17 +390,20 @@ export class GameModel {
 
     // 2. Bullets simulation (Runs even if stage just finished, allowing in-flight bullets to complete flight)
     if (this.state.bullets.length > 0) {
-      const newShards = [];
+      const spawnedBullets = [];
 
       this.state.bullets.forEach((bullet) => {
         if (bullet.dead) return;
 
         if (bullet.vx !== undefined && bullet.vy !== undefined) {
-          // Directional projectile or cluster shard
+          // Directional projectile, atomic fission ball, or cluster shard
           const moveDist = bullet.speed * scaledDt;
           bullet.x += bullet.vx * moveDist;
           bullet.y += bullet.vy * moveDist;
           bullet.rangeLeft = (bullet.rangeLeft ?? 200) - moveDist;
+          if (bullet.distTraveled !== undefined) {
+            bullet.distTraveled += moveDist;
+          }
 
           // Check if out of bounds or range
           if (
@@ -403,6 +426,41 @@ export class GameModel {
                 bullet.dead = true;
                 break;
               }
+            }
+          }
+
+          // Atomic fission: split/multiply into more projectiles the further it travels
+          if (!bullet.dead && bullet.isAtomic && bullet.splitCount < bullet.maxSplits) {
+            if (bullet.distTraveled >= bullet.nextSplitDist) {
+              bullet.dead = true;
+              const currentAngle = bullet.angle !== undefined ? bullet.angle : Math.atan2(bullet.vy, bullet.vx);
+              const spread = Math.max(0.12, 0.22 - bullet.splitCount * 0.04);
+              const nextDist = bullet.distTraveled + 55;
+              const childDmg = Math.max(4, Math.round(bullet.dmg * 0.85));
+              const childR = Math.max(2.8, (bullet.r || 5) - 0.7);
+
+              [-spread, spread].forEach((offset) => {
+                const childAngle = currentAngle + offset;
+                const cvx = Math.cos(childAngle);
+                const cvy = Math.sin(childAngle);
+                spawnedBullets.push({
+                  x: bullet.x,
+                  y: bullet.y,
+                  vx: cvx,
+                  vy: cvy,
+                  angle: childAngle,
+                  dmg: childDmg,
+                  speed: bullet.speed,
+                  rangeLeft: bullet.rangeLeft,
+                  isAtomic: true,
+                  distTraveled: bullet.distTraveled,
+                  nextSplitDist: nextDist,
+                  splitCount: bullet.splitCount + 1,
+                  maxSplits: bullet.maxSplits,
+                  r: childR
+                });
+              });
+              return;
             }
           }
         } else {
@@ -454,7 +512,7 @@ export class GameModel {
                 const angle = baseAngle + i * angleStep;
                 const vx = Math.cos(angle);
                 const vy = Math.sin(angle);
-                newShards.push({
+                spawnedBullets.push({
                   x: bullet.x,
                   y: bullet.y,
                   vx,
@@ -474,8 +532,8 @@ export class GameModel {
         }
       });
 
-      if (newShards.length > 0) {
-        this.state.bullets.push(...newShards);
+      if (spawnedBullets.length > 0) {
+        this.state.bullets.push(...spawnedBullets);
       }
     }
 

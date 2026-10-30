@@ -185,6 +185,26 @@ function drawEnemyShape(ctx, enemy) {
 }
 
 function drawTowerBarrels(ctx, tower, def) {
+  if (def.isAtomic) {
+    const angle = tower.angle || 0;
+    // Heavy accelerator barrel
+    ctx.strokeStyle = '#0f766e';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(tower.x, tower.y);
+    ctx.lineTo(tower.x + Math.cos(angle) * 19, tower.y + Math.sin(angle) * 19);
+    ctx.stroke();
+
+    // Glowing emitter muzzle
+    ctx.strokeStyle = '#00f5d4';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(tower.x + Math.cos(angle) * 16, tower.y + Math.sin(angle) * 16, 4, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+
   if (!def.multiDir) return;
 
   const baseAngle = tower.angle || 0;
@@ -323,7 +343,20 @@ export function renderGame(ctx, state, towerDefs) {
     const r = bullet.r || 4;
     ctx.arc(bullet.x, bullet.y, r, 0, Math.PI * 2);
 
-    if (bullet.isShard) {
+    if (bullet.isAtomic) {
+      // Atomic multiplying fission ball (glowing neon turquoise with bright radioactive nucleus)
+      ctx.fillStyle = '#00f5d4';
+      ctx.fill();
+      ctx.strokeStyle = '#70e000';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Bright inner nucleus
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, Math.max(1.5, r * 0.42), 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    } else if (bullet.isShard) {
       // Outward bursting shards (warm fiery spark)
       ctx.fillStyle = '#ff7b72';
       ctx.fill();

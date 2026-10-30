@@ -2,7 +2,8 @@ export const TOWER_DEFINITIONS = {
   // Rapid branch
   Spammer: { cost: 60, dmg: 5, rate: 0.25, range: 105, color: '#57d6ff', next: ['Blaster', 'Harpy'] },
   Blaster: { cost: 100, dmg: 10, rate: 0.25, range: 115, color: '#52e5ff', next: ['Rotary'] },
-  Rotary: { cost: 180, dmg: 7, rate: 0.2, range: 235, color: '#35b9e9' },
+  Rotary: { cost: 180, dmg: 7, rate: 0.2, range: 235, color: '#35b9e9', next: ['Atomic'] },
+  Atomic: { cost: 300, dmg: 9, rate: 0.2, range: 260, color: '#00f5d4', abbr: 'ATOM', isAtomic: true },
   Harpy: { cost: 100, dmg: 5, rate: 0.12, range: 110, color: '#e9b7ff', next: ['Thunder'] },
   Thunder: { cost: 180, dmg: 4, rate: 0.05, range: 120, color: '#fff18a' },
 

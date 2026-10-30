@@ -22,7 +22,7 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
   - ⚔️ **Ruby Crosses (Rounds 13+)**: Rapid assault raiders (Speed: 48).
   - 🔮 **Amethyst Decagons (Rounds 16+)**: Sturdy siege colossi (Speed: 30).
 - **Turrets & Upgrade Trees**:
-  - **Spammer** → Blaster → Rotary, Harpy → Thunder
+  - **Spammer** → Blaster → Rotary → **Atomic** (shoots at Rotary's fire rate, with atomic balls that multiply into more projectiles the further they travel!), Harpy → Thunder
   - **Scout** → Ace, Shotgun, **Scatter** (bursts into 5 outward shards on impact) → **Cluster** (bursts into 10 outward shards on impact)
   - **Spiker** → Double Spiker → ALLSPIKER
   - **Double** → Triple → Quadruple
