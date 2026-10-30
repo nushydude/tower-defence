@@ -185,6 +185,26 @@ function drawEnemyShape(ctx, enemy) {
 }
 
 function drawTowerBarrels(ctx, tower, def) {
+  if (def.isGamma) {
+    const angle = tower.angle || 0;
+    // Focusing coil emitter barrel
+    ctx.strokeStyle = '#365314';
+    ctx.lineWidth = 5.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(tower.x, tower.y);
+    ctx.lineTo(tower.x + Math.cos(angle) * 19, tower.y + Math.sin(angle) * 19);
+    ctx.stroke();
+
+    // Gamma emitter ring
+    ctx.strokeStyle = '#a3e635';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(tower.x + Math.cos(angle) * 16, tower.y + Math.sin(angle) * 16, 4, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+
   if (def.isAtomic) {
     const angle = tower.angle || 0;
     // Heavy accelerator barrel
@@ -343,7 +363,31 @@ export function renderGame(ctx, state, towerDefs) {
     const r = bullet.r || 4;
     ctx.arc(bullet.x, bullet.y, r, 0, Math.PI * 2);
 
-    if (bullet.isAtomic) {
+    if (bullet.isGamma) {
+      // Gamma Expanding Ray: grows bigger the further it flies
+      const outerGlow = ctx.createRadialGradient(bullet.x, bullet.y, Math.max(1, r * 0.15), bullet.x, bullet.y, r);
+      outerGlow.addColorStop(0, '#ffffff');
+      outerGlow.addColorStop(0.35, '#bef264');
+      outerGlow.addColorStop(0.75, '#84cc16');
+      outerGlow.addColorStop(1, 'rgba(132, 204, 22, 0.3)');
+
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = outerGlow;
+      ctx.fill();
+      ctx.strokeStyle = '#4d7c0f';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Inner pulsating energy ring on larger spheres
+      if (r > 6.5) {
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, r * 0.52, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    } else if (bullet.isAtomic) {
       // Atomic multiplying fission ball (glowing neon turquoise with bright radioactive nucleus)
       ctx.fillStyle = '#00f5d4';
       ctx.fill();

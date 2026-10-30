@@ -370,6 +370,26 @@ export class GameModel {
                 maxSplits: 3,
                 r: 5.5
               });
+            } else if (def.isGamma) {
+              // Gamma Turret: Rapid-fire expanding radiation orb that grows larger and more damaging the further it goes
+              const vx = Math.cos(aimAngle);
+              const vy = Math.sin(aimAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 14,
+                y: tower.y + vy * 14,
+                vx,
+                vy,
+                baseDmg: def.dmg,
+                dmg: def.dmg,
+                speed: 340,
+                rangeLeft: def.range + 30,
+                maxRange: def.range + 30,
+                distTraveled: 0,
+                isGamma: true,
+                initialR: 3.5,
+                maxR: 16,
+                r: 3.5
+              });
             } else {
               // Standard or exploding bullet
               this.state.bullets.push({
@@ -403,6 +423,13 @@ export class GameModel {
           bullet.rangeLeft = (bullet.rangeLeft ?? 200) - moveDist;
           if (bullet.distTraveled !== undefined) {
             bullet.distTraveled += moveDist;
+          }
+
+          // Gamma radiation pulse expands in size and power the further it travels
+          if (bullet.isGamma) {
+            const progress = Math.min(1.4, bullet.distTraveled / (bullet.maxRange || 240));
+            bullet.r = bullet.initialR + progress * (bullet.maxR - bullet.initialR);
+            bullet.dmg = Math.round(bullet.baseDmg + progress * 9);
           }
 
           // Check if out of bounds or range

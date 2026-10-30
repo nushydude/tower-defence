@@ -9,7 +9,8 @@ export const TOWER_DEFINITIONS = {
 
   // Precision / sniper / shotgun / scatter branch
   Scout: { cost: 100, dmg: 12, rate: 0.56, range: 155, color: '#c4ff6a', next: ['Ace', 'Shotgun', 'Scatter'] },
-  Ace: { cost: 150, dmg: 19, rate: 0.46, range: 190, color: '#faff7c' },
+  Ace: { cost: 150, dmg: 19, rate: 0.46, range: 190, color: '#faff7c', next: ['Gamma'] },
+  Gamma: { cost: 260, dmg: 7, rate: 0.12, range: 240, color: '#84cc16', abbr: 'GAM', isGamma: true },
   Shotgun: { cost: 180, dmg: 85, rate: 1.03, range: 175, color: '#ffb65b' },
   Scatter: { cost: 220, dmg: 65, rate: 0.92, range: 190, color: '#ff6eae', burstShards: 5, shardDmg: 16, next: ['Cluster'] },
   Cluster: { cost: 320, dmg: 80, rate: 0.88, range: 210, color: '#f43f5e', burstShards: 10, shardDmg: 20, abbr: 'CLUS' },
