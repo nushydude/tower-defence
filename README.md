@@ -10,24 +10,33 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
     - 🌱 **Grassland Plains**: Classic lush green terrain with winding stone pathways.
     - 🏜️ **Desert Dunes**: Scorching golden dunes and canyon pathways.
     - 🏝️ **Tropical Atoll**: Deep blue waters surrounding an island and wooden boardwalk trail.
-- **Diverse Enemy Roster**:
-  - 🟦 **Blue Squares (Rounds 1+)**: Standard slow units to build early economy.
-  - 🔺 **Purple Triangles (Rounds 3+)**: Agile, fast-moving speedsters pointing towards their movement trajectory.
-  - ⬡ **Amber Hexagons (Rounds 5+)**: Heavy armored tanks that take reduced damage and deal extra damage if reaching base.
-  - 🔷 **Emerald Diamonds (Rounds 7+)**: High-speed, high-health elite threats.
-  - 🛑 **Red Pentagon Boss (Round 10)**: Massive slow titan with 2,200 HP and huge bounty rewards.
+- **Diverse Enemy Roster & Speeds**:
+  - 🟦 **Blue Squares (Rounds 1+)**: Standard starter enemy (Speed: 36).
+  - ⚡ **Neon Pink Orbs (Rounds 2+)**: Hyper-speed swarming scouts (Speed: 84).
+  - 🔺 **Purple Triangles (Rounds 3+)**: Agile speedsters pointing forward in motion (Speed: 68).
+  - ⬡ **Amber Hexagons (Rounds 5+)**: Heavily armored tanks that deal extra leak damage (Speed: 25).
+  - ⬟ **Cyan Pentagons (Rounds 6+)**: Sturdy mid-speed bruisers (Speed: 40).
+  - 🔷 **Emerald Diamonds (Rounds 7+)**: Rapid elite threats (Speed: 52).
+  - ⭐ **Golden Stars (Rounds 8+)**: Fast skirmish vanguards (Speed: 62).
+  - 🛑 **Obsidian Octagons (Rounds 11+)**: Colossal armored juggernauts with massive bulk (Speed: 18).
+  - ⚔️ **Ruby Crosses (Rounds 13+)**: Rapid assault raiders (Speed: 48).
+  - 🔮 **Amethyst Decagons (Rounds 16+)**: Sturdy siege colossi (Speed: 30).
 - **Turrets & Upgrade Trees**:
   - **Spammer** → Blaster → Rotary, Harpy → Thunder
   - **Scout** → Ace, Shotgun, **Scatter** (bursts into 5 outward shards on impact) → **Cluster** (bursts into 10 outward shards on impact)
   - **Spiker** → Double Spiker → ALLSPIKER
   - **Double** → Triple → Quadruple
-  - 🆕 **Multi-Directional Turret Branch**:
+  - **Multi-Directional Turret Branch**:
     - **Side Turret**: Fires 2 simultaneous shots (front and back in opposite directions).
     - **Fourway**: Upgrades to 4 barrels firing in 4 perpendicular directions.
     - **Eightway**: Ultimate 8-barrel omni-turret firing across all 8 compass directions.
-- **Wave Progression & Boss Battles**: 
-  - Dynamic enemy waves with increasing speed and health along custom map paths.
-  - Stage 10 Boss Encounter featuring a high-HP red pentagon boss.
+- **Progressive Boss Battles (Every 10 Stages)**:
+  - Every 10th Stage (10, 20, 30, 40, 50, ...) unleashes a formidable titan boss with scaling HP, speed, and rewards:
+    - 🛑 **Stage 10**: *Red Pentagon Colossus* (2,400 HP · 100 coins, 10 gems)
+    - 🛑 **Stage 20**: *Crimson Octagon Dreadnought* (6,000 HP · 200 coins, 20 gems)
+    - 🌟 **Stage 30**: *Solar Star Titan* (14,000 HP · 300 coins, 30 gems)
+    - 🔮 **Stage 40**: *Void Decagon Leviathan* (30,000 HP · 400 coins, 40 gems)
+    - 🌌 **Stage 50+**: *Omega Titans* (Progressively scaling HP, speed, and bounties)
 - **Game Controls**: 
   - **Auto-Start**: Toggleable auto-start mode (`Auto-Start: ON / OFF`) that automatically launches successive rounds with a brief intermission countdown after clearing each wave.
   - **Speed**: Variable speed toggling (1x, 2x, 3x).

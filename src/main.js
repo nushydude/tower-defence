@@ -1,5 +1,5 @@
 import './style.css';
-import { TOWER_DEFINITIONS, BASE_TOWERS, MAP_CONFIGS } from './config.js';
+import { TOWER_DEFINITIONS, BASE_TOWERS, MAP_CONFIGS, getBossConfigForWave } from './config.js';
 import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
 
@@ -43,7 +43,17 @@ function updateUI() {
     $('auto').className = S.autoStart ? 'active' : '';
   }
 
-  $('boss').style.display = S.wave === 10 ? 'block' : 'none';
+  const isBossWave = S.wave % 10 === 0 && S.wave > 0;
+  const hasActiveBoss = S.enemies.some((e) => e.boss && !e.dead);
+  if ($('boss')) {
+    if (isBossWave && (S.running || hasActiveBoss)) {
+      const bossConfig = getBossConfigForWave(S.wave);
+      $('boss').style.display = 'block';
+      $('boss').textContent = `⚠️ BOSS BATTLE (STAGE ${S.wave}) — ${bossConfig.name.toUpperCase()}`;
+    } else {
+      $('boss').style.display = 'none';
+    }
+  }
 
   const selectedTower = S.towers.find((t) => t.id === S.sel);
   if (selectedTower) {

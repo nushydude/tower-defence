@@ -15,6 +15,43 @@ export function drawPolygon(ctx, x, y, r, n, rotation = 0) {
   ctx.closePath();
 }
 
+export function drawStar(ctx, x, y, r, innerR, points = 5, rotation = 0) {
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const radius = i % 2 === 0 ? r : innerR;
+    const angle = -Math.PI / 2 + (i * Math.PI) / points + rotation;
+    const xx = x + Math.cos(angle) * radius;
+    const yy = y + Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(xx, yy);
+    else ctx.lineTo(xx, yy);
+  }
+  ctx.closePath();
+}
+
+export function drawCross(ctx, x, y, r, rotation = 0) {
+  const w = r * 0.42;
+  ctx.save();
+  ctx.translate(x, y);
+  if (rotation) ctx.rotate(rotation);
+  ctx.beginPath();
+  ctx.moveTo(-w, -r);
+  ctx.lineTo(w, -r);
+  ctx.lineTo(w, -w);
+  ctx.lineTo(r, -w);
+  ctx.lineTo(r, w);
+  ctx.lineTo(w, w);
+  ctx.lineTo(w, r);
+  ctx.lineTo(-w, r);
+  ctx.lineTo(-w, w);
+  ctx.lineTo(-r, w);
+  ctx.lineTo(-r, -w);
+  ctx.lineTo(-w, -w);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
 function renderEnvironment(ctx, map) {
   // Base background
   ctx.fillStyle = map.bgColor;
@@ -67,9 +104,22 @@ function renderEnvironment(ctx, map) {
 function drawEnemyShape(ctx, enemy) {
   ctx.fillStyle = enemy.color;
   ctx.strokeStyle = enemy.borderColor || '#184f94';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = enemy.boss ? 3.5 : 2;
 
   switch (enemy.shape) {
+    case 'circle': {
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Gleam / specular shine
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      ctx.arc(enemy.x - enemy.r * 0.3, enemy.y - enemy.r * 0.3, enemy.r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
     case 'square': {
       ctx.fillRect(enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
       ctx.strokeRect(enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
@@ -83,23 +133,51 @@ function drawEnemyShape(ctx, enemy) {
       ctx.stroke();
       break;
     }
+    case 'diamond': {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r * 1.15, 4);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case 'pentagon': {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 5);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
     case 'hexagon': {
       drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 6);
       ctx.fill();
       ctx.stroke();
       break;
     }
-    case 'diamond': {
-      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 4);
+    case 'octagon': {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 8);
       ctx.fill();
       ctx.stroke();
       break;
     }
-    case 'pentagon':
+    case 'decagon': {
+      drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 10);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case 'star': {
+      const rot = enemy.boss ? 0 : (enemy.angle !== undefined ? enemy.angle : 0);
+      drawStar(ctx, enemy.x, enemy.y, enemy.r * 1.25, enemy.r * 0.6, 5, rot);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case 'cross': {
+      const rot = enemy.angle !== undefined ? enemy.angle : 0;
+      drawCross(ctx, enemy.x, enemy.y, enemy.r * 1.15, rot);
+      break;
+    }
     default: {
       drawPolygon(ctx, enemy.x, enemy.y, enemy.r, 5);
       ctx.fill();
-      ctx.lineWidth = 3;
       ctx.stroke();
       break;
     }
@@ -208,25 +286,33 @@ export function renderGame(ctx, state, towerDefs) {
 
     if (enemy.boss) {
       // Boss health bar & label
+      const barW = Math.max(74, enemy.r * 2.5);
+      const barH = 8;
+      const barY = enemy.y - enemy.r - 20;
+
       ctx.fillStyle = '#28070b';
-      ctx.fillRect(enemy.x - 34, enemy.y - 48, 68, 8);
-      ctx.fillStyle = '#ff4652';
-      ctx.fillRect(enemy.x - 33, enemy.y - 47, 66 * healthFraction, 6);
+      ctx.fillRect(enemy.x - barW / 2 - 1, barY - 1, barW + 2, barH + 2);
+      ctx.fillStyle = enemy.color || '#ff4652';
+      ctx.fillRect(enemy.x - barW / 2, barY, barW * healthFraction, barH);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(enemy.x - barW / 2 - 1, barY - 1, barW + 2, barH + 2);
 
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 12px system-ui';
+      ctx.font = 'bold 11px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('BOSS', enemy.x, enemy.y - 55);
+      const bossTitle = enemy.name ? `BOSS: ${enemy.name.toUpperCase()}` : 'BOSS';
+      ctx.fillText(bossTitle, enemy.x, barY - 5);
     } else {
       // Standard / elite enemy health bar
-      const barWidth = Math.max(18, enemy.r * 2);
+      const barWidth = Math.max(16, enemy.r * 2);
       const barHeight = 4;
       const barY = enemy.y - enemy.r - 7;
 
       ctx.fillStyle = '#1d2937';
       ctx.fillRect(enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
 
-      ctx.fillStyle = enemy.shape === 'triangle' ? '#d97706' : enemy.shape === 'hexagon' ? '#f59e0b' : '#69f29b';
+      ctx.fillStyle = enemy.color || '#69f29b';
       ctx.fillRect(enemy.x - barWidth / 2, barY, barWidth * healthFraction, barHeight);
     }
   });

@@ -1,4 +1,4 @@
-import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT } from './config.js';
+import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT, getBossConfigForWave } from './config.js';
 
 export function distToSegment(px, py, x1, y1, x2, y2) {
   const dx = x2 - x1;
@@ -96,38 +96,66 @@ export class GameModel {
 
   chooseEnemyTypeForWave() {
     const wave = this.state.wave;
-    if (wave === 10) return 'boss';
+    if (wave % 10 === 0) return 'boss';
 
-    const pool = ['square', 'square'];
+    const pool = [];
+    Object.entries(ENEMY_TYPES).forEach(([key, def]) => {
+      if (wave >= def.minWave) {
+        const waveDiff = wave - def.minWave;
+        let weight = Math.max(1, 6 - Math.floor(waveDiff / 4));
+        if (def.shape === 'circle' || def.shape === 'triangle') {
+          weight = Math.max(2, weight); // maintain fast pressure
+        }
+        for (let i = 0; i < weight; i++) {
+          pool.push(key);
+        }
+      }
+    });
 
-    if (wave >= 3) {
-      pool.push('triangle', 'triangle', 'triangle');
-    }
-    if (wave >= 5) {
-      pool.push('hexagon', 'hexagon');
-    }
-    if (wave >= 7) {
-      pool.push('diamond', 'diamond');
-    }
-
-    const chosen = pool[Math.floor(Math.random() * pool.length)];
-    return chosen;
+    return pool[Math.floor(Math.random() * pool.length)] || 'square';
   }
 
   spawnEnemy() {
     const map = this.getCurrentMap();
-    const typeKey = this.chooseEnemyTypeForWave();
-    const def = ENEMY_TYPES[typeKey];
-    const isBoss = typeKey === 'boss';
-
-    const waveFactor = Math.max(0, this.state.wave - 1);
-    const hp = isBoss ? def.baseHp : Math.round(def.baseHp + waveFactor * def.hpPerWave);
-    const speed = isBoss ? def.speed : Math.round(def.speed + Math.min(waveFactor * def.speedPerWave, 35));
+    const isBossWave = this.state.wave % 10 === 0;
 
     const startX = map.path[0][0];
     const startY = map.path[0][1];
     const nextPoint = map.path[1] || map.path[0];
     const initialAngle = Math.atan2(nextPoint[1] - startY, nextPoint[0] - startX);
+
+    if (isBossWave) {
+      const bossConfig = getBossConfigForWave(this.state.wave);
+      this.state.enemies.push({
+        x: startX,
+        y: startY,
+        seg: 0,
+        distance: 0,
+        angle: initialAngle,
+        type: 'boss',
+        bossTier: bossConfig.tier,
+        name: bossConfig.name,
+        shape: bossConfig.shape,
+        color: bossConfig.color,
+        borderColor: bossConfig.borderColor,
+        boss: true,
+        hp: bossConfig.hp,
+        max: bossConfig.hp,
+        speed: bossConfig.speed,
+        rewardCoins: bossConfig.rewardCoins,
+        rewardGems: bossConfig.rewardGems,
+        r: bossConfig.r,
+        dead: false
+      });
+      return;
+    }
+
+    const typeKey = this.chooseEnemyTypeForWave();
+    const def = ENEMY_TYPES[typeKey] || ENEMY_TYPES.square;
+
+    const waveFactor = Math.max(0, this.state.wave - 1);
+    const hp = Math.round(def.baseHp + waveFactor * def.hpPerWave);
+    const speed = Math.round(def.speed + Math.min(waveFactor * def.speedPerWave, 35));
 
     this.state.enemies.push({
       x: startX,
@@ -136,10 +164,11 @@ export class GameModel {
       distance: 0,
       angle: initialAngle,
       type: typeKey,
+      name: def.name,
       shape: def.shape,
       color: def.color,
       borderColor: def.borderColor,
-      boss: isBoss,
+      boss: false,
       hp,
       max: hp,
       speed,
@@ -166,18 +195,30 @@ export class GameModel {
     this.state.running = true;
     this.state.spawned = 0;
     this.state.clock = 0;
-    this.state.total = this.state.wave === 10 ? 1 : Math.min(8 + this.state.wave * 2, 32);
 
-    if (this.state.wave === 10) {
-      this.onMessage('⚠️ BOSS BATTLE! Defeat the giant red pentagon!');
-    } else if (this.state.wave === 3) {
-      this.onMessage(`Stage 3: Fast Purple Triangles have arrived!`);
-    } else if (this.state.wave === 5) {
-      this.onMessage(`Stage 5: Armored Amber Hexagons incoming!`);
-    } else if (this.state.wave === 7) {
-      this.onMessage(`Stage 7: Elite Emerald Diamonds detected!`);
+    const isBossWave = this.state.wave % 10 === 0;
+    this.state.total = isBossWave ? 1 : Math.min(8 + this.state.wave * 2, 40);
+
+    if (isBossWave) {
+      const boss = getBossConfigForWave(this.state.wave);
+      this.onMessage(`⚠️ BOSS BATTLE! Stage ${this.state.wave}: Defeat ${boss.name}!`);
     } else {
-      this.onMessage(`Stage ${this.state.wave} started!`);
+      const unlocks = {
+        2: '⚡ Neon Pink Orbs (Hyper Swarm) are rushing in!',
+        3: '🔺 Fast Purple Triangles have arrived!',
+        5: '⬡ Armored Amber Hexagons incoming!',
+        6: '⬟ Cyan Pentagons (Bruisers) entering the field!',
+        7: '🔷 Elite Emerald Diamonds detected!',
+        8: '⭐ Golden Star Vanguards approaching!',
+        11: '🛑 Obsidian Octagons (Heavy Juggernauts) deployed!',
+        13: '⚔️ Ruby Cross Raiders sighted!',
+        16: '🔮 Amethyst Decagon Colossi marching in!'
+      };
+      if (unlocks[this.state.wave]) {
+        this.onMessage(`Stage ${this.state.wave}: ${unlocks[this.state.wave]}`);
+      } else {
+        this.onMessage(`Stage ${this.state.wave} started!`);
+      }
     }
 
     this.onUIUpdate();
@@ -212,9 +253,9 @@ export class GameModel {
         if (this.state.clock <= 0) {
           this.spawnEnemy();
           this.state.spawned++;
-          this.state.clock = this.state.wave === 10
+          this.state.clock = (this.state.wave % 10 === 0)
             ? 999
-            : Math.max(0.22, 1.05 - this.state.wave * 0.03);
+            : Math.max(0.20, 1.05 - this.state.wave * 0.025);
         }
       }
 
@@ -227,11 +268,14 @@ export class GameModel {
         while (moveDist > 0 && !enemy.dead) {
           if (enemy.seg >= path.length - 1) {
             enemy.dead = true;
-            this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
             if (enemy.boss) {
+              this.state.hp -= 100;
               this.state.over = true;
               this.state.running = false;
-              this.onMessage('The boss reached your base! Game over.');
+              this.onMessage(`The ${enemy.name || 'Boss'} reached your base! Game over.`);
+            } else {
+              const leakDmg = (enemy.shape === 'hexagon' || enemy.shape === 'octagon' || enemy.shape === 'decagon') ? 15 : 10;
+              this.state.hp -= leakDmg;
             }
             break;
           }
@@ -262,11 +306,14 @@ export class GameModel {
 
             if (enemy.seg >= path.length - 1) {
               enemy.dead = true;
-              this.state.hp -= enemy.boss ? 100 : (enemy.type === 'hexagon' ? 15 : 10);
               if (enemy.boss) {
+                this.state.hp -= 100;
                 this.state.over = true;
                 this.state.running = false;
-                this.onMessage('The boss reached your base! Game over.');
+                this.onMessage(`The ${enemy.name || 'Boss'} reached your base! Game over.`);
+              } else {
+                const leakDmg = (enemy.shape === 'hexagon' || enemy.shape === 'octagon' || enemy.shape === 'decagon') ? 15 : 10;
+                this.state.hp -= leakDmg;
               }
               break;
             }
@@ -437,10 +484,15 @@ export class GameModel {
       if (enemy.hp <= 0 && !enemy.dead) {
         enemy.dead = true;
         if (enemy.boss) {
-          this.state.gems += 10;
-          this.state.coins += 100;
+          const gemsAwarded = enemy.rewardGems || 10;
+          const coinsAwarded = enemy.rewardCoins || 100;
+          this.state.gems += gemsAwarded;
+          this.state.coins += coinsAwarded;
           this.state.running = false;
-          this.onMessage('BOSS DEFEATED! +10 gems and +100 coins!');
+          this.onMessage(`BOSS DEFEATED (${enemy.name})! +${gemsAwarded} gems and +${coinsAwarded} coins!`);
+          if (this.state.autoStart && !this.state.over) {
+            this.state.autoCountdown = 2.0;
+          }
         } else {
           this.state.coins += enemy.reward;
         }
@@ -454,8 +506,9 @@ export class GameModel {
     // 4. Wave completion
     if (this.state.spawned >= this.state.total && !this.state.enemies.length && this.state.running) {
       this.state.running = false;
-      this.state.coins += 25;
-      this.onMessage('Stage cleared! +25 bonus coins.');
+      const bonus = 25 + Math.floor(this.state.wave * 2.5);
+      this.state.coins += bonus;
+      this.onMessage(`Stage cleared! +${bonus} bonus coins.`);
       if (this.state.autoStart && !this.state.over) {
         this.state.autoCountdown = 1.5; // Brief intermission before launching next wave
       }

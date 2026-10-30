@@ -82,10 +82,24 @@ export const ENEMY_TYPES = {
     baseHp: 32,
     hpPerWave: 14,
     speed: 36,
-    speedPerWave: 1.2,
+    speedPerWave: 1.1,
     r: 9,
     reward: 5,
     minWave: 1
+  },
+  circle: {
+    type: 'circle',
+    name: 'Neon Orb (Swarm)',
+    shape: 'circle',
+    color: '#f43f5e',
+    borderColor: '#9f1239',
+    baseHp: 18,
+    hpPerWave: 8,
+    speed: 84,
+    speedPerWave: 1.5,
+    r: 7.5,
+    reward: 4,
+    minWave: 2
   },
   triangle: {
     type: 'triangle',
@@ -93,10 +107,10 @@ export const ENEMY_TYPES = {
     shape: 'triangle',
     color: '#c242fc',
     borderColor: '#6b1991',
-    baseHp: 24,
+    baseHp: 25,
     hpPerWave: 11,
     speed: 68,
-    speedPerWave: 1.6,
+    speedPerWave: 1.4,
     r: 9,
     reward: 7,
     minWave: 3
@@ -110,10 +124,24 @@ export const ENEMY_TYPES = {
     baseHp: 85,
     hpPerWave: 28,
     speed: 25,
-    speedPerWave: 0.8,
+    speedPerWave: 0.7,
     r: 13,
     reward: 12,
     minWave: 5
+  },
+  pentagon: {
+    type: 'pentagon',
+    name: 'Cyan Pentagon (Bruiser)',
+    shape: 'pentagon',
+    color: '#06b6d4',
+    borderColor: '#0e7490',
+    baseHp: 110,
+    hpPerWave: 26,
+    speed: 40,
+    speedPerWave: 1.0,
+    r: 12,
+    reward: 11,
+    minWave: 6
   },
   diamond: {
     type: 'diamond',
@@ -122,28 +150,131 @@ export const ENEMY_TYPES = {
     color: '#10b981',
     borderColor: '#065f46',
     baseHp: 150,
-    hpPerWave: 36,
+    hpPerWave: 34,
     speed: 52,
-    speedPerWave: 1.4,
+    speedPerWave: 1.2,
     r: 11,
-    reward: 16,
+    reward: 15,
     minWave: 7
   },
-  boss: {
-    type: 'boss',
-    name: 'Red Pentagon Boss',
-    shape: 'pentagon',
-    color: '#ed202d',
-    borderColor: '#790b17',
-    baseHp: 2200,
-    hpPerWave: 0,
-    speed: 13,
-    speedPerWave: 0,
-    r: 29,
-    reward: 100,
-    minWave: 10
+  star: {
+    type: 'star',
+    name: 'Golden Star (Vanguard)',
+    shape: 'star',
+    color: '#eab308',
+    borderColor: '#854d0e',
+    baseHp: 75,
+    hpPerWave: 20,
+    speed: 62,
+    speedPerWave: 1.3,
+    r: 11,
+    reward: 13,
+    minWave: 8
+  },
+  octagon: {
+    type: 'octagon',
+    name: 'Obsidian Octagon (Juggernaut)',
+    shape: 'octagon',
+    color: '#475569',
+    borderColor: '#0f172a',
+    baseHp: 260,
+    hpPerWave: 50,
+    speed: 18,
+    speedPerWave: 0.5,
+    r: 15,
+    reward: 22,
+    minWave: 11
+  },
+  cross: {
+    type: 'cross',
+    name: 'Ruby Cross (Raider)',
+    shape: 'cross',
+    color: '#ef4444',
+    borderColor: '#7f1d1d',
+    baseHp: 175,
+    hpPerWave: 36,
+    speed: 48,
+    speedPerWave: 1.1,
+    r: 11,
+    reward: 18,
+    minWave: 13
+  },
+  decagon: {
+    type: 'decagon',
+    name: 'Amethyst Decagon (Colossus)',
+    shape: 'decagon',
+    color: '#a855f7',
+    borderColor: '#581c87',
+    baseHp: 360,
+    hpPerWave: 65,
+    speed: 30,
+    speedPerWave: 0.7,
+    r: 14,
+    reward: 28,
+    minWave: 16
   }
 };
+
+export function getBossConfigForWave(wave) {
+  const tier = Math.max(1, Math.floor(wave / 10));
+
+  const templates = [
+    {
+      name: 'Red Pentagon Colossus',
+      shape: 'pentagon',
+      color: '#ed202d',
+      borderColor: '#790b17',
+      r: 30
+    },
+    {
+      name: 'Crimson Octagon Dreadnought',
+      shape: 'octagon',
+      color: '#dc2626',
+      borderColor: '#7f1d1d',
+      r: 32
+    },
+    {
+      name: 'Solar Star Titan',
+      shape: 'star',
+      color: '#f59e0b',
+      borderColor: '#78350f',
+      r: 34
+    },
+    {
+      name: 'Void Decagon Leviathan',
+      shape: 'decagon',
+      color: '#8b5cf6',
+      borderColor: '#4c1d95',
+      r: 35
+    }
+  ];
+
+  const templateIndex = (tier - 1) % templates.length;
+  const cycle = Math.floor((tier - 1) / templates.length);
+  const template = templates[templateIndex];
+
+  const baseHps = [2400, 6000, 14000, 30000];
+  const hp = tier <= 4 ? baseHps[tier - 1] : Math.round(30000 * Math.pow(2.1, tier - 4));
+  const speed = Math.min(27, 13 + (tier - 1) * 2.5);
+  const rewardCoins = 100 * tier;
+  const rewardGems = 10 * tier;
+
+  const displayName = cycle > 0 ? `Omega ${template.name} Mk.${cycle + 1}` : template.name;
+
+  return {
+    tier,
+    name: displayName,
+    shape: template.shape,
+    color: template.color,
+    borderColor: template.borderColor,
+    hp,
+    max: hp,
+    speed,
+    r: template.r,
+    rewardCoins,
+    rewardGems
+  };
+}
 
 export const MAP_CONFIGS = {
   grassland: {
