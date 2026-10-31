@@ -446,29 +446,55 @@ function drawTowerBarrels(ctx, tower, def) {
   }
 
   if (def.isRailgun) {
-    // Electromagnetic hyper-velocity rail assembly
+    // Electromagnetic laser railgun assembly (Railgun: blue, Double Railgun: red, Triple Railgun: purple)
     ctx.lineCap = 'square';
-    [-3.2, 3.2].forEach((offset) => {
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 3.6;
+    const offsets = def.parallelShots || [0];
+    const laserColor = def.laserColor || 'blue';
+    const glowColor = laserColor === 'red' ? '#ef4444' : laserColor === 'purple' ? '#a855f7' : '#38bdf8';
+    const coreColor = laserColor === 'red' ? '#fca5a5' : laserColor === 'purple' ? '#e9d5ff' : '#bae6fd';
+    const railWidth = offsets.length === 3 ? 2.8 : offsets.length === 2 ? 3.2 : 3.6;
+    const subOffsetDist = offsets.length === 3 ? 2.2 : 2.6;
+
+    offsets.forEach((offset) => {
+      const cx = tower.x + px * offset;
+      const cy = tower.y + py * offset;
+
+      // Twin electromagnetic rails
+      [-subOffsetDist, subOffsetDist].forEach((subOffset) => {
+        const pxSub = -fy;
+        const pySub = fx;
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = railWidth;
+        ctx.beginPath();
+        ctx.moveTo(cx + pxSub * subOffset + fx * 6, cy + pySub * subOffset + fy * 6);
+        ctx.lineTo(cx + pxSub * subOffset + fx * 25, cy + pySub * subOffset + fy * 25);
+        ctx.stroke();
+
+        // Glowing capacitor charge rails
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = Math.max(1.4, railWidth - 1.2);
+        ctx.beginPath();
+        ctx.moveTo(cx + pxSub * subOffset + fx * 17, cy + pySub * subOffset + fy * 17);
+        ctx.lineTo(cx + pxSub * subOffset + fx * 25, cy + pySub * subOffset + fy * 25);
+        ctx.stroke();
+      });
+
+      // Central glowing laser excitation channel
+      ctx.strokeStyle = coreColor;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
-      ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
-      ctx.lineTo(tower.x + px * offset + fx * 26, tower.y + py * offset + fy * 26);
+      ctx.moveTo(cx + fx * 7, cy + fy * 7);
+      ctx.lineTo(cx + fx * 24, cy + fy * 24);
       ctx.stroke();
 
-      ctx.strokeStyle = '#fde047';
+      // Muzzle laser emitter lens
+      ctx.strokeStyle = glowColor;
       ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
-      ctx.lineTo(tower.x + px * offset + fx * 26, tower.y + py * offset + fy * 26);
+      ctx.arc(cx + fx * 24, cy + fy * 24, 2.5, 0, Math.PI * 2);
       ctx.stroke();
     });
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    ctx.moveTo(tower.x + fx * 8, tower.y + fy * 8);
-    ctx.lineTo(tower.x + fx * 24, tower.y + fy * 24);
-    ctx.stroke();
+
     ctx.restore();
     return;
   }
@@ -1294,18 +1320,44 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.fillStyle = '#ffffff';
       ctx.fill();
     } else if (bullet.isRailgun) {
-      // Hyper-velocity cyan beam round with bright white core
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2.2;
+      // Penetrating Laser Beam (Blue for Railgun, Red for Double Railgun, Purple for Triple Railgun)
+      const laserColor = bullet.laserColor || 'blue';
+      const beamGlow = laserColor === 'red' ? '#ef4444' : laserColor === 'purple' ? '#c084fc' : '#38bdf8';
+      const beamCore = laserColor === 'red' ? '#fee2e2' : laserColor === 'purple' ? '#f3e8ff' : '#e0f2fe';
+      const beamLength = 26;
+
+      const angle = Math.atan2(bullet.vy, bullet.vx);
+      const bCos = Math.cos(angle);
+      const bSin = Math.sin(angle);
+
+      const tipX = bullet.x + bCos * 6;
+      const tipY = bullet.y + bSin * 6;
+      const tailX = bullet.x - bCos * beamLength;
+      const tailY = bullet.y - bSin * beamLength;
+
+      // Outer wide laser glow halo
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(tipX, tipY);
+      ctx.strokeStyle = beamGlow;
+      ctx.lineWidth = 6.0;
+      ctx.lineCap = 'round';
       ctx.stroke();
 
+      // Inner intense laser core line
       ctx.beginPath();
-      ctx.arc(bullet.x, bullet.y, r * 1.5, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(253, 224, 71, 0.6)';
-      ctx.lineWidth = 1.2;
+      ctx.moveTo(tailX + bCos * 4, tailY + bSin * 4);
+      ctx.lineTo(tipX, tipY);
+      ctx.strokeStyle = beamCore;
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
       ctx.stroke();
+
+      // Bright laser tip flare
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
     } else if (bullet.isExplosive) {
       // Heavy explosive artillery mortar shell
       ctx.fillStyle = '#f97316';

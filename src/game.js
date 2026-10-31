@@ -427,6 +427,30 @@ export class GameModel {
                 r: def.bulletR || (def.isTrident ? 5.5 : 3.0)
               });
             });
+          } else if (def.isRailgun) {
+            // Penetrating laser beam railgun (Railgun: 1 blue laser, Double: 2 red lasers, Triple: 3 purple lasers)
+            const fx = Math.cos(aimAngle);
+            const fy = Math.sin(aimAngle);
+            const px = -fy;
+            const py = fx;
+            const offsets = def.parallelShots || [0];
+
+            offsets.forEach((offset) => {
+              this.state.bullets.push({
+                x: tower.x + px * offset + fx * 18,
+                y: tower.y + py * offset + fy * 18,
+                vx: fx,
+                vy: fy,
+                dmg: def.dmg,
+                speed: def.bulletSpeed || 580,
+                rangeLeft: def.range + 45,
+                isRailgun: true,
+                laserColor: def.laserColor || 'blue',
+                isPiercing: true,
+                pierceLeft: def.pierceCount || 4,
+                r: 5.5
+              });
+            });
           } else if (def.parallelShots) {
             // Multi-barrel parallel volleys (Double, Triple, Quadruple, Penta, Double Spiker, Dual Thunder)
             const fx = Math.cos(aimAngle);
@@ -539,23 +563,6 @@ export class GameModel {
               isPiercing: true,
               pierceLeft: def.pierceCount || 2,
               r: 6.5
-            });
-          } else if (def.isRailgun) {
-            // Electromagnetic hyper-velocity railgun beam
-            const fx = Math.cos(aimAngle);
-            const fy = Math.sin(aimAngle);
-            this.state.bullets.push({
-              x: tower.x + fx * 18,
-              y: tower.y + fy * 18,
-              vx: fx,
-              vy: fy,
-              dmg: def.dmg,
-              speed: def.bulletSpeed || 520,
-              rangeLeft: def.range + 45,
-              isRailgun: true,
-              isPiercing: true,
-              pierceLeft: def.pierceCount || 4,
-              r: 6.0
             });
           } else if (def.isSpiker) {
             // Single Spiker forward slow triangle

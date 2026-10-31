@@ -97,18 +97,15 @@ export const TOWER_DEFINITIONS = {
     range: 250,
     color: '#eab308',
     abbr: 'RNGR',
-    next: ['Railgun']
+    next: ['Deadeye']
   },
-  Railgun: {
+  Deadeye: {
     cost: 390,
-    dmg: 165,
-    rate: 1.15,
-    range: 295,
-    color: '#fde047',
-    abbr: 'RAIL',
-    isRailgun: true,
-    pierceCount: 4,
-    bulletSpeed: 520
+    dmg: 180,
+    rate: 1.10,
+    range: 305,
+    color: '#f59e0b',
+    abbr: 'DEAD'
   },
   Pulsar: {
     cost: 150,
@@ -480,10 +477,54 @@ export const TOWER_DEFINITIONS = {
     fanAngles: [-0.14, 0, 0.14],
     bulletSpeed: 270,
     abbr: 'TRID'
+  },
+
+  // =========================================================
+  // 7. PENETRATING LASER RAILGUN BRANCH (Root: Railgun)
+  // =========================================================
+  Railgun: {
+    cost: 140,
+    dmg: 65,
+    rate: 0.90,
+    range: 220,
+    color: '#0284c7',
+    abbr: 'RAIL',
+    isRailgun: true,
+    laserColor: 'blue',
+    pierceCount: 4,
+    bulletSpeed: 580,
+    next: ['Double Railgun']
+  },
+  'Double Railgun': {
+    cost: 350,
+    dmg: 95,
+    rate: 0.85,
+    range: 250,
+    color: '#ef4444',
+    abbr: 'DRAL',
+    isRailgun: true,
+    laserColor: 'red',
+    parallelShots: [-6, 6],
+    pierceCount: 6,
+    bulletSpeed: 620,
+    next: ['Triple Railgun']
+  },
+  'Triple Railgun': {
+    cost: 1000,
+    dmg: 190,
+    rate: 0.80,
+    range: 290,
+    color: '#a855f7',
+    abbr: 'TRAL',
+    isRailgun: true,
+    laserColor: 'purple',
+    parallelShots: [-8, 0, 8],
+    pierceCount: 10,
+    bulletSpeed: 680
   }
 };
 
-export const BASE_TOWERS = ['Spammer', 'Scout', 'Shotgun', 'Double', 'Side Turret', 'Spiker'];
+export const BASE_TOWERS = ['Spammer', 'Scout', 'Railgun', 'Shotgun', 'Double', 'Side Turret', 'Spiker'];
 
 export const CANVAS_WIDTH = 720;
 export const CANVAS_HEIGHT = 470;
