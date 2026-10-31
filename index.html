@@ -3,65 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tower Defence</title>
+  <title>Tower Defence — Strategic Warfare</title>
 </head>
 <body>
   <main>
+    <!-- Start / Home Screen -->
     <section id="home">
-      <h1>TOWER DEFENCE</h1>
-      <div class="small">Build your defence. Survive the waves.</div>
-      <div style="font-size: 48px; margin: 14px">🛡️ 💥 🛡️</div>
-      
-      <div class="panel">
-        <b>Choose a save slot</b>
-        <div id="slots" class="actions" style="justify-content: center"></div>
-        <div id="slotinfo" class="small">Choose a slot, then create or continue your game.</div>
-        <button id="play">Open Slot</button>
-        <button id="del">Delete Slot</button>
-      </div>
-
-      <!-- Map Selector for empty save slot -->
-      <div id="map-select" class="panel" style="display: none">
-        <h3 style="margin: 4px 0 8px">Select a Map for Slot <span id="target-slot-num">1</span></h3>
-        <p class="small">This slot is empty. Choose a map theme to start your journey:</p>
-        <div id="map-cards" class="map-grid"></div>
-        <div style="margin-top: 10px">
-          <button id="cancel-map-select">Back</button>
+      <!-- Hero Header -->
+      <header class="hero-header">
+        <div class="hero-badge">TACTICAL COMMAND SYSTEM</div>
+        <h1 class="hero-title"><span class="title-highlight">TOWER</span> DEFENCE</h1>
+        <p class="hero-subtitle">Construct lethal defenses, upgrade advanced tech trees, and survive unrelenting waves.</p>
+        
+        <div class="feature-pills">
+          <span class="pill">🛡️ 23 Upgradable Turrets</span>
+          <span class="pill">🗺️ 3 Tactical Battlegrounds</span>
+          <span class="pill">👑 Stage 10+ Boss Battles</span>
+          <span class="pill">💾 Auto-Save Protected</span>
         </div>
-      </div>
+      </header>
 
-      <div class="panel">
-        <b>Boss Battles</b>
-        <p class="small">Every 10th Stage (10, 20, 30, ...) unleashes a colossal Boss with scaling health, new shapes, and huge coin &amp; gem rewards!</p>
-      </div>
+      <!-- Save Slots Section -->
+      <section class="slots-section">
+        <div class="section-title-row">
+          <div>
+            <h2 class="section-title">CAMPAIGN SLOTS</h2>
+            <div class="small">Choose a slot to continue your mission or deploy a new outpost. Progress saves automatically.</div>
+          </div>
+          <div id="save-status-indicator" class="save-indicator">
+            <span class="pulse-dot"></span> Storage Active
+          </div>
+        </div>
+
+        <!-- Dynamic Save Slot Cards Container -->
+        <div id="slots" class="slots-grid"></div>
+      </section>
+
+      <!-- Boss Encounters Showcase -->
+      <section class="boss-showcase-panel">
+        <div class="showcase-header">
+          <div class="boss-icon-badge">👑</div>
+          <div>
+            <h3 class="showcase-title">COLOSSAL BOSS THREATS</h3>
+            <p class="small">Every 10th Stage (10, 20, 30...) summons an elite Boss Titan with heavy health scaling and massive reward bounties.</p>
+          </div>
+        </div>
+        <div class="boss-showcase-grid">
+          <div class="boss-mini-card">
+            <div class="boss-mini-icon">🛡️</div>
+            <div class="boss-mini-name">Iron Golem</div>
+            <div class="boss-mini-stage">Stage 10</div>
+            <div class="boss-mini-desc">High armor &amp; kinetic dampening</div>
+          </div>
+          <div class="boss-mini-card">
+            <div class="boss-mini-icon">⚡</div>
+            <div class="boss-mini-name">Vortex Sovereign</div>
+            <div class="boss-mini-stage">Stage 20</div>
+            <div class="boss-mini-desc">Supercharged velocity &amp; rapid thrust</div>
+          </div>
+          <div class="boss-mini-card">
+            <div class="boss-mini-icon">☄️</div>
+            <div class="boss-mini-name">Omega Colossus</div>
+            <div class="boss-mini-stage">Stage 30+</div>
+            <div class="boss-mini-desc">Supreme juggernaut &amp; colossal bounties</div>
+          </div>
+        </div>
+      </section>
     </section>
 
+    <!-- Map Selection Modal (Opens when starting a new game in an empty slot) -->
+    <div id="map-modal" class="modal-overlay" style="display: none">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div>
+            <div class="modal-pretitle">INITIALIZE OUTPOST</div>
+            <h3 class="modal-title">Select Battlefield for Slot <span id="target-slot-num">1</span></h3>
+          </div>
+          <button id="cancel-map-select-x" class="modal-close-btn" aria-label="Close modal">&times;</button>
+        </div>
+        <p class="small modal-desc">Choose your starting battleground. Each territory has distinct enemy routes and tactical choke points:</p>
+        <div id="map-cards" class="map-grid"></div>
+        <div class="modal-actions">
+          <button id="cancel-map-select" class="btn-secondary">← Back to Slots</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal (Eliminates user error on accidental deletes) -->
+    <div id="delete-modal" class="modal-overlay" style="display: none">
+      <div class="modal-box modal-box-danger">
+        <div class="modal-header">
+          <div class="danger-header-icon">⚠️</div>
+          <div>
+            <div class="modal-pretitle danger-text">DESTRUCTIVE ACTION</div>
+            <h3 class="modal-title">Delete Slot <span id="delete-slot-num">1</span> Save?</h3>
+          </div>
+        </div>
+        <div class="delete-warning-body">
+          <p id="delete-modal-details">Are you sure you want to delete this save? All progress, towers, and earned coins will be permanently removed.</p>
+          <div class="warning-callout">This action cannot be undone.</div>
+        </div>
+        <div class="modal-actions">
+          <button id="cancel-delete-btn" class="btn-primary">Keep Save (Cancel)</button>
+          <button id="confirm-delete-btn" class="btn-danger">Yes, Delete Slot</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Game Screen -->
     <section id="game">
       <div class="row">
-        <div class="panel">🪙 <span id="coins">300</span></div>
-        <div class="panel">💎 <span id="gems">0</span></div>
-        <div class="panel">STAGE <span id="stage">1</span></div>
-        <div class="panel">BASE HP <span id="hp">100</span></div>
-        <div class="panel">MAP <span id="active-map-name">Plains</span></div>
+        <div class="panel stat-panel">🪙 <span id="coins">300</span></div>
+        <div class="panel stat-panel">💎 <span id="gems">0</span></div>
+        <div class="panel stat-panel">STAGE <span id="stage">1</span></div>
+        <div class="panel stat-panel">BASE HP <span id="hp">100</span></div>
+        <div class="panel stat-panel">MAP <span id="active-map-name">Plains</span></div>
       </div>
-      <div id="boss" class="panel" style="display: none; color: #ff6875; font-weight: 900">
+      <div id="boss" class="panel boss-banner" style="display: none">
         ⚠️ BOSS BATTLE
       </div>
       <canvas id="map" width="720" height="470"></canvas>
-      <div class="actions">
-        <button id="start">Start Stage</button>
+      <div class="actions hud-actions">
+        <button id="start" class="btn-hud-primary">Start Stage</button>
         <button id="auto">Auto-Start: OFF</button>
         <button id="speed">Speed: 1×</button>
-        <button id="homebtn">Home</button>
+        <button id="homebtn" class="btn-hud-secondary">Home Menu</button>
       </div>
-      <div class="panel">
-        <b>Build a tower</b>
+      <div class="panel shop-panel">
+        <div class="shop-title">Deploy Turret</div>
         <div id="shop" class="actions"></div>
-        <div class="small">Choose a tower, then tap clear terrain to place it. Tap an existing tower to upgrade it.</div>
-        <div id="selected" class="small"></div>
+        <div class="small shop-hint">Select a turret, then click clear terrain to build. Click an existing turret to view upgrade trees.</div>
+        <div id="selected" class="selected-tower-info">No tower selected</div>
         <div id="upgrades" class="actions"></div>
       </div>
-      <div id="msg" class="small">Build your defence!</div>
+      <div id="msg" class="small status-message">Build your defence!</div>
     </section>
   </main>
   <script type="module" src="/src/main.js"></script>

@@ -1,4 +1,11 @@
 import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT, getBossConfigForWave } from './config.js';
+import {
+  loadAllSaves,
+  saveSlotToStorage,
+  deleteSlotFromStorage,
+  getStoredActiveSlot,
+  setStoredActiveSlot
+} from './storage.js';
 
 export function distToSegment(px, py, x1, y1, x2, y2) {
   const dx = x2 - x1;
@@ -49,10 +56,11 @@ export class GameModel {
   constructor(onMessage, onUIUpdate) {
     this.onMessage = onMessage || (() => {});
     this.onUIUpdate = onUIUpdate || (() => {});
-    this.saves = [null, null, null];
-    this.activeSlot = 0;
+    this.saves = loadAllSaves();
+    this.activeSlot = getStoredActiveSlot();
     this.state = null;
     this.nextTowerId = 1;
+    this.autoSaveTimer = 0;
   }
 
   getCurrentMap() {
@@ -66,14 +74,16 @@ export class GameModel {
 
   saveGame() {
     if (this.state) {
-      this.saves[this.activeSlot] = JSON.parse(
-        JSON.stringify({ ...this.state, running: false, bullets: [] })
-      );
+      saveSlotToStorage(this.activeSlot, this.state);
+      this.saves = loadAllSaves();
+      setStoredActiveSlot(this.activeSlot);
     }
   }
 
   loadSlot(slotIndex, chosenMapId = 'grassland') {
     this.activeSlot = slotIndex;
+    setStoredActiveSlot(slotIndex);
+    this.saves = loadAllSaves();
     const saved = this.saves[slotIndex];
     if (saved) {
       this.state = {
@@ -82,16 +92,32 @@ export class GameModel {
         running: false,
         over: false,
         bullets: [],
+        enemies: [],
+        spawned: 0,
+        clock: 0,
         sel: null,
         build: null
       };
+      if (Array.isArray(saved.towers) && saved.towers.length > 0) {
+        const maxId = saved.towers.reduce((max, t) => Math.max(max, t.id || 0), 0);
+        this.nextTowerId = maxId + 1;
+      } else {
+        this.nextTowerId = 1;
+      }
     } else {
       this.state = createInitialState(chosenMapId);
+      this.state.createdAt = Date.now();
+      this.nextTowerId = 1;
+      this.saveGame();
     }
   }
 
   deleteSlot(slotIndex) {
-    this.saves[slotIndex] = null;
+    deleteSlotFromStorage(slotIndex);
+    this.saves = loadAllSaves();
+    if (this.activeSlot === slotIndex) {
+      this.state = null;
+    }
   }
 
   chooseEnemyTypeForWave() {
@@ -680,6 +706,7 @@ export class GameModel {
       if (this.state.autoStart && !this.state.over) {
         this.state.autoCountdown = 1.5; // Brief intermission before launching next wave
       }
+      this.saveGame();
     }
 
     // Auto-start countdown when idle between rounds
@@ -697,6 +724,14 @@ export class GameModel {
       this.state.running = false;
       this.state.over = true;
       this.onMessage('Base destroyed! Game over.');
+      this.saveGame();
+    }
+
+    // Periodic auto-save (every 3 seconds) for crash and termination safety
+    this.autoSaveTimer = (this.autoSaveTimer || 0) + dt;
+    if (this.autoSaveTimer >= 3.0) {
+      this.autoSaveTimer = 0;
+      this.saveGame();
     }
 
     this.onUIUpdate();

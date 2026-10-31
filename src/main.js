@@ -2,6 +2,7 @@ import './style.css';
 import { TOWER_DEFINITIONS, BASE_TOWERS, MAP_CONFIGS, getBossConfigForWave } from './config.js';
 import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
+import { formatSaveTime } from './storage.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('map');
@@ -10,9 +11,12 @@ const ctx = canvas.getContext('2d');
 let lastTime = 0;
 let lastRenderedTowerId = null;
 let lastRenderedTowerType = null;
+let pendingMapSlotIndex = 0;
+let pendingDeleteSlotIndex = null;
 
 function showMessage(text) {
-  $('msg').textContent = text;
+  const msgEl = $('msg');
+  if (msgEl) msgEl.textContent = text;
 }
 
 const game = new GameModel(showMessage, updateUI);
@@ -114,46 +118,113 @@ function updateUI() {
 }
 
 function renderSlotList() {
-  $('slots').innerHTML = '';
+  const container = $('slots');
+  if (!container) return;
+  container.innerHTML = '';
+
   game.saves.forEach((saved, index) => {
-    const btn = document.createElement('button');
-    btn.className = game.activeSlot === index ? 'active' : '';
-    
-    let slotSubtitle = 'Empty';
+    const isTargetSlot = game.activeSlot === index;
+    const card = document.createElement('div');
+    card.className = `slot-card ${saved ? 'slot-card-occupied' : 'slot-card-empty'} ${isTargetSlot ? 'slot-active-target' : ''}`;
+
     if (saved) {
-      const mapName = MAP_CONFIGS[saved.mapId]?.name.split(' ')[0] || 'Grassland';
-      slotSubtitle = `${mapName} · Stg ${saved.wave + 1} · ${saved.coins}c`;
+      const map = MAP_CONFIGS[saved.mapId] || MAP_CONFIGS.grassland;
+      const stage = saved.wave + 1;
+      const isBossNext = stage % 10 === 0;
+      const hp = Math.max(0, Math.min(100, saved.hp ?? 100));
+      const hpColor = hp > 60 ? '#10b981' : hp > 30 ? '#fbbf24' : '#ef4444';
+      const towersCount = Array.isArray(saved.towers) ? saved.towers.length : 0;
+      const coins = Math.floor(saved.coins ?? 300);
+      const gems = saved.gems ?? 0;
+      const saveTime = formatSaveTime(saved.lastSaved);
+
+      card.innerHTML = `
+        <div>
+          <div class="slot-top-row">
+            <span class="slot-index-badge">SLOT ${index + 1}</span>
+            <span class="slot-badge-chip ${isBossNext ? 'chip-boss' : 'chip-active'}">
+              ${isBossNext ? '⚠️ BOSS NEXT' : 'ACTIVE'}
+            </span>
+          </div>
+
+          <div class="slot-map-header">
+            <span class="slot-map-icon">${map.icon}</span>
+            <div>
+              <div class="slot-map-name">${map.name}</div>
+              <div class="small" style="color: #38bdf8; font-weight: 700;">Stage ${stage}</div>
+            </div>
+          </div>
+
+          <div class="slot-stats-grid">
+            <div class="slot-stat-item">
+              <div class="slot-stat-label">Base Health</div>
+              <div class="slot-stat-value" style="color: ${hpColor}">${hp}%</div>
+              <div class="hp-bar-track">
+                <div class="hp-bar-fill" style="width: ${hp}%; background: ${hpColor};"></div>
+              </div>
+            </div>
+
+            <div class="slot-stat-item">
+              <div class="slot-stat-label">Defenses</div>
+              <div class="slot-stat-value">🏰 ${towersCount} ${towersCount === 1 ? 'Tower' : 'Towers'}</div>
+            </div>
+
+            <div class="slot-stat-item">
+              <div class="slot-stat-label">Coins</div>
+              <div class="slot-stat-value" style="color: #fbbf24">🪙 ${coins}</div>
+            </div>
+
+            <div class="slot-stat-item">
+              <div class="slot-stat-label">Gems</div>
+              <div class="slot-stat-value" style="color: #60a5fa">💎 ${gems}</div>
+            </div>
+          </div>
+
+          <div class="slot-save-time">🕒 Saved ${saveTime}</div>
+        </div>
+
+        <div class="slot-actions-row">
+          <button class="btn-resume">▶ Resume Mission</button>
+          <button class="btn-slot-delete">🗑️ Delete Save</button>
+        </div>
+      `;
+
+      const btnResume = card.querySelector('.btn-resume');
+      btnResume.onclick = () => {
+        game.loadSlot(index);
+        enterGameScreen();
+      };
+
+      const btnDelete = card.querySelector('.btn-slot-delete');
+      btnDelete.onclick = (e) => {
+        e.stopPropagation();
+        showDeleteConfirm(index);
+      };
+    } else {
+      card.innerHTML = `
+        <div class="empty-icon-wrap">+</div>
+        <div class="empty-title">Slot ${index + 1} — Empty</div>
+        <div class="empty-desc">No garrison deployed. Select this slot to initialize a new campaign.</div>
+        <button class="btn-primary" style="margin-top: 8px; width: 100%;">+ Deploy New Outpost</button>
+      `;
+
+      const btnNew = card.querySelector('.btn-primary');
+      btnNew.onclick = () => {
+        showMapModal(index);
+      };
     }
 
-    btn.innerHTML = `Slot ${index + 1}<br><span class="small">${slotSubtitle}</span>`;
-
-    btn.onclick = () => {
-      game.activeSlot = index;
-      renderSlotList();
-      hideMapSelection();
-
-      if (saved) {
-        const mapName = MAP_CONFIGS[saved.mapId]?.name || 'Grassland';
-        $('slotinfo').textContent = `Stage ${saved.wave + 1} (${mapName}) · ${saved.coins} coins · ${saved.gems} gems`;
-        $('play').textContent = 'Continue Game';
-      } else {
-        $('slotinfo').textContent = 'Empty slot — open to select a map and start.';
-        $('play').textContent = 'Create Game';
-      }
-    };
-    $('slots').appendChild(btn);
+    container.appendChild(card);
   });
-
-  const activeSaved = game.saves[game.activeSlot];
-  $('play').textContent = activeSaved ? 'Continue Game' : 'Create Game';
 }
 
-function showMapSelection() {
-  $('target-slot-num').textContent = game.activeSlot + 1;
+function showMapModal(slotIndex) {
+  pendingMapSlotIndex = slotIndex;
+  $('target-slot-num').textContent = slotIndex + 1;
   const container = $('map-cards');
   container.innerHTML = '';
 
-  const mapKeys = ['grassland', 'desert', 'crossroads'];
+  const mapKeys = ['crossroads', 'grassland', 'desert'];
   mapKeys.forEach((mapKey) => {
     const map = MAP_CONFIGS[mapKey];
     if (!map) return;
@@ -166,24 +237,53 @@ function showMapSelection() {
     `;
 
     card.onclick = () => {
-      startNewGameWithMap(map.id);
+      startNewGameWithMap(pendingMapSlotIndex, map.id);
     };
 
     container.appendChild(card);
   });
 
-  $('map-select').style.display = 'block';
+  $('map-modal').style.display = 'flex';
 }
 
-function hideMapSelection() {
-  $('map-select').style.display = 'none';
+function hideMapModal() {
+  $('map-modal').style.display = 'none';
 }
 
-function startNewGameWithMap(mapId) {
-  hideMapSelection();
-  game.loadSlot(game.activeSlot, mapId);
+function startNewGameWithMap(slotIndex, mapId) {
+  hideMapModal();
+  game.loadSlot(slotIndex, mapId);
   game.saveGame();
+  renderSlotList();
   enterGameScreen();
+}
+
+function showDeleteConfirm(slotIndex) {
+  pendingDeleteSlotIndex = slotIndex;
+  $('delete-slot-num').textContent = slotIndex + 1;
+
+  const saved = game.saves[slotIndex];
+  if (saved) {
+    const map = MAP_CONFIGS[saved.mapId] || MAP_CONFIGS.grassland;
+    const stage = saved.wave + 1;
+    const towersCount = Array.isArray(saved.towers) ? saved.towers.length : 0;
+    const coins = Math.floor(saved.coins ?? 0);
+
+    $('delete-modal-details').innerHTML = `
+      Are you sure you want to delete <strong>Slot ${slotIndex + 1}</strong> (${map.name}, Stage ${stage})?
+      <br><br>
+      You will lose <strong>${towersCount} deployed towers</strong>, <strong>${coins} coins</strong>, and all campaign progress.
+    `;
+  } else {
+    $('delete-modal-details').textContent = `Are you sure you want to clear Slot ${slotIndex + 1}?`;
+  }
+
+  $('delete-modal').style.display = 'flex';
+}
+
+function hideDeleteConfirm() {
+  $('delete-modal').style.display = 'none';
+  pendingDeleteSlotIndex = null;
 }
 
 function enterGameScreen() {
@@ -214,28 +314,51 @@ function renderShop() {
   });
 }
 
-// Event Listeners
-$('play').onclick = () => {
-  const hasExistingSave = game.hasSave(game.activeSlot);
-  if (hasExistingSave) {
-    game.loadSlot(game.activeSlot);
-    enterGameScreen();
-  } else {
-    showMapSelection();
+// Map Modal Listeners
+$('cancel-map-select').onclick = hideMapModal;
+$('cancel-map-select-x').onclick = hideMapModal;
+$('map-modal').onclick = (e) => {
+  if (e.target === $('map-modal')) hideMapModal();
+};
+
+// Delete Modal Listeners
+$('cancel-delete-btn').onclick = hideDeleteConfirm;
+$('delete-modal').onclick = (e) => {
+  if (e.target === $('delete-modal')) hideDeleteConfirm();
+};
+
+$('confirm-delete-btn').onclick = () => {
+  if (pendingDeleteSlotIndex !== null) {
+    const slotNum = pendingDeleteSlotIndex + 1;
+    game.deleteSlot(pendingDeleteSlotIndex);
+    renderSlotList();
+    hideDeleteConfirm();
+    showMessage(`Slot ${slotNum} deleted.`);
   }
 };
 
-$('cancel-map-select').onclick = () => {
-  hideMapSelection();
-};
+// Global escape key to close open modals
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    hideMapModal();
+    hideDeleteConfirm();
+  }
+});
 
-$('del').onclick = () => {
-  game.deleteSlot(game.activeSlot);
-  renderSlotList();
-  hideMapSelection();
-  $('slotinfo').textContent = 'Slot deleted.';
-};
+// Crash / Termination Persistence Listeners
+window.addEventListener('beforeunload', () => {
+  if (game.state) {
+    game.saveGame();
+  }
+});
 
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && game.state) {
+    game.saveGame();
+  }
+});
+
+// Game In-HUD Buttons
 $('homebtn').onclick = () => {
   if (game.state) game.state.running = false;
   game.saveGame();

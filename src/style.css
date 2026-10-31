@@ -4,57 +4,705 @@
 
 body {
   margin: 0;
-  padding: 14px;
-  background: #101827;
-  color: #f5f7ff;
+  padding: 16px;
+  background: #0b111e;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+  color: #f1f5f9;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
 }
 
 main {
-  max-width: 900px;
+  max-width: 920px;
   margin: auto;
 }
 
+/* Base Panel */
 .panel {
-  background: #1a2639;
-  border: 1px solid #354660;
+  background: linear-gradient(180deg, #182438 0%, #121b2b 100%);
+  border: 1px solid #283952;
   border-radius: 12px;
-  padding: 12px;
+  padding: 14px;
   margin: 10px 0;
-}
-
-h1 {
-  text-align: center;
-  font-size: clamp(28px, 6vw, 44px);
-  margin: 12px 0 3px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .small {
-  color: #bdc9db;
+  color: #94a3b8;
   font-size: 12px;
+  line-height: 1.4;
 }
 
+/* Buttons */
 button {
-  background: #263750;
-  color: white;
-  border: 1px solid #526681;
-  border-radius: 9px;
-  padding: 10px 12px;
-  font-weight: 750;
+  background: #1e2c42;
+  color: #f8fafc;
+  border: 1px solid #3c5273;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
   margin: 3px;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 button:hover:not(:disabled) {
-  background: #324765;
-  border-color: #6a82a3;
+  background: #2b3e5c;
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.45);
+}
+
+.btn-resume {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  border: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 8px;
+  width: 100%;
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-resume:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  box-shadow: 0 5px 18px rgba(16, 185, 129, 0.45);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  color: #ffffff;
+  border: none;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
+}
+
+.btn-secondary {
+  background: #1c2738;
+  border: 1px solid #364966;
+  color: #cbd5e1;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #25354d;
+  color: #fff;
+  border-color: #4b648b;
+}
+
+/* =========================================================
+   START / HOME SCREEN
+   ========================================================= */
+
+#home {
+  padding: 8px 0 24px;
+}
+
+.hero-header {
+  text-align: center;
+  padding: 18px 12px 24px;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  margin: 0 0 8px;
+  font-size: clamp(32px, 6vw, 48px);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.title-highlight {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  color: #94a3b8;
+  font-size: 15px;
+  max-width: 580px;
+  margin: 0 auto 16px;
+  line-height: 1.4;
+}
+
+.feature-pills {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pill {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid #2e4159;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* Save Slots Section */
+.slots-section {
+  margin-top: 10px;
+}
+
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #e2e8f0;
+}
+
+.save-indicator {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 3px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  display: inline-block;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* Save Slot Cards Grid */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.slot-card {
+  background: linear-gradient(180deg, #172336 0%, #101826 100%);
+  border: 2px solid #2a3a52;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  min-height: 270px;
+}
+
+.slot-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.15);
+}
+
+.slot-card.slot-active-target {
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+}
+
+.slot-card-empty {
+  border-style: dashed;
+  border-color: #334763;
+  background: linear-gradient(180deg, rgba(23, 35, 54, 0.6) 0%, rgba(16, 24, 38, 0.6) 100%);
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.slot-card-empty:hover {
+  border-color: #60a5fa;
+  background: linear-gradient(180deg, rgba(30, 46, 70, 0.7) 0%, rgba(18, 28, 44, 0.7) 100%);
+}
+
+.empty-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.empty-desc {
+  color: #94a3b8;
+  font-size: 12px;
+  max-width: 220px;
+}
+
+/* Occupied Slot Details */
+.slot-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.slot-index-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #cbd5e1;
+  background: #223247;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.slot-badge-chip {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.chip-active {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.chip-boss {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  animation: pulse-glow 1.8s infinite ease-in-out;
+}
+
+.slot-map-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #23334a;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.slot-map-icon {
+  font-size: 26px;
+}
+
+.slot-map-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: #f1f5f9;
+}
+
+.slot-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.slot-stat-item {
+  background: rgba(15, 23, 42, 0.4);
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #1e2d42;
+}
+
+.slot-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.slot-stat-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.hp-bar-track {
+  height: 5px;
+  background: #1e293b;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.hp-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.slot-save-time {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 12px;
+  text-align: right;
+}
+
+.slot-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-slot-delete {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  font-size: 12px;
+  padding: 7px;
+  width: 100%;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.btn-slot-delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #fee2e2;
+}
+
+/* Boss Showcase Panel */
+.boss-showcase-panel {
+  background: linear-gradient(180deg, #162234 0%, #101826 100%);
+  border: 1px solid #273850;
+  border-radius: 14px;
+  padding: 18px;
+  margin-top: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.showcase-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.boss-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.showcase-title {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #f8fafc;
+}
+
+.boss-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.boss-mini-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #23334a;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.boss-mini-card:hover {
+  transform: translateY(-2px);
+  border-color: #fbbf24;
+}
+
+.boss-mini-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.boss-mini-name {
+  font-weight: 800;
+  font-size: 13px;
+  color: #f8fafc;
+}
+
+.boss-mini-stage {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+
+.boss-mini-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+/* =========================================================
+   MODALS & OVERLAYS
+   ========================================================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 20, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+  animation: fadeIn 0.18s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-box {
+  background: linear-gradient(180deg, #18253a 0%, #121c2d 100%);
+  border: 1px solid #334969;
+  border-radius: 16px;
+  padding: 22px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+  animation: scaleUp 0.18s ease-out;
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-box-danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  max-width: 480px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.modal-pretitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #38bdf8;
+  margin-bottom: 2px;
+}
+
+.modal-pretitle.danger-text {
+  color: #ef4444;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 4px;
+  margin: 0;
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  color: #fff;
+}
+
+.modal-desc {
+  margin-bottom: 16px;
+}
+
+.danger-header-icon {
+  font-size: 28px;
+  margin-right: 12px;
+}
+
+.delete-warning-body {
+  padding: 12px 0 16px;
+}
+
+.delete-warning-body p {
+  margin: 0 0 10px;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.warning-callout {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+/* Map Cards inside Modal */
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.map-card {
+  background: #141f30;
+  border: 2px solid #2b3e59;
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.map-card:hover {
+  transform: translateY(-3px);
+  border-color: #38bdf8;
+  background: #1c2b42;
+  box-shadow: 0 8px 20px rgba(56, 189, 248, 0.15);
+}
+
+.map-card .map-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.map-card .map-title {
+  font-weight: 800;
+  font-size: 15px;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.map-card .map-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+/* =========================================================
+   ACTIVE GAME SCREEN
+   ========================================================= */
+
+#game {
+  display: none;
 }
 
 .row {
@@ -63,19 +711,25 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.row > .panel {
+.row > .stat-panel {
   flex: 1;
   min-width: 90px;
   margin: 0;
-}
-
-#home {
   text-align: center;
-  padding: 10px 0 24px;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px;
+  background: #152236;
+  border-color: #273952;
 }
 
-#game {
-  display: none;
+.boss-banner {
+  color: #f87171;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  border-color: #7f1d1d;
+  background: rgba(127, 29, 29, 0.25);
+  text-align: center;
 }
 
 canvas {
@@ -85,56 +739,82 @@ canvas {
   border-radius: 10px;
   touch-action: manipulation;
   background: #83b65d;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid #23334a;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin: 8px 0;
+  gap: 6px;
+  margin: 10px 0;
 }
 
-.active {
-  border-color: #ffd166;
+.hud-actions {
+  align-items: center;
 }
 
-/* Map Selection Cards */
-.map-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin: 12px 0;
+.btn-hud-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
 }
 
-.map-card {
-  background: #213047;
-  border: 2px solid #3a4d6b;
-  border-radius: 10px;
-  padding: 14px;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+.btn-hud-secondary {
+  background: #1c2738;
+  border-color: #3b4e6d;
 }
 
-.map-card:hover {
-  transform: translateY(-2px);
-  border-color: #ffd166;
-  background: #2a3c58;
+.shop-panel {
+  margin-top: 10px;
 }
 
-.map-card .map-icon {
-  font-size: 38px;
+.shop-title {
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: #e2e8f0;
   margin-bottom: 6px;
 }
 
-.map-card .map-title {
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 4px;
+.shop-hint {
+  margin: 4px 0 8px;
 }
 
-.map-card .map-desc {
-  font-size: 12px;
-  color: #bdc9db;
-  line-height: 1.4;
+.selected-tower-info {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid #24354c;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.status-message {
+  text-align: center;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 6px 0;
+}
+
+/* Active buttons in HUD */
+.active {
+  border-color: #fbbf24 !important;
+  color: #fbbf24;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+  .slots-grid {
+    grid-template-columns: 1fr;
+  }
+  .map-grid {
+    grid-template-columns: 1fr;
+  }
 }
