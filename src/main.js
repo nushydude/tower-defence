@@ -1,5 +1,11 @@
 import './style.css';
-import { TOWER_DEFINITIONS, BASE_TOWERS, MAP_CONFIGS, getBossConfigForWave } from './config.js';
+import {
+  TOWER_DEFINITIONS,
+  BASE_TOWERS,
+  MAP_CONFIGS,
+  TECH_TREE_BRANCHES,
+  getBossConfigForWave
+} from './config.js';
 import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
 import { formatSaveTime } from './storage.js';
@@ -62,7 +68,8 @@ function updateUI() {
   const selectedTower = S.towers.find((t) => t.id === S.sel);
   if (selectedTower) {
     const def = TOWER_DEFINITIONS[selectedTower.type];
-    $('selected').textContent = `Selected: ${selectedTower.type} · Damage ${def.dmg} · Range ${def.range}`;
+    const branchName = def.branch || (def.isRailgun ? 'Laser Railgun' : 'Tactical');
+    $('selected').innerHTML = `<strong>Selected: ${selectedTower.type}</strong> [${branchName} Branch] · Damage ${def.dmg} · Range ${def.range}`;
   } else {
     $('selected').textContent = 'No tower selected';
   }
@@ -297,21 +304,101 @@ function enterGameScreen() {
 }
 
 function renderShop() {
-  $('shop').innerHTML = '';
+  const shopEl = $('shop');
+  if (!shopEl) return;
+  shopEl.innerHTML = '';
   BASE_TOWERS.forEach((towerName) => {
-    const cost = TOWER_DEFINITIONS[towerName].cost;
+    const def = TOWER_DEFINITIONS[towerName];
+    const cost = def.cost;
     const btn = document.createElement('button');
-    btn.textContent = `${towerName} · ${cost}`;
     btn.dataset.cost = cost;
+
+    if (towerName === 'Railgun') {
+      btn.className = 'shop-btn-railgun';
+      btn.innerHTML = `⚡ ${towerName} · ${cost}`;
+    } else {
+      btn.textContent = `${towerName} · ${cost}`;
+    }
+
     btn.onclick = () => {
       if (!game.state) return;
       game.state.build = towerName;
       game.state.sel = null;
       updateUI();
-      showMessage(`Tap clear terrain to place ${towerName}.`);
+      showMessage(`Tap clear terrain to place ${towerName} (${def.branch || 'Base Turret'}).`);
     };
-    $('shop').appendChild(btn);
+    shopEl.appendChild(btn);
   });
+}
+
+function showTechTree() {
+  const container = $('techtree-content');
+  if (!container) return;
+  container.innerHTML = '';
+
+  TECH_TREE_BRANCHES.forEach((b) => {
+    const card = document.createElement('div');
+    card.className = `techtree-card ${b.root === 'Railgun' ? 'techtree-card-railgun' : ''}`;
+
+    let contentHtml = `
+      <div>
+        <div class="techtree-header">
+          <span class="techtree-icon">${b.icon}</span>
+          <span class="techtree-title">${b.name}</span>
+          ${b.badge ? `<span class="techtree-badge">${b.badge}</span>` : ''}
+        </div>
+        <div class="techtree-desc">${b.description}</div>
+    `;
+
+    if (b.chain) {
+      contentHtml += `<div class="techtree-chain">`;
+      b.chain.forEach((step, idx) => {
+        contentHtml += `
+          <div class="techtree-step">
+            <div>
+              <strong>${idx + 1}. ${step.name}</strong>
+              <div class="small" style="color: ${b.color}; font-weight: 600;">${step.desc}</div>
+            </div>
+            <span class="techtree-cost">${step.cost}c</span>
+          </div>
+        `;
+      });
+      contentHtml += `</div>`;
+    } else if (b.sublines) {
+      contentHtml += `<div class="techtree-chain">`;
+      b.sublines.forEach((sub) => {
+        contentHtml += `
+          <div class="techtree-subline">
+            <strong>${sub.name}:</strong> ${sub.towers.join(' → ')}
+          </div>
+        `;
+      });
+      contentHtml += `</div>`;
+    }
+
+    contentHtml += `</div>`;
+    card.innerHTML = contentHtml;
+    container.appendChild(card);
+  });
+
+  const modal = $('techtree-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function hideTechTree() {
+  const modal = $('techtree-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Tech Tree Modal Listeners
+if ($('hero-techtree-btn')) $('hero-techtree-btn').onclick = showTechTree;
+if ($('game-techtree-btn')) $('game-techtree-btn').onclick = showTechTree;
+if ($('close-techtree-btn')) $('close-techtree-btn').onclick = hideTechTree;
+if ($('cancel-techtree-x')) $('cancel-techtree-x').onclick = hideTechTree;
+if ($('techtree-modal')) {
+  $('techtree-modal').onclick = (e) => {
+    if (e.target === $('techtree-modal')) hideTechTree();
+  };
 }
 
 // Map Modal Listeners
@@ -342,6 +429,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     hideMapModal();
     hideDeleteConfirm();
+    hideTechTree();
   }
 });
 

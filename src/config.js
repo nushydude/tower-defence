@@ -526,6 +526,88 @@ export const TOWER_DEFINITIONS = {
 
 export const BASE_TOWERS = ['Spammer', 'Scout', 'Railgun', 'Shotgun', 'Double', 'Side Turret', 'Spiker'];
 
+export const TECH_TREE_BRANCHES = [
+  {
+    name: 'Laser Railgun',
+    badge: 'NEW BRANCH',
+    icon: '⚡',
+    color: '#0284c7',
+    root: 'Railgun',
+    description: 'High-velocity electromagnetic directed-energy cannons firing penetrating laser beams.',
+    chain: [
+      { name: 'Railgun', cost: 250, desc: '1 Blue Penetrating Laser' },
+      { name: 'Double Railgun', cost: 500, desc: '2 Red Penetrating Lasers' },
+      { name: 'Triple Railgun', cost: 1000, desc: '3 Purple Penetrating Lasers (Apex)' }
+    ]
+  },
+  {
+    name: 'Rapid Fire',
+    icon: '⚡',
+    color: '#57d6ff',
+    root: 'Spammer',
+    description: 'Blistering cadence bullet storms and electric tesla discharges.',
+    sublines: [
+      { name: 'Minigun Line', towers: ['Spammer (60c)', 'Blaster (100c)', 'Rotary (180c)', 'Vulcan (320c)'] },
+      { name: 'Tesla Line', towers: ['Harpy (100c)', 'Thunder (180c)', 'Dual Thunder (290c)'] }
+    ]
+  },
+  {
+    name: 'Precision & Quantum',
+    icon: '🎯',
+    color: '#c4ff6a',
+    root: 'Scout',
+    description: 'Long-range ballistic anti-materiel rifles and exotic expanding quantum cores.',
+    sublines: [
+      { name: 'Sniper Line', towers: ['Scout (100c)', 'Ace (160c)', 'Ranger (250c)', 'Deadeye (390c)'] },
+      { name: 'Quantum Line', towers: ['Pulsar (150c)', 'Gamma (270c)', 'Atomic (330c)'] }
+    ]
+  },
+  {
+    name: 'Demolition & Blast',
+    icon: '💥',
+    color: '#ffb65b',
+    root: 'Shotgun',
+    description: 'Area suppression, exploding cluster submunitions, and heavy siege howitzers.',
+    sublines: [
+      { name: 'Cluster Line', towers: ['Shotgun (85c)', 'Scatter (170c)', 'Cluster (280c)', 'Supercluster (410c)'] },
+      { name: 'Artillery Line', towers: ['Flak Cannon (165c)', 'Bombard (275c)', 'Colossus (430c)'] }
+    ]
+  },
+  {
+    name: 'Multi-Shot Battery',
+    icon: '⚔️',
+    color: '#e7a1ff',
+    root: 'Double',
+    description: 'Parallel heavy volleys and sweeping broadside fan salvos.',
+    sublines: [
+      { name: 'Parallel Line', towers: ['Double (110c)', 'Triple (170c)', 'Quadruple (240c)', 'Penta (340c)'] },
+      { name: 'Fan Battery', towers: ['Twin Flank (160c)', 'Spreadshot (250c)', 'Hydra (360c)'] }
+    ]
+  },
+  {
+    name: 'Perimeter Defense',
+    icon: '🌐',
+    color: '#38bdf8',
+    root: 'Side Turret',
+    description: 'Omni-directional multi-barrel crossfire and spinning high-frequency turbines.',
+    sublines: [
+      { name: 'Radial Star', towers: ['Side Turret (100c)', 'Fourway (160c)', 'Eightway (230c)', 'Nova (350c)'] },
+      { name: 'Vortex Rotor', towers: ['Cyclone (155c)', 'Vortex (250c)'] }
+    ]
+  },
+  {
+    name: 'Kinetic Spike',
+    icon: '🔺',
+    color: '#ffa45c',
+    root: 'Spiker',
+    description: 'Aerodynamic glowing piercing lances, heavy ballistas, and star fortresses.',
+    sublines: [
+      { name: 'Star Fortress', towers: ['Spiker (80c)', 'Double Spiker (130c)', 'ALLSPIKER (200c)', 'Bastion (320c)', 'Citadel (440c)'] },
+      { name: 'Heavy Lance', towers: ['Ballista (140c)', 'Javelin (240c)', 'Trident (350c)'] }
+    ]
+  }
+];
+
 export const CANVAS_WIDTH = 720;
 export const CANVAS_HEIGHT = 470;
 

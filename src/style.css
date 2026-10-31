@@ -807,6 +807,126 @@ canvas {
   color: #fbbf24;
 }
 
+/* Tech Tree Modal & Branch Cards */
+.modal-box-wide {
+  max-width: 860px !important;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.techtree-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.techtree-card {
+  background: #111a28;
+  border: 1px solid #23354c;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+
+.techtree-card:hover {
+  transform: translateY(-2px);
+  border-color: #38bdf8;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.techtree-card-railgun {
+  border-color: #0284c7;
+  background: linear-gradient(180deg, #102138 0%, #0d1624 100%);
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.25);
+}
+
+.techtree-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.techtree-icon {
+  font-size: 20px;
+}
+
+.techtree-title {
+  font-weight: 800;
+  font-size: 14px;
+  color: #f1f5f9;
+}
+
+.techtree-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.techtree-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+
+.techtree-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.techtree-step {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e2c3f;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.techtree-step strong {
+  color: #f8fafc;
+}
+
+.techtree-cost {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.techtree-subline {
+  font-size: 11px;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 5px 8px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+/* Railgun Shop Button Highlight */
+button.shop-btn-railgun {
+  border-color: #0284c7;
+  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.15);
+}
+
+button.shop-btn-railgun:hover:not(:disabled) {
+  background: rgba(2, 132, 199, 0.3);
+  border-color: #38bdf8;
+}
+
 @media (max-width: 600px) {
   body {
     padding: 10px;
