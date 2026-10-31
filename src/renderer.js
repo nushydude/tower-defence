@@ -185,66 +185,405 @@ function drawEnemyShape(ctx, enemy) {
 }
 
 function drawTowerBarrels(ctx, tower, def) {
+  if (!def) return;
+  const angle = tower.angle || 0;
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+  const fx = cosA;
+  const fy = sinA;
+  const px = -sinA;
+  const py = cosA;
+
+  ctx.save();
+
   if (def.isGamma) {
-    const angle = tower.angle || 0;
     // Focusing coil emitter barrel
     ctx.strokeStyle = '#365314';
     ctx.lineWidth = 5.5;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(tower.x, tower.y);
-    ctx.lineTo(tower.x + Math.cos(angle) * 19, tower.y + Math.sin(angle) * 19);
+    ctx.lineTo(tower.x + fx * 19, tower.y + fy * 19);
+    ctx.stroke();
+
+    // Inner radiation core
+    ctx.strokeStyle = '#bef264';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+    ctx.lineTo(tower.x + fx * 18, tower.y + fy * 18);
     ctx.stroke();
 
     // Gamma emitter ring
     ctx.strokeStyle = '#a3e635';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(tower.x + Math.cos(angle) * 16, tower.y + Math.sin(angle) * 16, 4, 0, Math.PI * 2);
+    ctx.arc(tower.x + fx * 16, tower.y + fy * 16, 4, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
     return;
   }
 
   if (def.isAtomic) {
-    const angle = tower.angle || 0;
     // Heavy accelerator barrel
     ctx.strokeStyle = '#0f766e';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(tower.x, tower.y);
-    ctx.lineTo(tower.x + Math.cos(angle) * 19, tower.y + Math.sin(angle) * 19);
+    ctx.lineTo(tower.x + fx * 19, tower.y + fy * 19);
+    ctx.stroke();
+
+    // Inner power rail
+    ctx.strokeStyle = '#2dd4bf';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+    ctx.lineTo(tower.x + fx * 18, tower.y + fy * 18);
     ctx.stroke();
 
     // Glowing emitter muzzle
     ctx.strokeStyle = '#00f5d4';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(tower.x + Math.cos(angle) * 16, tower.y + Math.sin(angle) * 16, 4, 0, Math.PI * 2);
+    ctx.arc(tower.x + fx * 16, tower.y + fy * 16, 4, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
     return;
   }
 
-  if (!def.multiDir) return;
+  if (def.multiDir) {
+    ctx.lineCap = 'butt';
+    def.multiDir.forEach((offset) => {
+      const dirAngle = angle + offset;
+      const dCos = Math.cos(dirAngle);
+      const dSin = Math.sin(dirAngle);
 
-  const baseAngle = tower.angle || 0;
-  ctx.strokeStyle = '#263448';
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'butt';
+      // Dark steel barrel
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + dCos * 6, tower.y + dSin * 6);
+      ctx.lineTo(tower.x + dCos * 17.5, tower.y + dSin * 17.5);
+      ctx.stroke();
 
-  def.multiDir.forEach((offset) => {
-    const angle = baseAngle + offset;
-    const barrelLength = 17;
-    const startX = tower.x + Math.cos(angle) * 7;
-    const startY = tower.y + Math.sin(angle) * 7;
-    const endX = tower.x + Math.cos(angle) * barrelLength;
-    const endY = tower.y + Math.sin(angle) * barrelLength;
+      // Cyan muzzle collar
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + dCos * 14.5, tower.y + dSin * 14.5);
+      ctx.lineTo(tower.x + dCos * 17.5, tower.y + dSin * 17.5);
+      ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
 
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.stroke();
-  });
+  if (def.parallelShots) {
+    // Multi-barrel parallel cannons (Double: 2, Triple: 3, Quadruple: 4)
+    ctx.lineCap = 'square';
+    const count = def.parallelShots.length;
+    const barrelWidth = count === 2 ? 3.8 : count === 3 ? 3.2 : 2.7;
+
+    def.parallelShots.forEach((offset, idx) => {
+      let bLen = 17;
+      if (count === 3 && idx === 1) bLen = 18.5;
+      if (count === 4 && (idx === 1 || idx === 2)) bLen = 18;
+
+      const rootX = tower.x + px * offset + fx * 5;
+      const rootY = tower.y + py * offset + fy * 5;
+      const tipX = tower.x + px * offset + fx * bLen;
+      const tipY = tower.y + py * offset + fy * bLen;
+
+      // Dark gunmetal barrel
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = barrelWidth;
+      ctx.beginPath();
+      ctx.moveTo(rootX, rootY);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
+      // Glowing muzzle cap matching turret theme
+      ctx.strokeStyle = def.color || '#e879f9';
+      ctx.lineWidth = Math.max(1.8, barrelWidth - 0.6);
+      ctx.beginPath();
+      ctx.moveTo(tipX - fx * 2.5, tipY - fy * 2.5);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
+
+  // Branch-specific unique cannon designs
+  switch (tower.type) {
+    case 'Rotary': {
+      // 3 bundled Gatling minigun barrels with stabilizing rotor ring
+      ctx.lineCap = 'butt';
+      [-3.2, 0, 3.2].forEach((offset) => {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 19, tower.y + py * offset + fy * 19);
+        ctx.stroke();
+      });
+      // Rotor bracket band
+      ctx.strokeStyle = '#35b9e9';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x - px * 4.5 + fx * 14, tower.y - py * 4.5 + fy * 14);
+      ctx.lineTo(tower.x + px * 4.5 + fx * 14, tower.y + py * 4.5 + fy * 14);
+      ctx.stroke();
+      break;
+    }
+    case 'Blaster': {
+      // Heavy twin blaster barrels
+      ctx.lineCap = 'square';
+      [-4, 4].forEach((offset) => {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 4.2;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 17.5, tower.y + py * offset + fy * 17.5);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#52e5ff';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 14.5, tower.y + py * offset + fy * 14.5);
+        ctx.lineTo(tower.x + px * offset + fx * 17.5, tower.y + py * offset + fy * 17.5);
+        ctx.stroke();
+      });
+      break;
+    }
+    case 'Harpy': {
+      // High-velocity needle accelerator
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 3.4;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 22, tower.y + fy * 22);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#e9b7ff';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 13, tower.y + fy * 13);
+      ctx.lineTo(tower.x + fx * 22, tower.y + fy * 22);
+      ctx.stroke();
+      break;
+    }
+    case 'Thunder': {
+      // Dual high-voltage tesla prongs with electric spark arc
+      ctx.lineCap = 'butt';
+      [-3.8, 3.8].forEach((offset) => {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#fff18a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 15, tower.y + py * offset + fy * 15);
+        ctx.lineTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
+        ctx.stroke();
+      });
+      // Crackling tesla spark between prongs
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(tower.x - px * 3.8 + fx * 17, tower.y - py * 3.8 + fy * 17);
+      ctx.lineTo(tower.x + px * 3.8 + fx * 17, tower.y + py * 3.8 + fy * 17);
+      ctx.stroke();
+      break;
+    }
+    case 'Ace': {
+      // Heavy anti-materiel sniper cannon with baffled muzzle brake
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 5.2;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 25, tower.y + fy * 25);
+      ctx.stroke();
+
+      // Muzzle brake baffles
+      ctx.strokeStyle = '#faff7c';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x - px * 3.8 + fx * 23, tower.y - py * 3.8 + fy * 23);
+      ctx.lineTo(tower.x + px * 3.8 + fx * 23, tower.y + py * 3.8 + fy * 23);
+      ctx.stroke();
+      break;
+    }
+    case 'Scout': {
+      // Tactical precision sniper barrel with compensator
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.2;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 21, tower.y + fy * 21);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#c4ff6a';
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 18, tower.y + fy * 18);
+      ctx.lineTo(tower.x + fx * 21, tower.y + fy * 21);
+      ctx.stroke();
+      break;
+    }
+    case 'Shotgun': {
+      // Wide sawed-off twin barrel shotgun
+      ctx.lineCap = 'square';
+      [-3.6, 3.6].forEach((offset) => {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 4.8;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 15, tower.y + py * offset + fy * 15);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffb65b';
+        ctx.lineWidth = 3.6;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 13, tower.y + py * offset + fy * 13);
+        ctx.lineTo(tower.x + px * offset + fx * 15, tower.y + py * offset + fy * 15);
+        ctx.stroke();
+      });
+      break;
+    }
+    case 'Scatter': {
+      // Flared blunderbuss dispersion cannon
+      ctx.beginPath();
+      ctx.moveTo(tower.x - px * 2.2 + fx * 6, tower.y - py * 2.2 + fy * 6);
+      ctx.lineTo(tower.x - px * 4.6 + fx * 16.5, tower.y - py * 4.6 + fy * 16.5);
+      ctx.lineTo(tower.x + px * 4.6 + fx * 16.5, tower.y + py * 4.6 + fy * 16.5);
+      ctx.lineTo(tower.x + px * 2.2 + fx * 6, tower.y + py * 2.2 + fy * 6);
+      ctx.closePath();
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.strokeStyle = '#ff6eae';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      break;
+    }
+    case 'Cluster': {
+      // Heavy siege mortar launcher
+      ctx.lineCap = 'square';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 8.2;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 17, tower.y + fy * 17);
+      ctx.stroke();
+
+      // Reinforced crimson collar
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 14.5, tower.y + fy * 14.5);
+      ctx.lineTo(tower.x + fx * 17, tower.y + fy * 17);
+      ctx.stroke();
+      break;
+    }
+    case 'Spiker': {
+      // Forward lance spear
+      ctx.beginPath();
+      ctx.moveTo(tower.x - px * 3 + fx * 6, tower.y - py * 3 + fy * 6);
+      ctx.lineTo(tower.x + fx * 18, tower.y + fy * 18);
+      ctx.lineTo(tower.x + px * 3 + fx * 6, tower.y + py * 3 + fy * 6);
+      ctx.closePath();
+      ctx.fillStyle = '#ffa45c';
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      break;
+    }
+    case 'Double Spiker': {
+      // Twin lance spears
+      [-4.5, 4.5].forEach((offset) => {
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * (offset - 2.2) + fx * 6, tower.y + py * (offset - 2.2) + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
+        ctx.lineTo(tower.x + px * (offset + 2.2) + fx * 6, tower.y + py * (offset + 2.2) + fy * 6);
+        ctx.closePath();
+        ctx.fillStyle = '#ff9c53';
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      });
+      break;
+    }
+    case 'ALLSPIKER': {
+      // 8 radiating lance spikes
+      for (let i = 0; i < 8; i++) {
+        const spikeAngle = angle + (i * Math.PI) / 4;
+        const sCos = Math.cos(spikeAngle);
+        const sSin = Math.sin(spikeAngle);
+        const sPx = -sSin;
+        const sPy = sCos;
+
+        ctx.beginPath();
+        ctx.moveTo(tower.x - sPx * 2.5 + sCos * 6, tower.y - sPy * 2.5 + sSin * 6);
+        ctx.lineTo(tower.x + sCos * 18, tower.y + sSin * 18);
+        ctx.lineTo(tower.x + sPx * 2.5 + sCos * 6, tower.y + sPy * 2.5 + sSin * 6);
+        ctx.closePath();
+        ctx.fillStyle = '#ff674d';
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'Spammer': {
+      // Rapid autocannon
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.6;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 16.5, tower.y + fy * 16.5);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#57d6ff';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 13.5, tower.y + fy * 13.5);
+      ctx.lineTo(tower.x + fx * 16.5, tower.y + fy * 16.5);
+      ctx.stroke();
+      break;
+    }
+    default: {
+      // Fallback clean standard cannon
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 16, tower.y + fy * 16);
+      ctx.stroke();
+
+      ctx.strokeStyle = def.color || '#57d6ff';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 13, tower.y + fy * 13);
+      ctx.lineTo(tower.x + fx * 16, tower.y + fy * 16);
+      ctx.stroke();
+      break;
+    }
+  }
+
+  ctx.restore();
 }
 
 export function renderGame(ctx, state, towerDefs) {
@@ -413,6 +752,13 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (bullet.isParallel) {
+      // Parallel multi-barrel projectile (crisp radiant lilac energy bolt with sharp violet border)
+      ctx.fillStyle = '#f5d0fe';
+      ctx.fill();
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 1.4;
       ctx.stroke();
     } else if (bullet.vx !== undefined) {
       // Directional multi-turret shot

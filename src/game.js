@@ -324,33 +324,58 @@ export class GameModel {
       // Towers acquire targets and fire (prioritizes furthest along track)
       this.state.towers.forEach((tower) => {
         tower.cool = (tower.cool || 0) - scaledDt;
-        if (tower.cool <= 0) {
-          const def = towerDefs[tower.type];
-          const target = this.state.enemies
-            .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
-            .sort((a, b) => (b.distance || 0) - (a.distance || 0))[0];
+        const def = towerDefs[tower.type];
+        if (!def) return;
 
-          if (target) {
-            const aimAngle = Math.atan2(target.y - tower.y, target.x - tower.x);
-            tower.angle = aimAngle;
+        // Smoothly track targets whenever in range, even during cooldown
+        const target = this.state.enemies
+          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
+          .sort((a, b) => (b.distance || 0) - (a.distance || 0))[0];
 
-            if (def.multiDir) {
-              // Multi-directional Turret
-              def.multiDir.forEach((offsetAngle) => {
-                const shotAngle = aimAngle + offsetAngle;
-                const vx = Math.cos(shotAngle);
-                const vy = Math.sin(shotAngle);
-                this.state.bullets.push({
-                  x: tower.x + vx * 14,
-                  y: tower.y + vy * 14,
-                  vx,
-                  vy,
-                  dmg: def.dmg,
-                  speed: 330,
-                  rangeLeft: def.range + 30
-                });
+        if (target) {
+          tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
+        }
+
+        if (tower.cool <= 0 && target) {
+          const aimAngle = tower.angle !== undefined ? tower.angle : Math.atan2(target.y - tower.y, target.x - tower.x);
+
+          if (def.multiDir) {
+            // Multi-directional Turret
+            def.multiDir.forEach((offsetAngle) => {
+              const shotAngle = aimAngle + offsetAngle;
+              const vx = Math.cos(shotAngle);
+              const vy = Math.sin(shotAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 14,
+                y: tower.y + vy * 14,
+                vx,
+                vy,
+                dmg: def.dmg,
+                speed: 330,
+                rangeLeft: def.range + 30
               });
-            } else if (def.isAtomic) {
+            });
+          } else if (def.parallelShots) {
+            // Multi-barrel parallel volleys (Double: 2, Triple: 3, Quadruple: 4)
+            const fx = Math.cos(aimAngle);
+            const fy = Math.sin(aimAngle);
+            const px = -fy;
+            const py = fx;
+
+            def.parallelShots.forEach((offset) => {
+              this.state.bullets.push({
+                x: tower.x + px * offset + fx * 15,
+                y: tower.y + py * offset + fy * 15,
+                vx: fx,
+                vy: fy,
+                dmg: def.dmg,
+                speed: 350,
+                rangeLeft: def.range + 35,
+                isParallel: true,
+                r: def.bulletR || 3.0
+              });
+            });
+          } else if (def.isAtomic) {
               // Atomic Turret: Fires an atomic core that multiplies into more the further it goes
               const vx = Math.cos(aimAngle);
               const vy = Math.sin(aimAngle);
@@ -404,9 +429,8 @@ export class GameModel {
             }
             tower.cool = def.rate;
           }
-        }
-      });
-    }
+        });
+      }
 
     // 2. Bullets simulation (Runs even if stage just finished, allowing in-flight bullets to complete flight)
     if (this.state.bullets.length > 0) {
@@ -446,7 +470,7 @@ export class GameModel {
 
           // Collision check against remaining active enemies
           for (const enemy of this.state.enemies) {
-            if (!enemy.dead) {
+            if (!enemy.dead && enemy.hp > 0) {
               const hitDist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
               if (hitDist <= (bullet.r || 4) + enemy.r) {
                 enemy.hp -= bullet.dmg;

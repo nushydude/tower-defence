@@ -20,10 +20,36 @@ export const TOWER_DEFINITIONS = {
   'Double Spiker': { cost: 130, dmg: 10, rate: 0.36, range: 130, color: '#ff9c53', next: ['ALLSPIKER'] },
   ALLSPIKER: { cost: 200, dmg: 12, rate: 0.33, range: 140, color: '#ff674d' },
 
-  // Multi-shot branch
-  Double: { cost: 120, dmg: 12, rate: 0.46, range: 135, color: '#e7a1ff', next: ['Triple'] },
-  Triple: { cost: 170, dmg: 13, rate: 0.45, range: 145, color: '#d6a6ff', next: ['Quadruple'] },
-  Quadruple: { cost: 240, dmg: 14, rate: 0.43, range: 155, color: '#b28aff' },
+  // Multi-shot branch (Parallel multi-barrel volleys)
+  Double: {
+    cost: 120,
+    dmg: 12,
+    rate: 0.46,
+    range: 135,
+    color: '#e7a1ff',
+    parallelShots: [-7, 7],
+    bulletR: 3.2,
+    next: ['Triple']
+  },
+  Triple: {
+    cost: 170,
+    dmg: 13,
+    rate: 0.45,
+    range: 145,
+    color: '#d6a6ff',
+    parallelShots: [-9.5, 0, 9.5],
+    bulletR: 3.0,
+    next: ['Quadruple']
+  },
+  Quadruple: {
+    cost: 240,
+    dmg: 14,
+    rate: 0.43,
+    range: 155,
+    color: '#b28aff',
+    parallelShots: [-11.5, -3.8, 3.8, 11.5],
+    bulletR: 2.6
+  },
 
   // Directional Multi-barrel Turret Branch: Side Turret -> Fourway -> Eightway
   'Side Turret': {
