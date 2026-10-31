@@ -483,7 +483,7 @@ export const TOWER_DEFINITIONS = {
   // 7. PENETRATING LASER RAILGUN BRANCH (Root: Railgun)
   // =========================================================
   Railgun: {
-    cost: 140,
+    cost: 250,
     dmg: 65,
     rate: 0.90,
     range: 220,
@@ -496,7 +496,7 @@ export const TOWER_DEFINITIONS = {
     next: ['Double Railgun']
   },
   'Double Railgun': {
-    cost: 350,
+    cost: 500,
     dmg: 95,
     rate: 0.85,
     range: 250,
