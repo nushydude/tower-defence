@@ -15,10 +15,47 @@ export const TOWER_DEFINITIONS = {
   Scatter: { cost: 220, dmg: 65, rate: 0.92, range: 190, color: '#ff6eae', burstShards: 5, shardDmg: 16, next: ['Cluster'] },
   Cluster: { cost: 320, dmg: 80, rate: 0.88, range: 210, color: '#f43f5e', burstShards: 10, shardDmg: 20, abbr: 'CLUS' },
 
-  // Spike area branch
-  Spiker: { cost: 80, dmg: 9, rate: 0.38, range: 120, color: '#ffa45c', next: ['Double Spiker'] },
-  'Double Spiker': { cost: 130, dmg: 10, rate: 0.36, range: 130, color: '#ff9c53', next: ['ALLSPIKER'] },
-  ALLSPIKER: { cost: 200, dmg: 12, rate: 0.33, range: 140, color: '#ff674d' },
+  // Spike area branch (Shoots slow piercing triangle spikes)
+  Spiker: {
+    cost: 80,
+    dmg: 11,
+    rate: 0.42,
+    range: 125,
+    color: '#ffa45c',
+    isSpiker: true,
+    bulletSpeed: 175,
+    next: ['Double Spiker']
+  },
+  'Double Spiker': {
+    cost: 130,
+    dmg: 12,
+    rate: 0.38,
+    range: 135,
+    color: '#ff9c53',
+    parallelShots: [-5, 5],
+    isSpiker: true,
+    bulletSpeed: 175,
+    next: ['ALLSPIKER']
+  },
+  ALLSPIKER: {
+    cost: 200,
+    dmg: 13,
+    rate: 0.36,
+    range: 145,
+    color: '#ff674d',
+    multiDir: [
+      0,
+      Math.PI / 3,
+      (2 * Math.PI) / 3,
+      Math.PI,
+      (4 * Math.PI) / 3,
+      (5 * Math.PI) / 3
+    ], // Shoots in 6 hexagonal directions
+    barrels: 6,
+    isSpiker: true,
+    bulletSpeed: 175,
+    abbr: 'ALL'
+  },
 
   // Multi-shot branch (Parallel multi-barrel volleys)
   Double: {
@@ -351,27 +388,28 @@ export const MAP_CONFIGS = {
       [740, 120]
     ]
   },
-  island: {
-    id: 'island',
-    name: 'Tropical Atoll',
-    icon: '🏝️',
-    description: 'Deep ocean surrounding sandy shores and wooden boardwalks.',
-    bgColor: '#3490cf',
-    gridColor: 'rgba(255, 255, 255, 0.09)',
-    pathOuter: '#4a301d',
-    pathInner: '#dfb77d',
-    pathDash: '#fff6d6',
-    waterFeatures: true,
+  crossroads: {
+    id: 'crossroads',
+    name: 'Crossroads Plaza',
+    icon: '⚔️',
+    description: 'Ancient cobblestone highways intersecting at a grand tactical plaza.',
+    bgColor: '#1e2430',
+    gridColor: 'rgba(255, 255, 255, 0.04)',
+    pathOuter: '#334155',
+    pathInner: '#64748b',
+    pathDash: '#fbbf24',
+    waterFeatures: false,
     path: [
-      [360, -20],
-      [360, 120],
-      [140, 120],
-      [140, 310],
-      [450, 310],
-      [450, 210],
-      [580, 210],
-      [580, 400],
-      [740, 400]
+      [360, 490], // Enter from South road
+      [360, 80],  // March North straight through the Crossroads intersection (360, 235)
+      [120, 80],  // Turn West along North plaza
+      [120, 390], // Turn South along West boulevard
+      [240, 390], // Turn East along South avenue
+      [240, 235], // Turn North to align with East-West highway
+      [740, 235]  // Cross straight through Crossroads intersection (360, 235) again and exit East
     ]
   }
 };
+
+// Backward-compatibility alias for older saves
+MAP_CONFIGS.island = MAP_CONFIGS.crossroads;

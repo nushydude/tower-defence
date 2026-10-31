@@ -9,7 +9,7 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
   - When opening an empty slot, choose from **3 unique themed maps**:
     - 🌱 **Grassland Plains**: Classic lush green terrain with winding stone pathways.
     - 🏜️ **Desert Dunes**: Scorching golden dunes and canyon pathways.
-    - 🏝️ **Tropical Atoll**: Deep blue waters surrounding an island and wooden boardwalk trail.
+    - ⚔️ **Crossroads Plaza**: Ancient cobblestone highways intersecting at a grand tactical plaza where enemies cross twice!
 - **Diverse Enemy Roster & Speeds**:
   - 🟦 **Blue Squares (Rounds 1+)**: Standard starter enemy (Speed: 36).
   - ⚡ **Neon Pink Orbs (Rounds 2+)**: Hyper-speed swarming scouts (Speed: 84).
@@ -24,7 +24,7 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
 - **Turrets & Upgrade Trees**:
   - **Spammer** → Blaster → Rotary → **Atomic** (shoots at Rotary's fire rate, with atomic balls that multiply into more projectiles the further they travel!), Harpy → Thunder
   - **Scout** → **Ace** → **Gamma** (shoots at Harpy's rapid fire rate of 0.12s, firing radiation orbs that expand in size and damage the further they travel!), Shotgun, **Scatter** (bursts into 5 outward shards on impact) → **Cluster** (bursts into 10 outward shards on impact)
-  - **Spiker** → Double Spiker → ALLSPIKER (radiating spike arrays)
+  - **Spiker** → **Double Spiker** → **ALLSPIKER** (fires slow, aerodynamic glowing spike triangles; Double Spiker fires twin parallel spikes, and ALLSPIKER radiates 6 slow triangles in 6 hexagonal directions!)
   - **Double** → **Triple** → **Quadruple** (fires 2, 3, and 4 parallel energy bullets with distinct lateral separation so they never merge into a single projectile)
   - **Multi-Directional Turret Branch**:
     - **Side Turret**: Fires 2 simultaneous shots (front and back in opposite directions).
@@ -107,7 +107,7 @@ tower-defense-game-basic/
 ## 🕹️ How to Play
 
 1. Pick an empty slot and click **Create Game**.
-2. Select your desired map theme: **Grassland Plains**, **Desert Dunes**, or **Tropical Atoll**.
+2. Select your desired map theme: **Grassland Plains**, **Desert Dunes**, or **Crossroads Plaza**.
 3. Purchase a starter turret such as **Side Turret**, **Spammer**, **Scout**, or **Double**.
 4. Click on clear terrain away from the path to place your turret.
 5. Click **Start Stage** to unleash the wave.

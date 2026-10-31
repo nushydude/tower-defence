@@ -153,7 +153,10 @@ function showMapSelection() {
   const container = $('map-cards');
   container.innerHTML = '';
 
-  Object.values(MAP_CONFIGS).forEach((map) => {
+  const mapKeys = ['grassland', 'desert', 'crossroads'];
+  mapKeys.forEach((mapKey) => {
+    const map = MAP_CONFIGS[mapKey];
+    if (!map) return;
     const card = document.createElement('div');
     card.className = 'map-card';
     card.innerHTML = `

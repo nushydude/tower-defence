@@ -340,23 +340,25 @@ export class GameModel {
           const aimAngle = tower.angle !== undefined ? tower.angle : Math.atan2(target.y - tower.y, target.x - tower.x);
 
           if (def.multiDir) {
-            // Multi-directional Turret
+            // Multi-directional Turrets (Side Turret, Fourway, Eightway, ALLSPIKER)
             def.multiDir.forEach((offsetAngle) => {
               const shotAngle = aimAngle + offsetAngle;
               const vx = Math.cos(shotAngle);
               const vy = Math.sin(shotAngle);
               this.state.bullets.push({
-                x: tower.x + vx * 14,
-                y: tower.y + vy * 14,
+                x: tower.x + vx * 15,
+                y: tower.y + vy * 15,
                 vx,
                 vy,
                 dmg: def.dmg,
-                speed: 330,
-                rangeLeft: def.range + 30
+                speed: def.bulletSpeed || 330,
+                rangeLeft: def.range + 35,
+                isSpikeTriangle: Boolean(def.isSpiker),
+                r: def.isSpiker ? 5.5 : 4
               });
             });
           } else if (def.parallelShots) {
-            // Multi-barrel parallel volleys (Double: 2, Triple: 3, Quadruple: 4)
+            // Multi-barrel parallel volleys (Double, Triple, Quadruple, Double Spiker)
             const fx = Math.cos(aimAngle);
             const fy = Math.sin(aimAngle);
             const px = -fy;
@@ -369,11 +371,27 @@ export class GameModel {
                 vx: fx,
                 vy: fy,
                 dmg: def.dmg,
-                speed: 350,
+                speed: def.bulletSpeed || 350,
                 rangeLeft: def.range + 35,
-                isParallel: true,
-                r: def.bulletR || 3.0
+                isParallel: !def.isSpiker,
+                isSpikeTriangle: Boolean(def.isSpiker),
+                r: def.bulletR || (def.isSpiker ? 5.0 : 3.0)
               });
+            });
+          } else if (def.isSpiker) {
+            // Single Spiker forward slow triangle
+            const fx = Math.cos(aimAngle);
+            const fy = Math.sin(aimAngle);
+            this.state.bullets.push({
+              x: tower.x + fx * 16,
+              y: tower.y + fy * 16,
+              vx: fx,
+              vy: fy,
+              dmg: def.dmg,
+              speed: def.bulletSpeed || 175,
+              rangeLeft: def.range + 35,
+              isSpikeTriangle: true,
+              r: 5.5
             });
           } else if (def.isAtomic) {
               // Atomic Turret: Fires an atomic core that multiplies into more the further it goes

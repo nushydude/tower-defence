@@ -57,31 +57,83 @@ function renderEnvironment(ctx, map) {
   ctx.fillStyle = map.bgColor;
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  // Special island background with sandy atoll landmasses
-  if (map.id === 'island') {
-    // Large central sandy island
-    ctx.fillStyle = '#e4c489';
+  // Special Crossroads Plaza: flagstone foundation, central crossing seal & warm corner lanterns
+  if (map.id === 'crossroads') {
+    // Subtle connecting secondary avenue (West approach) to complete the visual 4-way crossroads
+    ctx.strokeStyle = map.pathOuter;
+    ctx.lineWidth = 48;
+    ctx.lineCap = 'butt';
     ctx.beginPath();
-    ctx.ellipse(360, 240, 310, 190, 0, 0, Math.PI * 2);
+    ctx.moveTo(-20, 235);
+    ctx.lineTo(240, 235);
+    ctx.stroke();
+
+    ctx.strokeStyle = map.pathInner;
+    ctx.lineWidth = 39;
+    ctx.beginPath();
+    ctx.moveTo(-20, 235);
+    ctx.lineTo(240, 235);
+    ctx.stroke();
+
+    // Central circular stone plaza at the crossroads intersection (360, 235)
+    ctx.fillStyle = '#263042';
+    ctx.beginPath();
+    ctx.arc(360, 235, 68, 0, Math.PI * 2);
     ctx.fill();
 
-    // Inner tropical greenery
-    ctx.fillStyle = '#6ab85e';
+    // Outer decorative stone ring
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.ellipse(360, 240, 250, 140, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(360, 235, 68, 0, Math.PI * 2);
+    ctx.stroke();
 
-    // Water wave highlights
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-    ctx.lineWidth = 2;
-    for (let i = 25; i < CANVAS_WIDTH; i += 70) {
+    // Inner bronze compass medallion ring
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(360, 235, 46, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 4-point golden star inlay at crossroads center
+    drawStar(ctx, 360, 235, 26, 10, 4, 0);
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+    ctx.fill();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+
+    // 4 Corner guardpost braziers with glowing warm lantern halos
+    const corners = [
+      [305, 180],
+      [415, 180],
+      [305, 290],
+      [415, 290]
+    ];
+    corners.forEach(([cx, cy]) => {
+      // Warm lantern glow halo
+      const glow = ctx.createRadialGradient(cx, cy, 3, cx, cy, 34);
+      glow.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
+      glow.addColorStop(0.5, 'rgba(245, 158, 11, 0.12)');
+      glow.addColorStop(1, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(i, 40, 15, 0, Math.PI);
-      ctx.stroke();
+      ctx.arc(cx, cy, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Stone post
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(cx - 5.5, cy - 5.5, 11, 11);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 5.5, cy - 5.5, 11, 11);
+
+      // Golden brazier flame
+      ctx.fillStyle = '#fef08a';
       ctx.beginPath();
-      ctx.arc(i + 35, 435, 15, 0, Math.PI);
-      ctx.stroke();
-    }
+      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
   } else if (map.id === 'desert') {
     // Subtle desert dunes / rocks
     ctx.fillStyle = 'rgba(168, 107, 43, 0.18)';
@@ -247,6 +299,64 @@ function drawTowerBarrels(ctx, tower, def) {
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(tower.x + fx * 16, tower.y + fy * 16, 4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (def.isSpiker) {
+    if (tower.type === 'ALLSPIKER') {
+      // 6 radiating lance spikes in regular hexagonal formation (60 degrees apart)
+      for (let i = 0; i < 6; i++) {
+        const spikeAngle = angle + (i * Math.PI) / 3;
+        const sCos = Math.cos(spikeAngle);
+        const sSin = Math.sin(spikeAngle);
+        const sPx = -sSin;
+        const sPy = sCos;
+
+        ctx.beginPath();
+        ctx.moveTo(tower.x - sPx * 2.5 + sCos * 6, tower.y - sPy * 2.5 + sSin * 6);
+        ctx.lineTo(tower.x + sCos * 18, tower.y + sSin * 18);
+        ctx.lineTo(tower.x + sPx * 2.5 + sCos * 6, tower.y + sPy * 2.5 + sSin * 6);
+        ctx.closePath();
+        ctx.fillStyle = '#ff674d';
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    }
+
+    if (tower.type === 'Double Spiker') {
+      // Twin forward lance spears at [-5, 5]
+      [-5, 5].forEach((offset) => {
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * (offset - 2.2) + fx * 6, tower.y + py * (offset - 2.2) + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
+        ctx.lineTo(tower.x + px * (offset + 2.2) + fx * 6, tower.y + py * (offset + 2.2) + fy * 6);
+        ctx.closePath();
+        ctx.fillStyle = '#ff9c53';
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      });
+      ctx.restore();
+      return;
+    }
+
+    // Single Spiker forward lance spear
+    ctx.beginPath();
+    ctx.moveTo(tower.x - px * 3 + fx * 6, tower.y - py * 3 + fy * 6);
+    ctx.lineTo(tower.x + fx * 18, tower.y + fy * 18);
+    ctx.lineTo(tower.x + px * 3 + fx * 6, tower.y + py * 3 + fy * 6);
+    ctx.closePath();
+    ctx.fillStyle = '#ffa45c';
+    ctx.fill();
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1.2;
     ctx.stroke();
     ctx.restore();
     return;
@@ -698,6 +808,59 @@ export function renderGame(ctx, state, towerDefs) {
 
   // Draw bullets
   state.bullets.forEach((bullet) => {
+    if (bullet.isSpikeTriangle) {
+      // Slow spike triangle projectile (radiant fiery aerodynamic spearhead)
+      const angle = Math.atan2(bullet.vy, bullet.vx);
+      const len = (bullet.r || 5.5) * 2.4;
+      const halfW = (bullet.r || 5.5) * 1.35;
+
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const px = -sin;
+      const py = cos;
+
+      // Tip (front of arrowhead)
+      const tipX = bullet.x + cos * len;
+      const tipY = bullet.y + sin * len;
+
+      // Base left & right wings
+      const baseBackX = bullet.x - cos * (len * 0.4);
+      const baseBackY = bullet.y - sin * (len * 0.4);
+      const leftWingX = baseBackX + px * halfW;
+      const leftWingY = baseBackY + py * halfW;
+      const rightWingX = baseBackX - px * halfW;
+      const rightWingY = baseBackY - py * halfW;
+
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(leftWingX, leftWingY);
+      ctx.lineTo(baseBackX - cos * 2, baseBackY - sin * 2);
+      ctx.lineTo(rightWingX, rightWingY);
+      ctx.closePath();
+
+      // Radiant fiery amber/orange gradient
+      const grad = ctx.createLinearGradient(tipX, tipY, baseBackX, baseBackY);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, '#fed7aa');
+      grad.addColorStop(0.7, '#f97316');
+      grad.addColorStop(1, '#c2410c');
+
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = '#431407';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Sharp central spine
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(baseBackX, baseBackY);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      return;
+    }
+
     ctx.beginPath();
     const r = bullet.r || 4;
     ctx.arc(bullet.x, bullet.y, r, 0, Math.PI * 2);
