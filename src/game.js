@@ -540,7 +540,7 @@ export class GameModel {
                 y: tower.y + vy * 16,
                 vx,
                 vy,
-                dmg: Math.max(10, Math.round(def.dmg * 0.85)),
+                dmg: Math.max(6, Math.round(def.dmg * 0.85)),
                 speed: 340,
                 rangeLeft: def.range + 35,
                 isBastionBullet: true,
