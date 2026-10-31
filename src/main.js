@@ -119,12 +119,18 @@ function updateUI() {
     btn.disabled = S.coins < cost;
   });
 
-  // Update disabled state for shop build buttons based on coin balance
+  // Update disabled state and active build state for shop buttons
   const shopButtons = $('shop').querySelectorAll('button');
-  shopButtons.forEach((btn) => {
+  shopButtons.forEach((btn, index) => {
     const cost = Number(btn.dataset.cost);
     if (!isNaN(cost)) {
       btn.disabled = S.coins < cost;
+    }
+    const towerName = BASE_TOWERS[index];
+    if (towerName && S.build === towerName) {
+      btn.classList.add('active-build');
+    } else {
+      btn.classList.remove('active-build');
     }
   });
 }
@@ -312,25 +318,33 @@ function renderShop() {
   const shopEl = $('shop');
   if (!shopEl) return;
   shopEl.innerHTML = '';
-  BASE_TOWERS.forEach((towerName) => {
+  BASE_TOWERS.forEach((towerName, idx) => {
     const def = TOWER_DEFINITIONS[towerName];
     const cost = def.cost;
     const btn = document.createElement('button');
     btn.dataset.cost = cost;
 
+    const kbd = `<span class="kbd-hint">${idx + 1}</span>`;
+
     if (towerName === 'Railgun') {
       btn.className = 'shop-btn-railgun';
-      btn.innerHTML = `⚡ ${towerName} (Laser) · ${cost}`;
+      btn.innerHTML = `${kbd}⚡ ${towerName} (Laser) · ${cost}`;
     } else {
-      btn.textContent = `${towerName} · ${cost}`;
+      btn.innerHTML = `${kbd}${towerName} · ${cost}`;
     }
 
     btn.onclick = () => {
       if (!game.state) return;
+      if (game.state.build === towerName) {
+        game.state.build = null;
+        updateUI();
+        showMessage('Placement cancelled.');
+        return;
+      }
       game.state.build = towerName;
       game.state.sel = null;
       updateUI();
-      showMessage(`Tap clear terrain to place ${towerName} (${def.branch || 'Base Turret'}).`);
+      showMessage(`[${idx + 1}] Tap clear terrain to place ${towerName} (${def.branch || 'Base Turret'}).`);
     };
     shopEl.appendChild(btn);
   });
@@ -430,12 +444,84 @@ $('confirm-delete-btn').onclick = () => {
   }
 };
 
-// Global escape key to close open modals
+// Keyboard Shortcuts (Desktop PC & Hardware Keyboards)
 window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
   if (e.key === 'Escape') {
-    hideMapModal();
-    hideDeleteConfirm();
-    hideTechTree();
+    if ($('techtree-modal') && $('techtree-modal').style.display === 'flex') {
+      hideTechTree();
+      return;
+    }
+    if ($('map-modal') && $('map-modal').style.display === 'flex') {
+      hideMapModal();
+      return;
+    }
+    if ($('delete-modal') && $('delete-modal').style.display === 'flex') {
+      hideDeleteConfirm();
+      return;
+    }
+    if (game.state && (game.state.sel || game.state.build)) {
+      game.state.sel = null;
+      game.state.build = null;
+      updateUI();
+      showMessage('Selection cleared.');
+      return;
+    }
+  }
+
+  // Active Game screen controls
+  if (game.state && $('game').style.display !== 'none') {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      game.startStage();
+      updateUI();
+      return;
+    }
+    if (e.key === 'a' || e.key === 'A') {
+      e.preventDefault();
+      game.toggleAutoStart();
+      updateUI();
+      return;
+    }
+    if (e.key === 's' || e.key === 'S') {
+      e.preventDefault();
+      game.cycleSpeed();
+      $('speed').textContent = `Speed: ${game.state.speed}×`;
+      return;
+    }
+    if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      if ($('techtree-modal') && $('techtree-modal').style.display === 'flex') {
+        hideTechTree();
+      } else {
+        showTechTree();
+      }
+      return;
+    }
+
+    // Number keys 1-7 for base towers
+    const num = parseInt(e.key, 10);
+    if (!isNaN(num) && num >= 1 && num <= BASE_TOWERS.length) {
+      e.preventDefault();
+      const towerName = BASE_TOWERS[num - 1];
+      const def = TOWER_DEFINITIONS[towerName];
+      if (game.state.coins >= def.cost) {
+        if (game.state.build === towerName) {
+          game.state.build = null;
+          updateUI();
+          showMessage('Placement cancelled.');
+        } else {
+          game.state.build = towerName;
+          game.state.sel = null;
+          updateUI();
+          showMessage(`[${num}] Tap clear terrain to place ${towerName}.`);
+        }
+      } else {
+        showMessage(`Not enough coins for ${towerName} (${def.cost}c needed).`);
+      }
+      return;
+    }
   }
 });
 
@@ -485,13 +571,29 @@ canvas.addEventListener('pointerdown', (ev) => {
   game.handleCanvasClick(x, y, TOWER_DEFINITIONS);
 });
 
+// HiDPI Canvas Backing Resolution
+function resizeCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const targetW = Math.round(720 * dpr);
+  const targetH = Math.round(470 * dpr);
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
+}
+
 // Game loop
 function gameLoop(now) {
   const dt = Math.min(0.05, (now - lastTime) / 1000 || 0);
   lastTime = now;
 
   game.update(dt, TOWER_DEFINITIONS);
+
+  resizeCanvas();
+  ctx.save();
+  ctx.scale(canvas.width / 720, canvas.height / 470);
   renderGame(ctx, game.state, TOWER_DEFINITIONS);
+  ctx.restore();
 
   requestAnimationFrame(gameLoop);
 }
