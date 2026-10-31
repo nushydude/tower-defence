@@ -22,16 +22,16 @@ A lightweight, modular 2D Tower Defense game built with HTML5 Canvas, modern Jav
   - ⚔️ **Ruby Crosses (Rounds 13+)**: Rapid assault raiders (Speed: 48).
   - 🔮 **Amethyst Decagons (Rounds 16+)**: Sturdy siege colossi (Speed: 30).
 - **Turrets & Upgrade Trees**:
-  - **Spammer** → Blaster → Rotary → **Atomic** (shoots at Rotary's fire rate, with atomic balls that multiply into more projectiles the further they travel!), Harpy → Thunder
+  - **Spammer** → Blaster → Rotary → **Atomic** (shoots at Rotary's fire rate, with atomic balls that multiply into more projectiles the further they travel!), Harpy → Thunder → **Dual Thunder** (fires twin parallel high-voltage lightning bolts with dual storm tesla coil cannons at 0.05s fire rate!)
   - **Scout** → **Ace** → **Gamma** (shoots at Harpy's rapid fire rate of 0.12s, firing radiation orbs that expand in size and damage the further they travel!), Shotgun, **Scatter** (bursts into 5 outward shards on impact) → **Cluster** (bursts into 10 outward shards on impact)
-  - **Spiker** → **Double Spiker** → **ALLSPIKER** (fires slow, aerodynamic glowing spike triangles; Double Spiker fires twin parallel spikes, and ALLSPIKER radiates 6 slow triangles in 6 hexagonal directions!)
+  - **Spiker** → **Double Spiker** → **ALLSPIKER** (radiates 6 slow triangles in 6 hexagonal directions!) → **Bastion** (shoots 3 slow spike triangles in 3 directions at 120° intervals, with a high-speed cannon bullet in between each spike shooter!)
   - **Double** → **Triple** → **Quadruple** (fires 2, 3, and 4 parallel energy bullets with distinct lateral separation so they never merge into a single projectile)
   - **Multi-Directional Turret Branch**:
     - **Side Turret**: Fires 2 simultaneous shots (front and back in opposite directions).
     - **Fourway**: Upgrades to 4 barrels firing in 4 perpendicular directions.
     - **Eightway**: Ultimate 8-barrel omni-turret firing across all 8 compass directions.
 - **Turret Cannons & Animated Tracking**:
-  - **All 21 turrets** feature custom animated cannons (autocannons, twin blasters, miniguns, tesla prongs, snipers, blunderbusses, mortars, lance spikes, and multi-barrels) that smoothly rotate and track targets in real-time.
+  - **All 23 turrets** feature custom animated cannons (autocannons, twin blasters, miniguns, dual tesla coils, snipers, blunderbusses, mortars, lance spikes, and multi-barrels) that smoothly rotate and track targets in real-time.
 - **Progressive Boss Battles (Every 10 Stages)**:
   - Every 10th Stage (10, 20, 30, 40, 50, ...) unleashes a formidable titan boss with scaling HP, speed, and rewards:
     - 🛑 **Stage 10**: *Red Pentagon Colossus* (2,400 HP · 100 coins, 10 gems)

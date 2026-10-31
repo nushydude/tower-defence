@@ -358,7 +358,7 @@ export class GameModel {
               });
             });
           } else if (def.parallelShots) {
-            // Multi-barrel parallel volleys (Double, Triple, Quadruple, Double Spiker)
+            // Multi-barrel parallel volleys (Double, Triple, Quadruple, Double Spiker, Dual Thunder)
             const fx = Math.cos(aimAngle);
             const fy = Math.sin(aimAngle);
             const px = -fy;
@@ -373,9 +373,50 @@ export class GameModel {
                 dmg: def.dmg,
                 speed: def.bulletSpeed || 350,
                 rangeLeft: def.range + 35,
-                isParallel: !def.isSpiker,
+                isParallel: !def.isSpiker && !def.isDualThunder,
                 isSpikeTriangle: Boolean(def.isSpiker),
+                isDualThunder: Boolean(def.isDualThunder),
                 r: def.bulletR || (def.isSpiker ? 5.0 : 3.0)
+              });
+            });
+          } else if (def.isBastion) {
+            // Bastion: 3 spike triangles in 3 directions (0, 120, 240 deg), with a bullet in between each (60, 180, 300 deg)
+            const spikeOffsets = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
+            const bulletOffsets = [Math.PI / 3, Math.PI, (5 * Math.PI) / 3];
+
+            // 1. Three slow spike triangles
+            spikeOffsets.forEach((offsetAngle) => {
+              const shotAngle = aimAngle + offsetAngle;
+              const vx = Math.cos(shotAngle);
+              const vy = Math.sin(shotAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 16,
+                y: tower.y + vy * 16,
+                vx,
+                vy,
+                dmg: def.dmg,
+                speed: def.bulletSpeed || 175,
+                rangeLeft: def.range + 35,
+                isSpikeTriangle: true,
+                r: 6.0
+              });
+            });
+
+            // 2. Three energetic cannon bullets in between each spike shooter
+            bulletOffsets.forEach((offsetAngle) => {
+              const shotAngle = aimAngle + offsetAngle;
+              const vx = Math.cos(shotAngle);
+              const vy = Math.sin(shotAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 16,
+                y: tower.y + vy * 16,
+                vx,
+                vy,
+                dmg: Math.max(10, Math.round(def.dmg * 0.85)),
+                speed: 340,
+                rangeLeft: def.range + 35,
+                isBastionBullet: true,
+                r: 4.5
               });
             });
           } else if (def.isSpiker) {

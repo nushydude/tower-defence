@@ -5,7 +5,19 @@ export const TOWER_DEFINITIONS = {
   Rotary: { cost: 180, dmg: 7, rate: 0.2, range: 235, color: '#35b9e9', next: ['Atomic'] },
   Atomic: { cost: 300, dmg: 9, rate: 0.2, range: 260, color: '#00f5d4', abbr: 'ATOM', isAtomic: true },
   Harpy: { cost: 100, dmg: 5, rate: 0.12, range: 110, color: '#e9b7ff', next: ['Thunder'] },
-  Thunder: { cost: 180, dmg: 4, rate: 0.05, range: 120, color: '#fff18a' },
+  Thunder: { cost: 180, dmg: 4, rate: 0.05, range: 120, color: '#fff18a', next: ['Dual Thunder'] },
+  'Dual Thunder': {
+    cost: 290,
+    dmg: 5,
+    rate: 0.05,
+    range: 130,
+    color: '#facc15',
+    parallelShots: [-6.5, 6.5],
+    bulletR: 3.2,
+    bulletSpeed: 380,
+    isDualThunder: true,
+    abbr: 'DUAL'
+  },
 
   // Precision / sniper / shotgun / scatter branch
   Scout: { cost: 100, dmg: 12, rate: 0.56, range: 155, color: '#c4ff6a', next: ['Ace', 'Shotgun', 'Scatter'] },
@@ -54,7 +66,18 @@ export const TOWER_DEFINITIONS = {
     barrels: 6,
     isSpiker: true,
     bulletSpeed: 175,
-    abbr: 'ALL'
+    abbr: 'ALL',
+    next: ['Bastion']
+  },
+  Bastion: {
+    cost: 320,
+    dmg: 16,
+    rate: 0.35,
+    range: 155,
+    color: '#ea580c',
+    isBastion: true,
+    bulletSpeed: 175,
+    abbr: 'BAST'
   },
 
   // Multi-shot branch (Parallel multi-barrel volleys)

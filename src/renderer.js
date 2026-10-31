@@ -304,6 +304,108 @@ function drawTowerBarrels(ctx, tower, def) {
     return;
   }
 
+  if (def.isDualThunder) {
+    // Dual Thunder: basically double, but with the twin tesla cannons of storm/thunder
+    ctx.lineCap = 'butt';
+    [-6.5, 6.5].forEach((offset) => {
+      const cx = tower.x + px * offset;
+      const cy = tower.y + py * offset;
+
+      // Base coil mount
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx + fx * 4, cy + fy * 4);
+      ctx.lineTo(cx + fx * 9, cy + fy * 9);
+      ctx.stroke();
+
+      // Pair of conductive tesla prongs
+      [-2.2, 2.2].forEach((subOffset) => {
+        const pxSub = -fy;
+        const pySub = fx;
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(cx + pxSub * subOffset + fx * 7, cy + pySub * subOffset + fy * 7);
+        ctx.lineTo(cx + pxSub * subOffset + fx * 18, cy + pySub * subOffset + fy * 18);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + pxSub * subOffset + fx * 15, cy + pySub * subOffset + fy * 15);
+        ctx.lineTo(cx + pxSub * subOffset + fx * 18, cy + pySub * subOffset + fy * 18);
+        ctx.stroke();
+      });
+
+      // Crackling tesla spark between this pair of prongs
+      const pxSub = -fy;
+      const pySub = fx;
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - pxSub * 2.2 + fx * 17, cy - pySub * 2.2 + fy * 17);
+      ctx.lineTo(cx + pxSub * 2.2 + fx * 17, cy + pySub * 2.2 + fy * 17);
+      ctx.stroke();
+    });
+
+    ctx.restore();
+    return;
+  }
+
+  if (def.isBastion) {
+    // Bastion: 3 spike shooters in 3 directions, with a cannon barrel in between each
+    ctx.lineCap = 'butt';
+    const spikeAngles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
+    const bulletAngles = [Math.PI / 3, Math.PI, (5 * Math.PI) / 3];
+
+    // 1. Draw 3 in-between cannon barrels first
+    bulletAngles.forEach((offset) => {
+      const bAngle = angle + offset;
+      const bCos = Math.cos(bAngle);
+      const bSin = Math.sin(bAngle);
+
+      // Heavy cannon tube
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.8;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + bCos * 6, tower.y + bSin * 6);
+      ctx.lineTo(tower.x + bCos * 17.5, tower.y + bSin * 17.5);
+      ctx.stroke();
+
+      // Reinforced orange muzzle collar
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 3.6;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + bCos * 14.5, tower.y + bSin * 14.5);
+      ctx.lineTo(tower.x + bCos * 17.5, tower.y + bSin * 17.5);
+      ctx.stroke();
+    });
+
+    // 2. Draw 3 armored lance spikes
+    spikeAngles.forEach((offset) => {
+      const sAngle = angle + offset;
+      const sCos = Math.cos(sAngle);
+      const sSin = Math.sin(sAngle);
+      const sPx = -sSin;
+      const sPy = sCos;
+
+      ctx.beginPath();
+      ctx.moveTo(tower.x - sPx * 3.2 + sCos * 6, tower.y - sPy * 3.2 + sSin * 6);
+      ctx.lineTo(tower.x + sCos * 19, tower.y + sSin * 19);
+      ctx.lineTo(tower.x + sPx * 3.2 + sCos * 6, tower.y + sPy * 3.2 + sSin * 6);
+      ctx.closePath();
+      ctx.fillStyle = '#ea580c';
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+    });
+
+    ctx.restore();
+    return;
+  }
+
   if (def.isSpiker) {
     if (tower.type === 'ALLSPIKER') {
       // 6 radiating lance spikes in regular hexagonal formation (60 degrees apart)
@@ -922,6 +1024,27 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.fill();
       ctx.strokeStyle = '#c084fc';
       ctx.lineWidth = 1.4;
+      ctx.stroke();
+    } else if (bullet.isDualThunder) {
+      // Dual Thunder electric lightning projectile (intense white-gold nucleus with crackling electric corona)
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Outer electric corona
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, r * 1.45, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else if (bullet.isBastionBullet) {
+      // Bastion heavy cannon shell (dense molten core with dark casing)
+      ctx.fillStyle = '#fed7aa';
+      ctx.fill();
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     } else if (bullet.vx !== undefined) {
       // Directional multi-turret shot
