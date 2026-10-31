@@ -315,7 +315,7 @@ function renderShop() {
 
     if (towerName === 'Railgun') {
       btn.className = 'shop-btn-railgun';
-      btn.innerHTML = `⚡ ${towerName} · ${cost}`;
+      btn.innerHTML = `⚡ ${towerName} (Laser) · ${cost}`;
     } else {
       btn.textContent = `${towerName} · ${cost}`;
     }
@@ -392,6 +392,7 @@ function hideTechTree() {
 
 // Tech Tree Modal Listeners
 if ($('hero-techtree-btn')) $('hero-techtree-btn').onclick = showTechTree;
+if ($('hero-techtree-banner-btn')) $('hero-techtree-banner-btn').onclick = showTechTree;
 if ($('game-techtree-btn')) $('game-techtree-btn').onclick = showTechTree;
 if ($('close-techtree-btn')) $('close-techtree-btn').onclick = hideTechTree;
 if ($('cancel-techtree-x')) $('cancel-techtree-x').onclick = hideTechTree;
@@ -491,5 +492,6 @@ function gameLoop(now) {
 }
 
 // Initialise
+renderShop();
 renderSlotList();
 requestAnimationFrame(gameLoop);

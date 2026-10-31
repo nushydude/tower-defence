@@ -97,7 +97,7 @@ export const TOWER_DEFINITIONS = {
     range: 250,
     color: '#eab308',
     abbr: 'RNGR',
-    next: ['Deadeye']
+    next: ['Deadeye', 'Railgun']
   },
   Deadeye: {
     cost: 390,
@@ -489,6 +489,7 @@ export const TOWER_DEFINITIONS = {
     range: 220,
     color: '#0284c7',
     abbr: 'RAIL',
+    branch: 'Laser Railgun',
     isRailgun: true,
     laserColor: 'blue',
     pierceCount: 4,
@@ -502,6 +503,7 @@ export const TOWER_DEFINITIONS = {
     range: 250,
     color: '#ef4444',
     abbr: 'DRAL',
+    branch: 'Laser Railgun',
     isRailgun: true,
     laserColor: 'red',
     parallelShots: [-6, 6],
@@ -516,6 +518,7 @@ export const TOWER_DEFINITIONS = {
     range: 290,
     color: '#a855f7',
     abbr: 'TRAL',
+    branch: 'Laser Railgun',
     isRailgun: true,
     laserColor: 'purple',
     parallelShots: [-8, 0, 8],
