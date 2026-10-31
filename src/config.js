@@ -1,11 +1,61 @@
 export const TOWER_DEFINITIONS = {
-  // Rapid branch
-  Spammer: { cost: 60, dmg: 5, rate: 0.25, range: 105, color: '#57d6ff', next: ['Blaster', 'Harpy'] },
-  Blaster: { cost: 100, dmg: 10, rate: 0.25, range: 115, color: '#52e5ff', next: ['Rotary'] },
-  Rotary: { cost: 180, dmg: 7, rate: 0.2, range: 235, color: '#35b9e9', next: ['Atomic'] },
-  Atomic: { cost: 300, dmg: 9, rate: 0.2, range: 260, color: '#00f5d4', abbr: 'ATOM', isAtomic: true },
-  Harpy: { cost: 100, dmg: 5, rate: 0.12, range: 110, color: '#e9b7ff', next: ['Thunder'] },
-  Thunder: { cost: 180, dmg: 4, rate: 0.05, range: 120, color: '#fff18a', next: ['Dual Thunder'] },
+  // =========================================================
+  // 1. RAPID FIRE BRANCH (Root: Spammer)
+  // =========================================================
+  Spammer: {
+    cost: 60,
+    dmg: 5,
+    rate: 0.25,
+    range: 105,
+    color: '#57d6ff',
+    abbr: 'SPAM',
+    next: ['Blaster', 'Harpy']
+  },
+  Blaster: {
+    cost: 100,
+    dmg: 10,
+    rate: 0.25,
+    range: 115,
+    color: '#52e5ff',
+    abbr: 'BLST',
+    next: ['Rotary']
+  },
+  Rotary: {
+    cost: 180,
+    dmg: 8,
+    rate: 0.16,
+    range: 220,
+    color: '#35b9e9',
+    abbr: 'ROTR',
+    next: ['Vulcan'] // Upgrades to the apex Vulcan minigun!
+  },
+  Vulcan: {
+    cost: 320,
+    dmg: 10,
+    rate: 0.08,
+    range: 245,
+    color: '#06b6d4',
+    abbr: 'VULC',
+    isVulcan: true
+  },
+  Harpy: {
+    cost: 100,
+    dmg: 5,
+    rate: 0.12,
+    range: 110,
+    color: '#e9b7ff',
+    abbr: 'HARP',
+    next: ['Thunder']
+  },
+  Thunder: {
+    cost: 180,
+    dmg: 4,
+    rate: 0.05,
+    range: 120,
+    color: '#fff18a',
+    abbr: 'THND',
+    next: ['Dual Thunder']
+  },
   'Dual Thunder': {
     cost: 290,
     dmg: 5,
@@ -19,84 +69,179 @@ export const TOWER_DEFINITIONS = {
     abbr: 'DUAL'
   },
 
-  // Precision / sniper / shotgun / scatter branch
-  Scout: { cost: 100, dmg: 12, rate: 0.56, range: 155, color: '#c4ff6a', next: ['Ace', 'Shotgun', 'Scatter'] },
-  Ace: { cost: 150, dmg: 19, rate: 0.46, range: 190, color: '#faff7c', next: ['Gamma'] },
-  Gamma: { cost: 260, dmg: 7, rate: 0.12, range: 240, color: '#84cc16', abbr: 'GAM', isGamma: true },
-  Shotgun: { cost: 180, dmg: 85, rate: 1.03, range: 175, color: '#ffb65b' },
-  Scatter: { cost: 220, dmg: 65, rate: 0.92, range: 190, color: '#ff6eae', burstShards: 5, shardDmg: 16, next: ['Cluster'] },
-  Cluster: { cost: 320, dmg: 80, rate: 0.88, range: 210, color: '#f43f5e', burstShards: 10, shardDmg: 20, abbr: 'CLUS' },
-
-  // Spike area branch (Shoots slow piercing triangle spikes)
-  Spiker: {
-    cost: 80,
-    dmg: 11,
-    rate: 0.42,
-    range: 125,
-    color: '#ffa45c',
-    isSpiker: true,
-    bulletSpeed: 175,
-    next: ['Double Spiker']
+  // =========================================================
+  // 2. PRECISION & QUANTUM ENERGY BRANCH (Root: Scout)
+  // =========================================================
+  Scout: {
+    cost: 100,
+    dmg: 14,
+    rate: 0.55,
+    range: 160,
+    color: '#c4ff6a',
+    abbr: 'SCOT',
+    next: ['Ace', 'Pulsar'] // Branches into Ballistic Sniper (Ace) or Quantum Energy (Pulsar)!
   },
-  'Double Spiker': {
-    cost: 130,
-    dmg: 12,
-    rate: 0.38,
-    range: 135,
-    color: '#ff9c53',
-    parallelShots: [-5, 5],
-    isSpiker: true,
-    bulletSpeed: 175,
-    next: ['ALLSPIKER']
+  Ace: {
+    cost: 160,
+    dmg: 26,
+    rate: 0.46,
+    range: 200,
+    color: '#faff7c',
+    abbr: 'ACE',
+    next: ['Ranger']
   },
-  ALLSPIKER: {
-    cost: 200,
+  Ranger: {
+    cost: 250,
+    dmg: 60,
+    rate: 0.52,
+    range: 250,
+    color: '#eab308',
+    abbr: 'RNGR',
+    next: ['Railgun']
+  },
+  Railgun: {
+    cost: 390,
+    dmg: 165,
+    rate: 1.15,
+    range: 295,
+    color: '#fde047',
+    abbr: 'RAIL',
+    isRailgun: true,
+    pierceCount: 4,
+    bulletSpeed: 520
+  },
+  Pulsar: {
+    cost: 150,
     dmg: 13,
-    rate: 0.36,
-    range: 145,
-    color: '#ff674d',
-    multiDir: [
-      0,
-      Math.PI / 3,
-      (2 * Math.PI) / 3,
-      Math.PI,
-      (4 * Math.PI) / 3,
-      (5 * Math.PI) / 3
-    ], // Shoots in 6 hexagonal directions
-    barrels: 6,
-    isSpiker: true,
-    bulletSpeed: 175,
-    abbr: 'ALL',
-    next: ['Bastion']
+    rate: 0.28,
+    range: 175,
+    color: '#4ade80',
+    abbr: 'PULS',
+    next: ['Gamma', 'Atomic'] // Sister apex energy evolutions!
   },
-  Bastion: {
-    cost: 320,
-    dmg: 16,
-    rate: 0.35,
-    range: 155,
-    color: '#ea580c',
-    isBastion: true,
-    bulletSpeed: 175,
-    abbr: 'BAST'
+  Gamma: {
+    cost: 270,
+    dmg: 8,
+    rate: 0.12,
+    range: 240,
+    color: '#84cc16',
+    abbr: 'GAM',
+    isGamma: true
+  },
+  Atomic: {
+    cost: 330,
+    dmg: 11,
+    rate: 0.18,
+    range: 260,
+    color: '#00f5d4',
+    abbr: 'ATOM',
+    isAtomic: true
   },
 
-  // Multi-shot branch (Parallel multi-barrel volleys)
+  // =========================================================
+  // 3. HEAVY BLAST & DEMOLITION BRANCH (Root: Shotgun)
+  // =========================================================
+  Shotgun: {
+    cost: 85,
+    dmg: 50,
+    rate: 0.85,
+    range: 140,
+    color: '#ffb65b',
+    abbr: 'SHOT',
+    next: ['Scatter', 'Flak Cannon']
+  },
+  Scatter: {
+    cost: 170,
+    dmg: 65,
+    rate: 0.88,
+    range: 165,
+    color: '#ff6eae',
+    abbr: 'SCAT',
+    burstShards: 5,
+    shardDmg: 16,
+    next: ['Cluster']
+  },
+  Cluster: {
+    cost: 280,
+    dmg: 80,
+    rate: 0.82,
+    range: 190,
+    color: '#f43f5e',
+    abbr: 'CLUS',
+    burstShards: 10,
+    shardDmg: 20,
+    next: ['Supercluster']
+  },
+  Supercluster: {
+    cost: 410,
+    dmg: 115,
+    rate: 0.76,
+    range: 220,
+    color: '#e11d48',
+    abbr: 'SUPR',
+    burstShards: 16,
+    shardDmg: 26,
+    isSupercluster: true
+  },
+  'Flak Cannon': {
+    cost: 165,
+    dmg: 19,
+    rate: 0.65,
+    range: 155,
+    color: '#f97316',
+    abbr: 'FLAK',
+    fanAngles: [-0.16, -0.08, 0, 0.08, 0.16],
+    bulletSpeed: 360,
+    bulletR: 3.5,
+    next: ['Bombard']
+  },
+  Bombard: {
+    cost: 275,
+    dmg: 90,
+    rate: 0.95,
+    range: 195,
+    color: '#ea580c',
+    abbr: 'BOMB',
+    splashRadius: 46,
+    splashDmg: 45,
+    bulletSpeed: 290,
+    isExplosive: true,
+    next: ['Colossus']
+  },
+  Colossus: {
+    cost: 430,
+    dmg: 185,
+    rate: 1.35,
+    range: 240,
+    color: '#c2410c',
+    abbr: 'COLO',
+    splashRadius: 70,
+    splashDmg: 95,
+    bulletSpeed: 270,
+    isExplosive: true
+  },
+
+  // =========================================================
+  // 4. MULTI-SHOT & BROADSIDE BRANCH (Root: Double)
+  // =========================================================
   Double: {
-    cost: 120,
+    cost: 110,
     dmg: 12,
     rate: 0.46,
     range: 135,
     color: '#e7a1ff',
+    abbr: 'DUBL',
     parallelShots: [-7, 7],
     bulletR: 3.2,
-    next: ['Triple']
+    next: ['Triple', 'Twin Flank'] // Parallel battery vs Broadside flank!
   },
   Triple: {
     cost: 170,
     dmg: 13,
-    rate: 0.45,
+    rate: 0.44,
     range: 145,
     color: '#d6a6ff',
+    abbr: 'TRIP',
     parallelShots: [-9.5, 0, 9.5],
     bulletR: 3.0,
     next: ['Quadruple']
@@ -104,24 +249,71 @@ export const TOWER_DEFINITIONS = {
   Quadruple: {
     cost: 240,
     dmg: 14,
-    rate: 0.43,
+    rate: 0.42,
     range: 155,
     color: '#b28aff',
+    abbr: 'QUAD',
     parallelShots: [-11.5, -3.8, 3.8, 11.5],
-    bulletR: 2.6
+    bulletR: 2.6,
+    next: ['Penta']
+  },
+  Penta: {
+    cost: 340,
+    dmg: 15,
+    rate: 0.38,
+    range: 170,
+    color: '#9333ea',
+    abbr: 'PENT',
+    parallelShots: [-14, -7, 0, 7, 14],
+    bulletR: 2.5
+  },
+  'Twin Flank': {
+    cost: 160,
+    dmg: 12,
+    rate: 0.42,
+    range: 145,
+    color: '#c084fc',
+    abbr: 'FLNK',
+    isTwinFlank: true,
+    next: ['Spreadshot']
+  },
+  Spreadshot: {
+    cost: 250,
+    dmg: 13,
+    rate: 0.38,
+    range: 160,
+    color: '#a855f7',
+    abbr: 'SPRD',
+    fanAngles: [-0.42, -0.21, 0, 0.21, 0.42],
+    bulletSpeed: 350,
+    bulletR: 3.0,
+    next: ['Hydra']
+  },
+  Hydra: {
+    cost: 360,
+    dmg: 14,
+    rate: 0.34,
+    range: 175,
+    color: '#7e22ce',
+    abbr: 'HYDR',
+    fanAngles: [-0.56, -0.37, -0.18, 0, 0.18, 0.37, 0.56],
+    bulletSpeed: 360,
+    bulletR: 2.8
   },
 
-  // Directional Multi-barrel Turret Branch: Side Turret -> Fourway -> Eightway
+  // =========================================================
+  // 5. MULTI-DIRECTIONAL PERIMETER BRANCH (Root: Side Turret)
+  // =========================================================
   'Side Turret': {
-    cost: 110,
+    cost: 100,
     dmg: 9,
     rate: 0.38,
     range: 135,
     color: '#38bdf8',
-    multiDir: [0, Math.PI], // Shoots front and back (opposite directions)
+    multiDir: [0, Math.PI],
     barrels: 2,
     abbr: 'SIDE',
-    next: ['Fourway']
+    next: ['Fourway', 'Cyclone']
   },
   Fourway: {
     cost: 160,
@@ -129,7 +321,7 @@ export const TOWER_DEFINITIONS = {
     rate: 0.35,
     range: 150,
     color: '#0284c7',
-    multiDir: [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2], // Shoots in 4 perpendicular directions
+    multiDir: [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2],
     barrels: 4,
     abbr: 'FOUR',
     next: ['Eightway']
@@ -149,13 +341,149 @@ export const TOWER_DEFINITIONS = {
       (5 * Math.PI) / 4,
       (3 * Math.PI) / 2,
       (7 * Math.PI) / 4
-    ], // Shoots in 8 compass directions
+    ],
     barrels: 8,
-    abbr: 'EIGHT'
+    abbr: 'EGTW',
+    next: ['Nova']
+  },
+  Nova: {
+    cost: 350,
+    dmg: 14,
+    rate: 0.28,
+    range: 180,
+    color: '#075985',
+    multiDir: Array.from({ length: 12 }, (_, i) => (i * Math.PI) / 6),
+    barrels: 12,
+    abbr: 'NOVA'
+  },
+  Cyclone: {
+    cost: 155,
+    dmg: 10,
+    rate: 0.22,
+    range: 140,
+    color: '#0ea5e9',
+    multiDir: [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3],
+    barrels: 3,
+    abbr: 'CYCL',
+    next: ['Vortex']
+  },
+  Vortex: {
+    cost: 250,
+    dmg: 12,
+    rate: 0.16,
+    range: 155,
+    color: '#0284c7',
+    multiDir: Array.from({ length: 6 }, (_, i) => (i * Math.PI) / 3),
+    barrels: 6,
+    abbr: 'VORT'
+  },
+
+  // =========================================================
+  // 6. KINETIC SPIKE & LANCE BRANCH (Root: Spiker)
+  // =========================================================
+  Spiker: {
+    cost: 80,
+    dmg: 11,
+    rate: 0.42,
+    range: 125,
+    color: '#ffa45c',
+    isSpiker: true,
+    bulletSpeed: 175,
+    abbr: 'SPIK',
+    next: ['Double Spiker', 'Ballista']
+  },
+  'Double Spiker': {
+    cost: 130,
+    dmg: 12,
+    rate: 0.38,
+    range: 135,
+    color: '#ff9c53',
+    parallelShots: [-5, 5],
+    isSpiker: true,
+    bulletSpeed: 175,
+    abbr: 'DSPI',
+    next: ['ALLSPIKER']
+  },
+  ALLSPIKER: {
+    cost: 200,
+    dmg: 13,
+    rate: 0.36,
+    range: 145,
+    color: '#ff674d',
+    multiDir: [
+      0,
+      Math.PI / 3,
+      (2 * Math.PI) / 3,
+      Math.PI,
+      (4 * Math.PI) / 3,
+      (5 * Math.PI) / 3
+    ],
+    barrels: 6,
+    isSpiker: true,
+    bulletSpeed: 175,
+    abbr: 'ALLS',
+    next: ['Bastion']
+  },
+  Bastion: {
+    cost: 320,
+    dmg: 16,
+    rate: 0.35,
+    range: 155,
+    color: '#ea580c',
+    isBastion: true,
+    bulletSpeed: 175,
+    abbr: 'BAST',
+    next: ['Citadel']
+  },
+  Citadel: {
+    cost: 440,
+    dmg: 18,
+    rate: 0.30,
+    range: 170,
+    color: '#c2410c',
+    isCitadel: true,
+    bulletSpeed: 175,
+    abbr: 'CTDL'
+  },
+  Ballista: {
+    cost: 140,
+    dmg: 36,
+    rate: 0.58,
+    range: 165,
+    color: '#f97316',
+    isPiercingLance: true,
+    pierceCount: 2,
+    bulletSpeed: 230,
+    abbr: 'BALI',
+    next: ['Javelin']
+  },
+  Javelin: {
+    cost: 240,
+    dmg: 65,
+    rate: 0.54,
+    range: 195,
+    color: '#ea580c',
+    isPiercingLance: true,
+    pierceCount: 3,
+    bulletSpeed: 260,
+    abbr: 'JAVL',
+    next: ['Trident']
+  },
+  Trident: {
+    cost: 350,
+    dmg: 58,
+    rate: 0.48,
+    range: 215,
+    color: '#dc2626',
+    isTrident: true,
+    pierceCount: 3,
+    fanAngles: [-0.14, 0, 0.14],
+    bulletSpeed: 270,
+    abbr: 'TRID'
   }
 };
 
-export const BASE_TOWERS = ['Spammer', 'Scout', 'Spiker', 'Double', 'Side Turret'];
+export const BASE_TOWERS = ['Spammer', 'Scout', 'Shotgun', 'Double', 'Side Turret', 'Spiker'];
 
 export const CANVAS_WIDTH = 720;
 export const CANVAS_HEIGHT = 470;

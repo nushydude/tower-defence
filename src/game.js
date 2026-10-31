@@ -366,7 +366,7 @@ export class GameModel {
           const aimAngle = tower.angle !== undefined ? tower.angle : Math.atan2(target.y - tower.y, target.x - tower.x);
 
           if (def.multiDir) {
-            // Multi-directional Turrets (Side Turret, Fourway, Eightway, ALLSPIKER)
+            // Multi-directional Turrets (Side Turret, Fourway, Eightway, ALLSPIKER, Nova, Cyclone, Vortex)
             def.multiDir.forEach((offsetAngle) => {
               const shotAngle = aimAngle + offsetAngle;
               const vx = Math.cos(shotAngle);
@@ -383,8 +383,52 @@ export class GameModel {
                 r: def.isSpiker ? 5.5 : 4
               });
             });
+          } else if (def.isTwinFlank) {
+            // Twin Flank: 2 parallel forward shots and 2 parallel rear shots
+            [0, Math.PI].forEach((baseAngle) => {
+              const shotAngle = aimAngle + baseAngle;
+              const fx = Math.cos(shotAngle);
+              const fy = Math.sin(shotAngle);
+              const px = -fy;
+              const py = fx;
+              [-5, 5].forEach((offset) => {
+                this.state.bullets.push({
+                  x: tower.x + px * offset + fx * 15,
+                  y: tower.y + py * offset + fy * 15,
+                  vx: fx,
+                  vy: fy,
+                  dmg: def.dmg,
+                  speed: 350,
+                  rangeLeft: def.range + 35,
+                  isParallel: true,
+                  r: 3.0
+                });
+              });
+            });
+          } else if (def.fanAngles) {
+            // Fan Spread salvos (Flak Cannon, Spreadshot, Hydra, Trident)
+            def.fanAngles.forEach((relAngle) => {
+              const shotAngle = aimAngle + relAngle;
+              const vx = Math.cos(shotAngle);
+              const vy = Math.sin(shotAngle);
+              this.state.bullets.push({
+                x: tower.x + vx * 16,
+                y: tower.y + vy * 16,
+                vx,
+                vy,
+                dmg: def.dmg,
+                speed: def.bulletSpeed || 350,
+                rangeLeft: def.range + 35,
+                isFanBullet: true,
+                isTrident: Boolean(def.isTrident),
+                isSpikeTriangle: Boolean(def.isTrident),
+                isPiercing: Boolean(def.pierceCount && def.pierceCount > 1),
+                pierceLeft: def.pierceCount || 1,
+                r: def.bulletR || (def.isTrident ? 5.5 : 3.0)
+              });
+            });
           } else if (def.parallelShots) {
-            // Multi-barrel parallel volleys (Double, Triple, Quadruple, Double Spiker, Dual Thunder)
+            // Multi-barrel parallel volleys (Double, Triple, Quadruple, Penta, Double Spiker, Dual Thunder)
             const fx = Math.cos(aimAngle);
             const fy = Math.sin(aimAngle);
             const px = -fy;
@@ -405,6 +449,40 @@ export class GameModel {
                 r: def.bulletR || (def.isSpiker ? 5.0 : 3.0)
               });
             });
+          } else if (def.isCitadel) {
+            // Citadel: 12-point star fortress with 6 slow spikes + 6 machine gun bullets
+            for (let i = 0; i < 6; i++) {
+              const a = aimAngle + (i * Math.PI) / 3;
+              const vx = Math.cos(a);
+              const vy = Math.sin(a);
+              this.state.bullets.push({
+                x: tower.x + vx * 16,
+                y: tower.y + vy * 16,
+                vx,
+                vy,
+                dmg: def.dmg,
+                speed: 175,
+                rangeLeft: def.range + 35,
+                isSpikeTriangle: true,
+                r: 6.5
+              });
+            }
+            for (let i = 0; i < 6; i++) {
+              const a = aimAngle + Math.PI / 6 + (i * Math.PI) / 3;
+              const vx = Math.cos(a);
+              const vy = Math.sin(a);
+              this.state.bullets.push({
+                x: tower.x + vx * 16,
+                y: tower.y + vy * 16,
+                vx,
+                vy,
+                dmg: Math.round(def.dmg * 0.85),
+                speed: 350,
+                rangeLeft: def.range + 35,
+                isBastionBullet: true,
+                r: 4.5
+              });
+            }
           } else if (def.isBastion) {
             // Bastion: 3 spike triangles in 3 directions (0, 120, 240 deg), with a bullet in between each (60, 180, 300 deg)
             const spikeOffsets = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
@@ -445,6 +523,40 @@ export class GameModel {
                 r: 4.5
               });
             });
+          } else if (def.isPiercingLance) {
+            // Heavy armor-piercing kinetic lance (Ballista, Javelin)
+            const fx = Math.cos(aimAngle);
+            const fy = Math.sin(aimAngle);
+            this.state.bullets.push({
+              x: tower.x + fx * 16,
+              y: tower.y + fy * 16,
+              vx: fx,
+              vy: fy,
+              dmg: def.dmg,
+              speed: def.bulletSpeed || 240,
+              rangeLeft: def.range + 35,
+              isSpikeTriangle: true,
+              isPiercing: true,
+              pierceLeft: def.pierceCount || 2,
+              r: 6.5
+            });
+          } else if (def.isRailgun) {
+            // Electromagnetic hyper-velocity railgun beam
+            const fx = Math.cos(aimAngle);
+            const fy = Math.sin(aimAngle);
+            this.state.bullets.push({
+              x: tower.x + fx * 18,
+              y: tower.y + fy * 18,
+              vx: fx,
+              vy: fy,
+              dmg: def.dmg,
+              speed: def.bulletSpeed || 520,
+              rangeLeft: def.range + 45,
+              isRailgun: true,
+              isPiercing: true,
+              pierceLeft: def.pierceCount || 4,
+              r: 6.0
+            });
           } else if (def.isSpiker) {
             // Single Spiker forward slow triangle
             const fx = Math.cos(aimAngle);
@@ -461,57 +573,60 @@ export class GameModel {
               r: 5.5
             });
           } else if (def.isAtomic) {
-              // Atomic Turret: Fires an atomic core that multiplies into more the further it goes
-              const vx = Math.cos(aimAngle);
-              const vy = Math.sin(aimAngle);
-              this.state.bullets.push({
-                x: tower.x + vx * 14,
-                y: tower.y + vy * 14,
-                vx,
-                vy,
-                angle: aimAngle,
-                dmg: def.dmg,
-                speed: 340,
-                rangeLeft: def.range + 30,
-                isAtomic: true,
-                distTraveled: 0,
-                nextSplitDist: 60,
-                splitCount: 0,
-                maxSplits: 3,
-                r: 5.5
-              });
-            } else if (def.isGamma) {
-              // Gamma Turret: Rapid-fire expanding radiation orb that grows larger and more damaging the further it goes
-              const vx = Math.cos(aimAngle);
-              const vy = Math.sin(aimAngle);
-              this.state.bullets.push({
-                x: tower.x + vx * 14,
-                y: tower.y + vy * 14,
-                vx,
-                vy,
-                baseDmg: def.dmg,
-                dmg: def.dmg,
-                speed: 340,
-                rangeLeft: def.range + 30,
-                maxRange: def.range + 30,
-                distTraveled: 0,
-                isGamma: true,
-                initialR: 3.5,
-                maxR: 16,
-                r: 3.5
-              });
-            } else {
-              // Standard or exploding bullet
-              this.state.bullets.push({
-                x: tower.x,
-                y: tower.y,
-                target,
-                dmg: def.dmg,
-                speed: 330,
-                burstShards: def.burstShards || 0,
-                shardDmg: def.shardDmg || 0
-              });
-            }
+            // Atomic Turret: Fires an atomic core that multiplies into more the further it goes
+            const vx = Math.cos(aimAngle);
+            const vy = Math.sin(aimAngle);
+            this.state.bullets.push({
+              x: tower.x + vx * 14,
+              y: tower.y + vy * 14,
+              vx,
+              vy,
+              angle: aimAngle,
+              dmg: def.dmg,
+              speed: 340,
+              rangeLeft: def.range + 30,
+              isAtomic: true,
+              distTraveled: 0,
+              nextSplitDist: 60,
+              splitCount: 0,
+              maxSplits: 3,
+              r: 5.5
+            });
+          } else if (def.isGamma) {
+            // Gamma Turret: Rapid-fire expanding radiation orb that grows larger and more damaging the further it goes
+            const vx = Math.cos(aimAngle);
+            const vy = Math.sin(aimAngle);
+            this.state.bullets.push({
+              x: tower.x + vx * 14,
+              y: tower.y + vy * 14,
+              vx,
+              vy,
+              baseDmg: def.dmg,
+              dmg: def.dmg,
+              speed: 340,
+              rangeLeft: def.range + 30,
+              maxRange: def.range + 30,
+              distTraveled: 0,
+              isGamma: true,
+              initialR: 3.5,
+              maxR: 16,
+              r: 3.5
+            });
+          } else {
+            // Standard, explosive, or cluster bullet
+            this.state.bullets.push({
+              x: tower.x,
+              y: tower.y,
+              target,
+              dmg: def.dmg,
+              speed: def.bulletSpeed || 330,
+              burstShards: def.burstShards || 0,
+              shardDmg: def.shardDmg || 0,
+              isExplosive: Boolean(def.isExplosive),
+              splashRadius: def.splashRadius || 0,
+              splashDmg: def.splashDmg || 0
+            });
+          }
             tower.cool = def.rate;
           }
         });
@@ -558,9 +673,22 @@ export class GameModel {
             if (!enemy.dead && enemy.hp > 0) {
               const hitDist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
               if (hitDist <= (bullet.r || 4) + enemy.r) {
-                enemy.hp -= bullet.dmg;
-                bullet.dead = true;
-                break;
+                if (bullet.isPiercing) {
+                  bullet.hitEnemies = bullet.hitEnemies || [];
+                  if (!bullet.hitEnemies.includes(enemy)) {
+                    bullet.hitEnemies.push(enemy);
+                    enemy.hp -= bullet.dmg;
+                    bullet.pierceLeft = (bullet.pierceLeft || 1) - 1;
+                    if (bullet.pierceLeft <= 0) {
+                      bullet.dead = true;
+                      break;
+                    }
+                  }
+                } else {
+                  enemy.hp -= bullet.dmg;
+                  bullet.dead = true;
+                  break;
+                }
               }
             }
           }
@@ -637,7 +765,20 @@ export class GameModel {
             target.hp -= bullet.dmg;
             bullet.dead = true;
 
-            // Explode into non-exploding outward shards if configured (Scatter = 5, Cluster = 10)
+            // Area of effect splash damage (Bombard, Colossus)
+            if (bullet.isExplosive && bullet.splashRadius > 0) {
+              for (const otherEnemy of this.state.enemies) {
+                if (otherEnemy !== target && !otherEnemy.dead && otherEnemy.hp > 0) {
+                  const splashDist = Math.hypot(otherEnemy.x - bullet.x, otherEnemy.y - bullet.y);
+                  if (splashDist <= bullet.splashRadius + otherEnemy.r) {
+                    const falloff = 1 - (splashDist / (bullet.splashRadius + otherEnemy.r)) * 0.5;
+                    otherEnemy.hp -= Math.max(5, Math.round((bullet.splashDmg || bullet.dmg * 0.5) * falloff));
+                  }
+                }
+              }
+            }
+
+            // Explode into non-exploding outward shards if configured (Scatter = 5, Cluster = 10, Supercluster = 16)
             if (bullet.burstShards > 0) {
               const shardCount = bullet.burstShards;
               const angleStep = (Math.PI * 2) / shardCount;

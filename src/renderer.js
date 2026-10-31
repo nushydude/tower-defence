@@ -353,6 +353,223 @@ function drawTowerBarrels(ctx, tower, def) {
     return;
   }
 
+  if (def.isCitadel) {
+    // Citadel: 12-point star fortress with 6 spikes + 6 machine guns
+    ctx.lineCap = 'butt';
+    // 6 machine gun barrels
+    for (let i = 0; i < 6; i++) {
+      const bAngle = angle + Math.PI / 6 + (i * Math.PI) / 3;
+      const bCos = Math.cos(bAngle);
+      const bSin = Math.sin(bAngle);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.0;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + bCos * 6, tower.y + bSin * 6);
+      ctx.lineTo(tower.x + bCos * 17.5, tower.y + bSin * 17.5);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + bCos * 14.5, tower.y + bSin * 14.5);
+      ctx.lineTo(tower.x + bCos * 17.5, tower.y + bSin * 17.5);
+      ctx.stroke();
+    }
+    // 6 armored lance spikes
+    for (let i = 0; i < 6; i++) {
+      const sAngle = angle + (i * Math.PI) / 3;
+      const sCos = Math.cos(sAngle);
+      const sSin = Math.sin(sAngle);
+      const sPx = -sSin;
+      const sPy = sCos;
+      ctx.beginPath();
+      ctx.moveTo(tower.x - sPx * 2.8 + sCos * 6, tower.y - sPy * 2.8 + sSin * 6);
+      ctx.lineTo(tower.x + sCos * 20, tower.y + sSin * 20);
+      ctx.lineTo(tower.x + sPx * 2.8 + sCos * 6, tower.y + sPy * 2.8 + sSin * 6);
+      ctx.closePath();
+      ctx.fillStyle = '#c2410c';
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+
+  if (def.isTrident) {
+    // 3 heavy forward piercing lances
+    ctx.lineCap = 'butt';
+    [-0.14, 0, 0.14].forEach((offsetA) => {
+      const tAngle = angle + offsetA;
+      const tCos = Math.cos(tAngle);
+      const tSin = Math.sin(tAngle);
+      const tPx = -tSin;
+      const tPy = tCos;
+      ctx.beginPath();
+      ctx.moveTo(tower.x - tPx * 2.8 + tCos * 6, tower.y - tPy * 2.8 + tSin * 6);
+      ctx.lineTo(tower.x + tCos * 21, tower.y + tSin * 21);
+      ctx.lineTo(tower.x + tPx * 2.8 + tCos * 6, tower.y + tPy * 2.8 + tSin * 6);
+      ctx.closePath();
+      ctx.fillStyle = '#dc2626';
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
+
+  if (def.isPiercingLance) {
+    // Ballista / Javelin heavy armor-piercing lance with stabilizer wings
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = '#7c2d12';
+    ctx.lineWidth = 3.8;
+    ctx.beginPath();
+    ctx.moveTo(tower.x - px * 9 + fx * 10, tower.y - py * 9 + fy * 10);
+    ctx.lineTo(tower.x + px * 9 + fx * 10, tower.y + py * 9 + fy * 10);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(tower.x - px * 3.5 + fx * 6, tower.y - py * 3.5 + fy * 6);
+    ctx.lineTo(tower.x + fx * 23, tower.y + fy * 23);
+    ctx.lineTo(tower.x + px * 3.5 + fx * 6, tower.y + py * 3.5 + fy * 6);
+    ctx.closePath();
+    ctx.fillStyle = def.color || '#ea580c';
+    ctx.fill();
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (def.isRailgun) {
+    // Electromagnetic hyper-velocity rail assembly
+    ctx.lineCap = 'square';
+    [-3.2, 3.2].forEach((offset) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 3.6;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+      ctx.lineTo(tower.x + px * offset + fx * 26, tower.y + py * offset + fy * 26);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
+      ctx.lineTo(tower.x + px * offset + fx * 26, tower.y + py * offset + fy * 26);
+      ctx.stroke();
+    });
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(tower.x + fx * 8, tower.y + fy * 8);
+    ctx.lineTo(tower.x + fx * 24, tower.y + fy * 24);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (def.isVulcan) {
+    // 4 heavy rotary minigun barrels with circular thermal heat sink
+    ctx.lineCap = 'butt';
+    [-4.5, -1.5, 1.5, 4.5].forEach((offset) => {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+      ctx.lineTo(tower.x + px * offset + fx * 21, tower.y + py * offset + fy * 21);
+      ctx.stroke();
+    });
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.moveTo(tower.x - px * 5.5 + fx * 15, tower.y - py * 5.5 + fy * 15);
+    ctx.lineTo(tower.x + px * 5.5 + fx * 15, tower.y + py * 5.5 + fy * 15);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (def.isSupercluster) {
+    // Giant quad-vented cluster artillery mortar
+    ctx.lineCap = 'square';
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 9.5;
+    ctx.beginPath();
+    ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+    ctx.lineTo(tower.x + fx * 19, tower.y + fy * 19);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#e11d48';
+    ctx.lineWidth = 4.2;
+    ctx.beginPath();
+    ctx.moveTo(tower.x + fx * 15.5, tower.y + fy * 15.5);
+    ctx.lineTo(tower.x + fx * 19, tower.y + fy * 19);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (def.isTwinFlank) {
+    // Twin Flank: 2 forward barrels at [-5, 5] and 2 rear barrels at [-5, 5]
+    ctx.lineCap = 'square';
+    [0, Math.PI].forEach((baseA) => {
+      const bAngle = angle + baseA;
+      const bCos = Math.cos(bAngle);
+      const bSin = Math.sin(bAngle);
+      const bPx = -bSin;
+      const bPy = bCos;
+      [-5, 5].forEach((offset) => {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.8;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + bPx * offset + bCos * 5, tower.y + bPy * offset + bSin * 5);
+        ctx.lineTo(tower.x + bPx * offset + bCos * 17.5, tower.y + bPy * offset + bSin * 17.5);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + bPx * offset + bCos * 14.5, tower.y + bPy * offset + bSin * 14.5);
+        ctx.lineTo(tower.x + bPx * offset + bCos * 17.5, tower.y + bPy * offset + bSin * 17.5);
+        ctx.stroke();
+      });
+    });
+    ctx.restore();
+    return;
+  }
+
+  if (def.fanAngles) {
+    // Fan battery (Flak Cannon, Spreadshot, Hydra)
+    ctx.lineCap = 'square';
+    const count = def.fanAngles.length;
+    const bWidth = count >= 7 ? 2.6 : count >= 5 ? 3.0 : 3.6;
+    def.fanAngles.forEach((relA) => {
+      const fAngle = angle + relA;
+      const fCos = Math.cos(fAngle);
+      const fSin = Math.sin(fAngle);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = bWidth;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fCos * 6, tower.y + fSin * 6);
+      ctx.lineTo(tower.x + fCos * 17.5, tower.y + fSin * 17.5);
+      ctx.stroke();
+
+      ctx.strokeStyle = def.color || '#a855f7';
+      ctx.lineWidth = Math.max(1.8, bWidth - 0.6);
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fCos * 14.5, tower.y + fSin * 14.5);
+      ctx.lineTo(tower.x + fCos * 17.5, tower.y + fSin * 17.5);
+      ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
+
   if (def.isBastion) {
     // Bastion: 3 spike shooters in 3 directions, with a cannon barrel in between each
     ctx.lineCap = 'butt';
@@ -630,6 +847,78 @@ function drawTowerBarrels(ctx, tower, def) {
       ctx.beginPath();
       ctx.moveTo(tower.x - px * 3.8 + fx * 23, tower.y - py * 3.8 + fy * 23);
       ctx.lineTo(tower.x + px * 3.8 + fx * 23, tower.y + py * 3.8 + fy * 23);
+      ctx.stroke();
+      break;
+    }
+    case 'Ranger': {
+      // Long-barrel tactical sniper with dual port compensator
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.8;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 26, tower.y + fy * 26);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 21, tower.y + fy * 21);
+      ctx.lineTo(tower.x + fx * 26, tower.y + fy * 26);
+      ctx.stroke();
+      break;
+    }
+    case 'Pulsar': {
+      // Dual plasma emitter prongs with emerald orb
+      ctx.lineCap = 'round';
+      [-3.2, 3.2].forEach((offset) => {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(tower.x + px * offset + fx * 6, tower.y + py * offset + fy * 6);
+        ctx.lineTo(tower.x + px * offset + fx * 18, tower.y + py * offset + fy * 18);
+        ctx.stroke();
+      });
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(tower.x + fx * 16, tower.y + fy * 16, 3.5, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    }
+    case 'Bombard': {
+      // Heavy siege mortar
+      ctx.lineCap = 'square';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 8.5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 18, tower.y + fy * 18);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 3.6;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 15, tower.y + fy * 15);
+      ctx.lineTo(tower.x + fx * 18, tower.y + fy * 18);
+      ctx.stroke();
+      break;
+    }
+    case 'Colossus': {
+      // Gigantic siege cannon with golden shield
+      ctx.lineCap = 'square';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 11;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 6, tower.y + fy * 6);
+      ctx.lineTo(tower.x + fx * 22, tower.y + fy * 22);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#c2410c';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + fx * 17, tower.y + fy * 17);
+      ctx.lineTo(tower.x + fx * 22, tower.y + fy * 22);
       ctx.stroke();
       break;
     }
@@ -1004,6 +1293,38 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.arc(bullet.x, bullet.y, Math.max(1.5, r * 0.42), 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
+    } else if (bullet.isRailgun) {
+      // Hyper-velocity cyan beam round with bright white core
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, r * 1.5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(253, 224, 71, 0.6)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    } else if (bullet.isExplosive) {
+      // Heavy explosive artillery mortar shell
+      ctx.fillStyle = '#f97316';
+      ctx.fill();
+      ctx.strokeStyle = '#431407';
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      // Hot glowing core
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, r * 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = '#fef08a';
+      ctx.fill();
+    } else if (bullet.isFanBullet) {
+      ctx.fillStyle = '#e9d5ff';
+      ctx.fill();
+      ctx.strokeStyle = '#9333ea';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     } else if (bullet.isShard) {
       // Outward bursting shards (warm fiery spark)
       ctx.fillStyle = '#ff7b72';
