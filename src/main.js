@@ -88,7 +88,12 @@ function updateUI() {
       nextUpgrades.forEach((nextName) => {
         const upgradeDef = TOWER_DEFINITIONS[nextName];
         const btn = document.createElement('button');
-        btn.textContent = `Upgrade to ${nextName} · ${upgradeDef.cost}`;
+        if (nextName.includes('Railgun')) {
+          btn.className = 'btn-upgrade-railgun';
+          btn.innerHTML = `⚡ Upgrade to ${nextName} · ${upgradeDef.cost}`;
+        } else {
+          btn.textContent = `Upgrade to ${nextName} · ${upgradeDef.cost}`;
+        }
         btn.dataset.cost = upgradeDef.cost;
         btn.onclick = (e) => {
           e.stopPropagation();

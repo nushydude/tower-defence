@@ -927,6 +927,21 @@ button.shop-btn-railgun:hover:not(:disabled) {
   border-color: #38bdf8;
 }
 
+/* Glowing Railgun Upgrade Button */
+button.btn-upgrade-railgun {
+  border: 2px solid #38bdf8 !important;
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.22) !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+  font-weight: 800;
+}
+
+button.btn-upgrade-railgun:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.4) !important;
+  border-color: #7dd3fc !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.7);
+}
+
 @media (max-width: 600px) {
   body {
     padding: 10px;

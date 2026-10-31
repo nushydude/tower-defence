@@ -88,7 +88,7 @@ export const TOWER_DEFINITIONS = {
     range: 200,
     color: '#faff7c',
     abbr: 'ACE',
-    next: ['Ranger']
+    next: ['Ranger', 'Railgun']
   },
   Ranger: {
     cost: 250,

@@ -890,7 +890,7 @@ export class GameModel {
 
     // Check if an existing tower was clicked
     const clickedTower = [...this.state.towers].reverse().find(
-      (t) => Math.hypot(t.x - x, t.y - y) < 18
+      (t) => Math.hypot(t.x - x, t.y - y) < 26
     );
 
     if (clickedTower) {
