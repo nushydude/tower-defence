@@ -39,9 +39,38 @@ function showMessage(text) {
 let pendingUpdateWorker = null;
 let updateDismissed = false;
 
+function showScreen(screen) {
+  const homeEl = $('home');
+  const gameEl = $('game');
+  if (screen === 'game') {
+    if (homeEl) {
+      homeEl.classList.remove('active');
+      homeEl.classList.add('hidden');
+      homeEl.style.display = 'none';
+    }
+    if (gameEl) {
+      gameEl.classList.remove('hidden');
+      gameEl.classList.add('active');
+      gameEl.style.display = ''; // Clear inline display so responsive CSS (grid on desktop, flex on mobile) takes effect
+    }
+  } else {
+    if (gameEl) {
+      gameEl.classList.remove('active');
+      gameEl.classList.add('hidden');
+      gameEl.style.display = 'none';
+    }
+    if (homeEl) {
+      homeEl.classList.remove('hidden');
+      homeEl.classList.add('active');
+      homeEl.style.display = '';
+    }
+  }
+}
+
 function isGameActive() {
   const gameRunning = game && game.state && game.state.running && !game.state.over;
-  const inGameScreen = $('game') && $('game').style.display !== 'none';
+  const gameEl = $('game');
+  const inGameScreen = Boolean(gameEl && gameEl.classList.contains('active') && gameEl.style.display !== 'none');
   return Boolean(gameRunning && inGameScreen);
 }
 
@@ -524,10 +553,10 @@ function hideDeleteConfirm() {
 function enterGameScreen() {
   lastRenderedTowerId = null;
   lastRenderedTowerType = null;
-  $('home').style.display = 'none';
-  $('game').style.display = 'flex';
+  showScreen('game');
   renderShop();
   updateUI();
+  resizeCanvas();
   showMessage(`Welcome to ${game.getCurrentMap().name}! Build your towers.`);
 }
 
@@ -703,7 +732,7 @@ window.addEventListener('keydown', (e) => {
   }
 
   // Active Game screen controls
-  if (game.state && $('game').style.display !== 'none') {
+  if (game.state && $('game').classList.contains('active')) {
     if (e.code === 'Space') {
       e.preventDefault();
       game.startStage();
@@ -775,8 +804,7 @@ $('homebtn').onclick = () => {
   if (game.state) game.state.running = false;
   game.saveGame();
   renderSlotList();
-  $('game').style.display = 'none';
-  $('home').style.display = 'block';
+  showScreen('home');
   checkAndShowUpdatePrompt();
 };
 
@@ -820,7 +848,7 @@ if ($('nav-tab-tower')) {
 }
 
 canvas.addEventListener('pointerdown', (ev) => {
-  if (!game.state || $('game').style.display === 'none') return;
+  if (!game.state || !$('game').classList.contains('active')) return;
   const rect = canvas.getBoundingClientRect();
   const x = ((ev.clientX - rect.left) * CANVAS_WIDTH) / rect.width;
   const y = ((ev.clientY - rect.top) * CANVAS_HEIGHT) / rect.height;
@@ -843,13 +871,15 @@ function gameLoop(now) {
   const dt = Math.min(0.05, (now - lastTime) / 1000 || 0);
   lastTime = now;
 
-  game.update(dt, TOWER_DEFINITIONS);
+  if (game.state && $('game').classList.contains('active')) {
+    game.update(dt, TOWER_DEFINITIONS);
 
-  resizeCanvas();
-  ctx.save();
-  ctx.scale(canvas.width / CANVAS_WIDTH, canvas.height / CANVAS_HEIGHT);
-  renderGame(ctx, game.state, TOWER_DEFINITIONS);
-  ctx.restore();
+    resizeCanvas();
+    ctx.save();
+    ctx.scale(canvas.width / CANVAS_WIDTH, canvas.height / CANVAS_HEIGHT);
+    renderGame(ctx, game.state, TOWER_DEFINITIONS);
+    ctx.restore();
+  }
 
   requestAnimationFrame(gameLoop);
 }
