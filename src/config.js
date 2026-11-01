@@ -611,8 +611,8 @@ export const TECH_TREE_BRANCHES = [
   }
 ];
 
-export const CANVAS_WIDTH = 720;
-export const CANVAS_HEIGHT = 470;
+export const CANVAS_WIDTH = 480;
+export const CANVAS_HEIGHT = 720;
 
 export const ENEMY_TYPES = {
   square: {
@@ -831,16 +831,16 @@ export const MAP_CONFIGS = {
     pathDash: '#f2e5a4',
     waterFeatures: false,
     path: [
-      [-20, 95],
-      [145, 95],
-      [145, 205],
-      [310, 205],
-      [310, 105],
-      [490, 105],
-      [490, 320],
-      [630, 320],
-      [630, 405],
-      [740, 405]
+      [-20, 90],
+      [390, 90],
+      [390, 220],
+      [90, 220],
+      [90, 360],
+      [390, 360],
+      [390, 500],
+      [90, 500],
+      [90, 630],
+      [500, 630]
     ]
   },
   desert: {
@@ -855,14 +855,16 @@ export const MAP_CONFIGS = {
     pathDash: '#b58348',
     waterFeatures: false,
     path: [
-      [-20, 350],
-      [180, 350],
-      [180, 150],
-      [360, 150],
-      [360, 370],
-      [550, 370],
-      [550, 120],
-      [740, 120]
+      [390, -20],
+      [390, 160],
+      [90, 160],
+      [90, 320],
+      [390, 320],
+      [390, 480],
+      [90, 480],
+      [90, 630],
+      [390, 630],
+      [390, 740]
     ]
   },
   crossroads: {
@@ -877,13 +879,14 @@ export const MAP_CONFIGS = {
     pathDash: '#fbbf24',
     waterFeatures: false,
     path: [
-      [360, 490], // Enter from South road
-      [360, 80],  // March North straight through the Crossroads intersection (360, 235)
-      [120, 80],  // Turn West along North plaza
-      [120, 390], // Turn South along West boulevard
-      [240, 390], // Turn East along South avenue
-      [240, 235], // Turn North to align with East-West highway
-      [740, 235]  // Cross straight through Crossroads intersection (360, 235) again and exit East
+      [240, -20],  // Enter from North
+      [240, 140],  // March South into North plaza
+      [80, 140],   // Turn West
+      [80, 480],   // Turn South down West boulevard
+      [400, 480],  // Turn East across South sector
+      [400, 240],  // Turn North up East boulevard
+      [240, 240],  // Turn West to align with central Grand Boulevard
+      [240, 740]   // March South straight through the Crossroads intersection (240, 360) and exit South
     ]
   }
 };

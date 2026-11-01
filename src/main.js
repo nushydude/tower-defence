@@ -4,7 +4,9 @@ import {
   BASE_TOWERS,
   MAP_CONFIGS,
   TECH_TREE_BRANCHES,
-  getBossConfigForWave
+  getBossConfigForWave,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT
 } from './config.js';
 import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
@@ -791,35 +793,19 @@ if ($('nav-tab-tower')) {
   };
 }
 
-if ($('btn-rotate-hint')) {
-  $('btn-rotate-hint').onclick = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen?.();
-      }
-      if (screen.orientation?.lock) {
-        await screen.orientation.lock('landscape').catch(() => {});
-      }
-    } catch (e) {
-      // Fullscreen not supported or rejected
-    }
-    showMessage('Tip: Rotate phone sideways for maximum widescreen view! 🔄');
-  };
-}
-
 canvas.addEventListener('pointerdown', (ev) => {
   if (!game.state || $('game').style.display === 'none') return;
   const rect = canvas.getBoundingClientRect();
-  const x = ((ev.clientX - rect.left) * 720) / rect.width;
-  const y = ((ev.clientY - rect.top) * 470) / rect.height;
+  const x = ((ev.clientX - rect.left) * CANVAS_WIDTH) / rect.width;
+  const y = ((ev.clientY - rect.top) * CANVAS_HEIGHT) / rect.height;
   game.handleCanvasClick(x, y, TOWER_DEFINITIONS);
 });
 
 // HiDPI Canvas Backing Resolution
 function resizeCanvas() {
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
-  const targetW = Math.round(720 * dpr);
-  const targetH = Math.round(470 * dpr);
+  const targetW = Math.round(CANVAS_WIDTH * dpr);
+  const targetH = Math.round(CANVAS_HEIGHT * dpr);
   if (canvas.width !== targetW || canvas.height !== targetH) {
     canvas.width = targetW;
     canvas.height = targetH;
@@ -835,7 +821,7 @@ function gameLoop(now) {
 
   resizeCanvas();
   ctx.save();
-  ctx.scale(canvas.width / 720, canvas.height / 470);
+  ctx.scale(canvas.width / CANVAS_WIDTH, canvas.height / CANVAS_HEIGHT);
   renderGame(ctx, game.state, TOWER_DEFINITIONS);
   ctx.restore();
 

@@ -867,13 +867,14 @@ button:disabled {
 canvas#map {
   max-width: 100%;
   max-height: 100%;
-  aspect-ratio: 720 / 470;
+  aspect-ratio: 480 / 720;
   object-fit: contain;
   display: block;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .boss-banner {
@@ -1111,15 +1112,15 @@ canvas#map {
   background: rgba(239, 68, 68, 0.45);
 }
 
-/* Drawer Content: Ultra-Low Profile Turret Arsenal & Inspector (~62px total) */
+/* Drawer Content: Ultra-Low Profile Turret Arsenal & Inspector */
 .dock-drawer {
   flex: 0 0 auto;
   background: #090f1a;
   padding: 4px 8px;
   box-sizing: border-box;
   border-top: 1px solid #162438;
-  min-height: 62px;
-  max-height: 66px;
+  min-height: 68px;
+  max-height: 72px;
   display: flex;
   align-items: center;
   overflow-x: auto;
@@ -1144,17 +1145,17 @@ canvas#map {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 1px 0;
+  padding: 2px 0;
 }
 
 .turret-dock::-webkit-scrollbar {
   display: none;
 }
 
-/* Compact 56px Turret Dock Card */
+/* Compact Turret Dock Card with zero text clipping */
 .turret-dock-card {
-  flex: 0 0 66px;
-  height: 54px;
+  flex: 0 0 68px;
+  height: 60px;
   background: linear-gradient(180deg, #162438 0%, #101928 100%);
   border: 1px solid #283e5c;
   border-radius: 8px;
@@ -1224,20 +1225,23 @@ canvas#map {
   font-weight: 700;
   color: #f1f5f9;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 60px;
-  line-height: 1;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: 64px;
+  line-height: 1.25;
+  margin: 1px 0;
+  text-align: center;
 }
 
 .dock-card-cost {
   font-size: 9px;
   font-weight: 800;
   color: #fbbf24;
-  background: rgba(251, 191, 36, 0.12);
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.25);
   padding: 1px 5px;
   border-radius: 6px;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 /* Compact Selected Tower Inspector Bar */
@@ -1729,36 +1733,195 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
    RESPONSIVE DESIGN: iPHONE, ANDROID, iPAD & DESKTOP PC
    ========================================================= */
 
-/* Desktop PC (> 1024px) */
-@media (min-width: 1025px) {
-  .turret-dock {
+/* Desktop PC (> 900px): Dedicated Right-Hand Controls Sidebar, Portrait Battlefield Left */
+@media (min-width: 900px) {
+  #game {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: auto auto auto 1fr auto;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow: hidden;
+    background: #060a13;
+    border-left: 1px solid #162438;
+    border-right: 1px solid #162438;
+  }
+
+  /* Left Battlefield Column: Keeps Map Portrait */
+  .canvas-wrapper {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    border-right: 1px solid #1a273b;
+    border-bottom: none;
+    background: #020610;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  canvas#map {
+    height: calc(100vh - 24px);
+    max-height: 96vh;
+    width: auto;
+    aspect-ratio: 480 / 720;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Right-Hand Controls Sidebar */
+  .hud-stats-row {
+    grid-column: 2;
+    grid-row: 1;
+    border-bottom: 1px solid #1a273b;
+    padding: 12px 14px;
+    background: rgba(10, 16, 28, 0.98);
+  }
+
+  .combat-intel-bar {
+    grid-column: 2;
+    grid-row: 2;
+    border-bottom: 1px solid #1a273b;
+    padding: 8px 14px;
+    height: auto;
+    background: rgba(12, 18, 32, 0.98);
+  }
+
+  .build-alert-banner {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 6px 12px;
+  }
+
+  .dock-drawer {
+    grid-column: 2;
+    grid-row: 4;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-top: none;
+    border-bottom: 1px solid #1a273b;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     gap: 10px;
+    background: #080d18;
   }
+
+  .shop-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .turret-dock {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    overflow-x: visible;
+    width: 100%;
+  }
+
   .turret-dock-card {
-    flex: 0 0 74px;
-    height: 58px;
+    flex: none;
+    width: 100%;
+    height: 64px;
+    padding: 6px 4px;
   }
+
+  .dock-card-name {
+    font-size: 11px;
+    max-width: none;
+  }
+
+  .dock-card-cost {
+    font-size: 10px;
+  }
+
+  .compact-inspector-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px;
+    background: linear-gradient(180deg, #142136 0%, #0e1726 100%);
+    border: 1px solid #2a4163;
+    border-radius: 10px;
+  }
+
+  .inspector-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .mini-inspector-btn {
+    flex: 1;
+    height: 34px;
+    font-size: 11px;
+  }
+
+  .upgrades-horizontal-scroll {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    overflow-x: visible;
+  }
+
+  .upgrade-dock-card {
+    flex: none;
+    width: 100%;
+    height: 56px;
+    padding: 6px 8px;
+  }
+
   .mobile-bottom-nav {
-    justify-content: center;
-    gap: 20px;
+    grid-column: 2;
+    grid-row: 5;
+    height: 66px;
+    border-top: 1px solid #1a273b;
+    padding: 8px 12px;
+    background: rgba(10, 16, 28, 0.98);
   }
-  .bottom-nav-item {
-    max-width: 90px;
+
+  .bottom-nav-primary-btn {
+    width: 62px;
+    height: 62px;
+    margin-top: -16px;
   }
+
+  .start-btn-icon {
+    font-size: 18px;
+  }
+
+  .start-btn-text {
+    font-size: 10px;
+  }
+
   .techtree-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* iPad & Tablets (601px - 1024px) */
-@media (min-width: 601px) and (max-width: 1024px) {
+/* iPad & Tablets in Portrait (601px - 899px) */
+@media (min-width: 601px) and (max-width: 899px) {
   .turret-dock {
     justify-content: center;
     gap: 8px;
   }
   .turret-dock-card {
-    flex: 0 0 70px;
+    flex: 0 0 74px;
+    height: 62px;
   }
   .slots-grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -1783,8 +1946,8 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     font-size: 10px;
   }
   .turret-dock-card {
-    flex: 0 0 62px;
-    height: 52px;
+    flex: 0 0 68px;
+    height: 60px;
   }
   .mobile-bottom-nav {
     height: 50px;
@@ -1827,8 +1990,8 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     font-size: 9px;
   }
   .turret-dock-card {
-    flex: 0 0 58px;
-    height: 50px;
+    flex: 0 0 62px;
+    height: 56px;
   }
   .bottom-nav-label {
     font-size: 8px;
@@ -1846,7 +2009,7 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   }
 }
 
-/* Mobile Landscape Mode (e.g. iPhone horizontal <= 500px height) */
+/* Mobile Landscape Mode (e.g. Phone horizontal <= 500px height) */
 @media (max-height: 500px) and (orientation: landscape) {
   #game {
     display: grid;

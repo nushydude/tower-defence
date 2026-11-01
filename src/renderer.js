@@ -59,44 +59,44 @@ function renderEnvironment(ctx, map) {
 
   // Special Crossroads Plaza: flagstone foundation, central crossing seal & warm corner lanterns
   if (map.id === 'crossroads') {
-    // Subtle connecting secondary avenue (West approach) to complete the visual 4-way crossroads
+    // Subtle connecting secondary avenue (East-West approach) intersecting at (240, 360)
     ctx.strokeStyle = map.pathOuter;
     ctx.lineWidth = 48;
     ctx.lineCap = 'butt';
     ctx.beginPath();
-    ctx.moveTo(-20, 235);
-    ctx.lineTo(240, 235);
+    ctx.moveTo(-20, 360);
+    ctx.lineTo(500, 360);
     ctx.stroke();
 
     ctx.strokeStyle = map.pathInner;
     ctx.lineWidth = 39;
     ctx.beginPath();
-    ctx.moveTo(-20, 235);
-    ctx.lineTo(240, 235);
+    ctx.moveTo(-20, 360);
+    ctx.lineTo(500, 360);
     ctx.stroke();
 
-    // Central circular stone plaza at the crossroads intersection (360, 235)
+    // Central circular stone plaza at the crossroads intersection (240, 360)
     ctx.fillStyle = '#263042';
     ctx.beginPath();
-    ctx.arc(360, 235, 68, 0, Math.PI * 2);
+    ctx.arc(240, 360, 68, 0, Math.PI * 2);
     ctx.fill();
 
     // Outer decorative stone ring
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.arc(360, 235, 68, 0, Math.PI * 2);
+    ctx.arc(240, 360, 68, 0, Math.PI * 2);
     ctx.stroke();
 
     // Inner bronze compass medallion ring
     ctx.strokeStyle = '#d97706';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(360, 235, 46, 0, Math.PI * 2);
+    ctx.arc(240, 360, 46, 0, Math.PI * 2);
     ctx.stroke();
 
     // 4-point golden star inlay at crossroads center
-    drawStar(ctx, 360, 235, 26, 10, 4, 0);
+    drawStar(ctx, 240, 360, 26, 10, 4, 0);
     ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
     ctx.fill();
     ctx.strokeStyle = '#fbbf24';
@@ -105,10 +105,10 @@ function renderEnvironment(ctx, map) {
 
     // 4 Corner guardpost braziers with glowing warm lantern halos
     const corners = [
-      [305, 180],
-      [415, 180],
-      [305, 290],
-      [415, 290]
+      [185, 305],
+      [295, 305],
+      [185, 415],
+      [295, 415]
     ];
     corners.forEach(([cx, cy]) => {
       // Warm lantern glow halo
@@ -1440,9 +1440,9 @@ export function renderGame(ctx, state, towerDefs) {
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
     ctx.font = 'bold 30px system-ui';
-    ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 220);
+    ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 16);
     ctx.font = '16px system-ui';
-    ctx.fillText('Press Restart Game to try again', CANVAS_WIDTH / 2, 252);
+    ctx.fillText('Press Restart Game to try again', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 16);
   }
 
   ctx.textAlign = 'left';
