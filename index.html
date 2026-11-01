@@ -154,36 +154,69 @@
         </div>
         <canvas id="map" width="720" height="470"></canvas>
         <div id="msg" class="floating-toast">Build your defence!</div>
+        <div class="floating-hud-corner">
+          <button id="auto" class="canvas-hud-pill">Auto: OFF</button>
+          <button id="speed" class="canvas-hud-pill">1×</button>
+        </div>
+        <button id="btn-rotate-hint" class="floating-rotate-btn" title="Rotate phone for widescreen battlefield">🔄 Widescreen</button>
       </div>
 
-      <!-- Zone 3: Native Mobile Command Console (Fills all remaining vertical space!) -->
-      <div class="command-console">
-        <!-- Active Build Alert Banner (Appears when placing a tower) -->
-        <div id="build-alert" class="build-alert-banner" style="display: none;"></div>
+      <!-- Zone 3: Live Wave Combat Radar / Tactical Intel Bar -->
+      <div id="combat-intel" class="combat-intel-bar">
+        <div class="intel-stage-info">
+          <div class="intel-wave-title">
+            <span id="intel-wave-text">STAGE 1 READY</span>
+            <span id="intel-enemy-count" class="intel-badge">Prep Phase</span>
+          </div>
+          <div class="intel-progress-track">
+            <div id="intel-progress-bar" class="intel-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
 
-        <!-- Selected Tower Inspector (Appears when tapping a placed tower) -->
+      <!-- Active Build Alert Banner (Appears when placing a tower) -->
+      <div id="build-alert" class="build-alert-banner" style="display: none;"></div>
+
+      <!-- Drawer Content: Selected Tower Inspector OR Low-Profile Turret Arsenal -->
+      <div id="dock-drawer" class="dock-drawer">
+        <!-- Selected Tower Inspector (Compact bar when tapping a placed tower) -->
         <div id="selected" class="selected-tower-panel" style="display: none;"></div>
 
         <!-- Upgrade Cards Deck -->
         <div id="upgrades" class="upgrades-container" style="display: none;"></div>
 
-        <!-- Deploy Turrets Shop Section -->
+        <!-- Low-Profile Turret Selection Dock (Single-Row Horizontal Carousel, ~58px) -->
         <div id="shop-section" class="shop-section">
-          <div class="console-section-title">
-            <span class="title-text">🛡️ DEPLOY ARSENAL</span>
-            <span class="console-subtitle">7 Base Disciplines</span>
-          </div>
-          <div id="shop" class="turret-grid"></div>
+          <div id="shop" class="turret-dock"></div>
         </div>
       </div>
 
-      <!-- Zone 4: Native Mobile Bottom Action Dock (Fixed to bottom edge) -->
-      <nav class="hud-actions" aria-label="Game Controls">
-        <button id="start" class="btn-hud-primary">▶ Start Stage</button>
-        <button id="auto" class="btn-hud-secondary">Auto: OFF</button>
-        <button id="speed" class="btn-hud-secondary">1×</button>
-        <button id="game-techtree-btn" class="btn-hud-secondary">📜 Tech</button>
-        <button id="homebtn" class="btn-hud-secondary">🏠 Home</button>
+      <!-- Zone 4: Native Mobile Bottom Navigation Bar (Docked to bottom edge) -->
+      <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <button id="nav-tab-arsenal" class="bottom-nav-item active" data-tab="arsenal">
+          <span class="bottom-nav-icon">🛡️</span>
+          <span class="bottom-nav-label">Arsenal</span>
+        </button>
+        
+        <button id="nav-tab-tower" class="bottom-nav-item" data-tab="tower">
+          <span class="bottom-nav-icon">⚡</span>
+          <span class="bottom-nav-label">Tower</span>
+        </button>
+        
+        <button id="start" class="bottom-nav-primary-btn" aria-label="Start Stage">
+          <span class="start-btn-icon">▶</span>
+          <span class="start-btn-text">START</span>
+        </button>
+        
+        <button id="game-techtree-btn" class="bottom-nav-item" data-tab="techtree">
+          <span class="bottom-nav-icon">📜</span>
+          <span class="bottom-nav-label">Tech Tree</span>
+        </button>
+        
+        <button id="homebtn" class="bottom-nav-item" data-tab="home">
+          <span class="bottom-nav-icon">🏠</span>
+          <span class="bottom-nav-label">Home</span>
+        </button>
       </nav>
     </section>
   </main>

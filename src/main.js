@@ -48,18 +48,62 @@ function updateUI() {
   $('active-map-name').textContent = currentMap.name.split(' ')[0];
 
   const enemiesLeft = S.enemies ? S.enemies.filter((e) => !e.dead).length : 0;
-  $('start').disabled = S.running;
-  $('start').textContent = S.over
-    ? '🔄 Restart'
-    : S.running
-    ? `⚡ In Progress (${enemiesLeft} left)`
-    : (S.autoStart && S.autoCountdown > 0)
-    ? `⏳ Auto (${S.autoCountdown.toFixed(1)}s)`
-    : `▶ Start Stage ${S.wave + 1}`;
+  
+  // Update prominent central elevated Start button in bottom nav
+  const startBtn = $('start');
+  if (startBtn) {
+    startBtn.disabled = S.running;
+    let icon = '▶';
+    let text = `WAVE ${S.wave + 1}`;
+    if (S.over) {
+      icon = '🔄';
+      text = 'RETRY';
+    } else if (S.running) {
+      icon = '⚡';
+      text = `${enemiesLeft}`;
+    } else if (S.autoStart && S.autoCountdown > 0) {
+      icon = '⏳';
+      text = `${S.autoCountdown.toFixed(0)}s`;
+    }
+    startBtn.innerHTML = `
+      <span class="start-btn-icon">${icon}</span>
+      <span class="start-btn-text">${text}</span>
+    `;
+  }
 
+  // Update Combat Intel Radar Bar
+  const intelWaveText = $('intel-wave-text');
+  const intelEnemyCount = $('intel-enemy-count');
+  const intelProgressBar = $('intel-progress-bar');
+  if (intelWaveText && intelEnemyCount && intelProgressBar) {
+    if (S.over) {
+      intelWaveText.textContent = 'DEFENCE BREACHED';
+      intelEnemyCount.textContent = 'Mission Over';
+      intelProgressBar.style.width = '100%';
+      intelProgressBar.style.backgroundColor = '#ef4444';
+    } else if (S.running) {
+      const isBoss = S.wave % 10 === 0 && S.wave > 0;
+      intelWaveText.textContent = isBoss ? `⚠️ BOSS ASSAULT` : `STAGE ${S.wave + 1} COMBAT`;
+      intelEnemyCount.textContent = `${enemiesLeft} active`;
+      const progress = S.total > 0 ? Math.min(100, Math.round(((S.total - enemiesLeft) / S.total) * 100)) : 0;
+      intelProgressBar.style.width = `${progress}%`;
+      intelProgressBar.style.backgroundColor = isBoss ? '#ec4899' : '#38bdf8';
+    } else {
+      intelWaveText.textContent = `STAGE ${S.wave + 1} READY`;
+      intelEnemyCount.textContent = (S.autoStart && S.autoCountdown > 0) ? `Auto in ${S.autoCountdown.toFixed(1)}s` : 'Prep Phase';
+      intelProgressBar.style.width = '0%';
+      intelProgressBar.style.backgroundColor = '#10b981';
+    }
+  }
+
+  // Update Floating Canvas HUD (Auto & Speed)
   if ($('auto')) {
-    $('auto').textContent = S.autoStart ? '⚡ Auto: ON' : 'Auto: OFF';
-    $('auto').className = S.autoStart ? 'btn-hud-secondary active' : 'btn-hud-secondary';
+    $('auto').textContent = S.autoStart ? '⚡ Auto' : 'Auto';
+    if (S.autoStart) {
+      $('auto').classList.add('active');
+    } else {
+      $('auto').classList.remove('active');
+    }
   }
 
   if ($('speed')) {
@@ -83,6 +127,19 @@ function updateUI() {
   const upgradesEl = $('upgrades');
   const shopSection = $('shop-section');
   const buildAlert = $('build-alert');
+
+  // Sync Bottom Navigation active tab indicator
+  const navArsenal = $('nav-tab-arsenal');
+  const navTower = $('nav-tab-tower');
+  if (navArsenal && navTower) {
+    if (selectedTower) {
+      navArsenal.classList.remove('active');
+      navTower.classList.add('active');
+    } else {
+      navArsenal.classList.add('active');
+      navTower.classList.remove('active');
+    }
+  }
 
   // Handle Active Build Alert
   if (buildAlert) {
@@ -111,37 +168,37 @@ function updateUI() {
     }
   }
 
-  // Handle Selected Tower & Inspector View
+  // Handle Selected Tower & Compact Inspector View
   if (selectedTower) {
     const def = TOWER_DEFINITIONS[selectedTower.type];
-    const branchName = def.branch || (def.isRailgun ? 'Laser Railgun' : 'Tactical');
+    const branchName = def.branch || (def.isRailgun ? 'Laser' : 'Tactical');
     const sellRefund = Math.floor((def.cost || 80) * 0.7);
     const targetMode = (selectedTower.targetMode || 'first').toUpperCase();
 
     if (shopSection) shopSection.style.display = 'none';
     if (selectedEl) {
-      selectedEl.style.display = 'block';
+      selectedEl.style.display = 'flex';
       selectedEl.innerHTML = `
-        <div class="inspector-card">
-          <div class="inspector-header">
-            <div class="inspector-title-group">
-              <span class="inspector-icon">${selectedTower.type.includes('Railgun') ? '⚡' : '🛡️'}</span>
-              <div>
-                <div class="inspector-title">${selectedTower.type}</div>
-                <div class="inspector-subtitle">${branchName} Discipline</div>
+        <div class="compact-inspector-bar">
+          <div class="inspector-summary">
+            <span class="inspector-icon">${selectedTower.type.includes('Railgun') ? '⚡' : '🛡️'}</span>
+            <div class="inspector-info">
+              <div class="inspector-name-row">
+                <span class="inspector-name">${selectedTower.type}</span>
+                <span class="inspector-tag">${branchName}</span>
+              </div>
+              <div class="inspector-chips">
+                <span class="chip">💥${def.dmg}</span>
+                <span class="chip">🎯${def.range}</span>
+                <span class="chip">⏱️${def.rate}s</span>
+                <span class="chip">⚡${(def.dmg / (def.rate || 0.5)).toFixed(0)}dps</span>
               </div>
             </div>
-            <button id="btn-deselect-tower" class="btn-deselect-icon" aria-label="Close Inspector">✕</button>
           </div>
-          <div class="inspector-stats-grid">
-            <div class="inspector-stat-box"><span class="lbl">DAMAGE</span><span class="val">💥 ${def.dmg}</span></div>
-            <div class="inspector-stat-box"><span class="lbl">RANGE</span><span class="val">🎯 ${def.range}</span></div>
-            <div class="inspector-stat-box"><span class="lbl">FIRE RATE</span><span class="val">⏱️ ${def.rate}s</span></div>
-            <div class="inspector-stat-box"><span class="lbl">DPS</span><span class="val">⚡ ${(def.dmg / (def.rate || 0.5)).toFixed(1)}</span></div>
-          </div>
-          <div class="inspector-actions-row">
-            <button id="btn-target-mode" class="btn-inspector-action btn-target-action">🎯 Target: ${targetMode}</button>
-            <button id="btn-sell-tower" class="btn-inspector-action btn-sell-action">💰 Sell (+${sellRefund}🪙)</button>
+          <div class="inspector-actions">
+            <button id="btn-target-mode" class="mini-inspector-btn mini-btn-target" title="Target Priority">🎯 ${targetMode}</button>
+            <button id="btn-sell-tower" class="mini-inspector-btn mini-btn-sell" title="Sell for 70% refund">💰 +${sellRefund}🪙</button>
+            <button id="btn-deselect-tower" class="mini-inspector-btn mini-btn-close" aria-label="Close Inspector">✕</button>
           </div>
         </div>
       `;
@@ -169,9 +226,9 @@ function updateUI() {
         };
       }
     }
-    if (upgradesEl) upgradesEl.style.display = 'block';
+    if (upgradesEl) upgradesEl.style.display = 'flex';
   } else {
-    if (shopSection) shopSection.style.display = 'block';
+    if (shopSection) shopSection.style.display = 'flex';
     if (selectedEl) {
       selectedEl.style.display = 'none';
       selectedEl.innerHTML = '';
@@ -195,13 +252,8 @@ function updateUI() {
       if (selectedTower) {
         const nextUpgrades = TOWER_DEFINITIONS[selectedTower.type].next || [];
         if (nextUpgrades.length > 0) {
-          const title = document.createElement('div');
-          title.className = 'upgrades-header-title';
-          title.textContent = `⚡ AVAILABLE UPGRADES (${nextUpgrades.length})`;
-          upgradesEl.appendChild(title);
-
-          const grid = document.createElement('div');
-          grid.className = 'upgrades-grid';
+          const scrollWrap = document.createElement('div');
+          scrollWrap.className = 'upgrades-horizontal-scroll';
 
           nextUpgrades.forEach((nextName) => {
             const upgradeDef = TOWER_DEFINITIONS[nextName];
@@ -209,20 +261,18 @@ function updateUI() {
             const dmgDiff = upgradeDef.dmg - currentDef.dmg;
             const btn = document.createElement('button');
             const isRail = nextName.includes('Railgun');
-            btn.className = `upgrade-card ${isRail ? 'upgrade-card-railgun' : ''}`;
+            btn.className = `upgrade-dock-card ${isRail ? 'upgrade-card-railgun' : ''}`;
             btn.dataset.cost = upgradeDef.cost;
 
             btn.innerHTML = `
-              <div class="upgrade-card-header">
-                <span class="upgrade-name">${isRail ? '⚡ ' : ''}${nextName}</span>
-                <span class="upgrade-cost">${upgradeDef.cost} 🪙</span>
+              <div class="upgrade-dock-top">
+                <span class="upgrade-dock-name">${isRail ? '⚡ ' : ''}${nextName}</span>
+                <span class="upgrade-dock-cost">${upgradeDef.cost}🪙</span>
               </div>
-              <div class="upgrade-card-stats">
-                <span class="stat-chip">💥 ${upgradeDef.dmg} (${dmgDiff >= 0 ? '+' : ''}${dmgDiff})</span>
-                <span class="stat-chip">🎯 ${upgradeDef.range}</span>
-                <span class="stat-chip">⏱️ ${upgradeDef.rate}s</span>
+              <div class="upgrade-dock-bottom">
+                <span class="stat-pill-mini">💥 ${upgradeDef.dmg} (${dmgDiff >= 0 ? '+' : ''}${dmgDiff})</span>
+                <span class="stat-pill-mini">🎯 ${upgradeDef.range}</span>
               </div>
-              <div class="upgrade-card-hint">${isRail ? 'Fires penetrating laser beam' : (upgradeDef.branch ? `${upgradeDef.branch} discipline` : 'Advanced tactical enhancement')}</div>
             `;
 
             btn.onclick = (e) => {
@@ -237,12 +287,12 @@ function updateUI() {
               game.saveGame();
               showMessage(`Upgraded to ${nextName}!`);
             };
-            grid.appendChild(btn);
+            scrollWrap.appendChild(btn);
           });
-          upgradesEl.appendChild(grid);
+          upgradesEl.appendChild(scrollWrap);
         } else {
           const maxedNotice = document.createElement('div');
-          maxedNotice.className = 'maxed-branch-notice';
+          maxedNotice.className = 'maxed-branch-dock';
           maxedNotice.innerHTML = `⭐ <strong>Apex Discipline Reached</strong> · Fully upgraded!`;
           upgradesEl.appendChild(maxedNotice);
         }
@@ -474,29 +524,18 @@ function renderShop() {
     const meta = TOWER_METADATA[towerName] || { icon: '🛡️', branch: 'Tactical', perk: 'Combat turret' };
     const btn = document.createElement('button');
     const isRail = towerName === 'Railgun';
-    btn.className = `turret-card ${isRail ? 'turret-card-railgun' : ''}`;
+    btn.className = `turret-dock-card ${isRail ? 'turret-card-railgun' : ''}`;
     btn.dataset.cost = cost;
     btn.dataset.tower = towerName;
-
-    const kbd = `<span class="kbd-hint">${idx + 1}</span>`;
+    btn.title = `${towerName} (${cost}🪙): 💥${def.dmg} 🎯${def.range} ⏱️${def.rate}s — ${meta.perk}`;
 
     btn.innerHTML = `
-      <div class="card-header">
-        <div class="card-icon-title">
-          <span class="card-icon">${meta.icon}</span>
-          <div>
-            <div class="card-name">${kbd}${isRail ? '⚡ ' : ''}${towerName}</div>
-            <div class="card-branch-tag">${meta.branch}</div>
-          </div>
-        </div>
-        <div class="card-cost-badge">${cost} 🪙</div>
+      <div class="dock-card-icon-wrap">
+        <span class="dock-card-icon">${meta.icon}</span>
+        <span class="dock-card-num">${idx + 1}</span>
       </div>
-      <div class="card-stats-row">
-        <span class="stat-chip">💥 ${def.dmg}</span>
-        <span class="stat-chip">🎯 ${def.range}</span>
-        <span class="stat-chip">⏱️ ${def.rate}s</span>
-      </div>
-      <div class="card-perk-desc">${meta.perk}</div>
+      <div class="dock-card-name">${isRail ? '⚡' : ''}${towerName}</div>
+      <div class="dock-card-cost">${cost}🪙</div>
     `;
 
     btn.onclick = () => {
@@ -704,7 +743,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Game In-HUD Buttons
+// Game In-HUD Buttons & Bottom Navigation
 $('homebtn').onclick = () => {
   if (game.state) game.state.running = false;
   game.saveGame();
@@ -715,7 +754,7 @@ $('homebtn').onclick = () => {
 
 $('speed').onclick = () => {
   game.cycleSpeed();
-  $('speed').textContent = `Speed: ${game.state.speed}×`;
+  updateUI();
 };
 
 if ($('auto')) {
@@ -728,6 +767,45 @@ if ($('auto')) {
 $('start').onclick = () => {
   game.startStage();
 };
+
+if ($('nav-tab-arsenal')) {
+  $('nav-tab-arsenal').onclick = () => {
+    if (!game.state) return;
+    game.state.sel = null;
+    updateUI();
+  };
+}
+
+if ($('nav-tab-tower')) {
+  $('nav-tab-tower').onclick = () => {
+    if (!game.state) return;
+    if (game.state.towers.length > 0) {
+      if (!game.state.sel) {
+        game.state.sel = game.state.towers[game.state.towers.length - 1].id;
+        game.state.build = null;
+        updateUI();
+      }
+    } else {
+      showMessage('No towers deployed yet! Tap Arsenal to build one.');
+    }
+  };
+}
+
+if ($('btn-rotate-hint')) {
+  $('btn-rotate-hint').onclick = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen?.();
+      }
+      if (screen.orientation?.lock) {
+        await screen.orientation.lock('landscape').catch(() => {});
+      }
+    } catch (e) {
+      // Fullscreen not supported or rejected
+    }
+    showMessage('Tip: Rotate phone sideways for maximum widescreen view! 🔄');
+  };
+}
 
 canvas.addEventListener('pointerdown', (ev) => {
   if (!game.state || $('game').style.display === 'none') return;
