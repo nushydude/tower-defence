@@ -138,14 +138,16 @@
 
     <!-- Active Game Screen -->
     <section id="game">
-      <div class="row hud-stats-row">
-        <div class="stat-panel">🪙 <span id="coins">300</span></div>
-        <div class="stat-panel">💎 <span id="gems">0</span></div>
-        <div class="stat-panel">STAGE <span id="stage">1</span></div>
-        <div class="stat-panel">HP <span id="hp">100</span></div>
-        <div class="stat-panel">MAP <span id="active-map-name">Plains</span></div>
-      </div>
+      <!-- Zone 1: Native Mobile Top Status Bar -->
+      <header class="hud-stats-row">
+        <div class="stat-pill stat-gold">🪙 <span id="coins">300</span></div>
+        <div class="stat-pill stat-gems">💎 <span id="gems">0</span></div>
+        <div class="stat-pill stat-stage">STAGE <span id="stage">1</span></div>
+        <div class="stat-pill stat-hp">❤️ <span id="hp">100</span></div>
+        <div class="stat-pill stat-map">🗺️ <span id="active-map-name">Plains</span></div>
+      </header>
 
+      <!-- Zone 2: Battlefield Arena (Canvas) -->
       <div class="canvas-wrapper">
         <div id="boss" class="boss-banner" style="display: none">
           ⚠️ BOSS BATTLE
@@ -154,19 +156,35 @@
         <div id="msg" class="floating-toast">Build your defence!</div>
       </div>
 
-      <div class="actions hud-actions">
-        <button id="start" class="btn-hud-primary">Start Stage</button>
-        <button id="auto">Auto: OFF</button>
-        <button id="speed">1×</button>
-        <button id="game-techtree-btn" class="btn-hud-secondary">📜 Tech</button>
-        <button id="homebtn" class="btn-hud-secondary">🏠 Home</button>
+      <!-- Zone 3: Native Mobile Command Console (Fills all remaining vertical space!) -->
+      <div class="command-console">
+        <!-- Active Build Alert Banner (Appears when placing a tower) -->
+        <div id="build-alert" class="build-alert-banner" style="display: none;"></div>
+
+        <!-- Selected Tower Inspector (Appears when tapping a placed tower) -->
+        <div id="selected" class="selected-tower-panel" style="display: none;"></div>
+
+        <!-- Upgrade Cards Deck -->
+        <div id="upgrades" class="upgrades-container" style="display: none;"></div>
+
+        <!-- Deploy Turrets Shop Section -->
+        <div id="shop-section" class="shop-section">
+          <div class="console-section-title">
+            <span class="title-text">🛡️ DEPLOY ARSENAL</span>
+            <span class="console-subtitle">7 Base Disciplines</span>
+          </div>
+          <div id="shop" class="turret-grid"></div>
+        </div>
       </div>
 
-      <div class="shop-panel">
-        <div id="selected" class="selected-tower-info" style="display: none;"></div>
-        <div id="upgrades" class="actions deck-scroll" style="display: none;"></div>
-        <div id="shop" class="actions shop-deck deck-scroll"></div>
-      </div>
+      <!-- Zone 4: Native Mobile Bottom Action Dock (Fixed to bottom edge) -->
+      <nav class="hud-actions" aria-label="Game Controls">
+        <button id="start" class="btn-hud-primary">▶ Start Stage</button>
+        <button id="auto" class="btn-hud-secondary">Auto: OFF</button>
+        <button id="speed" class="btn-hud-secondary">1×</button>
+        <button id="game-techtree-btn" class="btn-hud-secondary">📜 Tech</button>
+        <button id="homebtn" class="btn-hud-secondary">🏠 Home</button>
+      </nav>
     </section>
   </main>
   <script type="module" src="/src/main.js"></script>

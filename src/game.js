@@ -353,10 +353,21 @@ export class GameModel {
         const def = towerDefs[tower.type];
         if (!def) return;
 
-        // Smoothly track targets whenever in range, even during cooldown
-        const target = this.state.enemies
-          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range)
-          .sort((a, b) => (b.distance || 0) - (a.distance || 0))[0];
+        // Smoothly track targets based on tower.targetMode
+        const inRange = this.state.enemies
+          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range);
+        let target;
+        const mode = tower.targetMode || 'first';
+        if (mode === 'strongest') {
+          target = inRange.sort((a, b) => (b.hp - a.hp) || ((b.distance || 0) - (a.distance || 0)))[0];
+        } else if (mode === 'last') {
+          target = inRange.sort((a, b) => (a.distance || 0) - (b.distance || 0))[0];
+        } else if (mode === 'closest') {
+          target = inRange.sort((a, b) => Math.hypot(a.x - tower.x, a.y - tower.y) - Math.hypot(b.x - tower.x, b.y - tower.y))[0];
+        } else {
+          // 'first'
+          target = inRange.sort((a, b) => (b.distance || 0) - (a.distance || 0))[0];
+        }
 
         if (target) {
           tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
@@ -941,5 +952,32 @@ export class GameModel {
     // Deselect if clicked empty area
     this.state.sel = null;
     this.onUIUpdate();
+  }
+
+  sellTower(towerId, towerDefs) {
+    if (!this.state || this.state.over) return;
+    const index = this.state.towers.findIndex((t) => t.id === towerId);
+    if (index === -1) return;
+    const tower = this.state.towers[index];
+    const def = towerDefs[tower.type];
+    const refund = Math.floor((def?.cost || 80) * 0.7);
+    this.state.coins += refund;
+    this.state.towers.splice(index, 1);
+    if (this.state.sel === towerId) this.state.sel = null;
+    this.onUIUpdate();
+    this.saveGame();
+    this.onMessage(`Sold ${tower.type} (+${refund} 🪙)`);
+  }
+
+  cycleTargetMode(towerId) {
+    if (!this.state) return;
+    const tower = this.state.towers.find((t) => t.id === towerId);
+    if (!tower) return;
+    const modes = ['first', 'strongest', 'last', 'closest'];
+    const curIdx = modes.indexOf(tower.targetMode || 'first');
+    tower.targetMode = modes[(curIdx + 1) % modes.length];
+    this.onUIUpdate();
+    this.saveGame();
+    this.onMessage(`Target: ${tower.targetMode.toUpperCase()}`);
   }
 }

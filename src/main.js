@@ -47,18 +47,19 @@ function updateUI() {
   $('hp').textContent = S.hp;
   $('active-map-name').textContent = currentMap.name.split(' ')[0];
 
+  const enemiesLeft = S.enemies ? S.enemies.filter((e) => !e.dead).length : 0;
   $('start').disabled = S.running;
   $('start').textContent = S.over
-    ? 'Restart'
+    ? '🔄 Restart'
     : S.running
-    ? 'In Progress'
+    ? `⚡ In Progress (${enemiesLeft} left)`
     : (S.autoStart && S.autoCountdown > 0)
-    ? `Auto (${S.autoCountdown.toFixed(1)}s)`
-    : '▶ Start Stage';
+    ? `⏳ Auto (${S.autoCountdown.toFixed(1)}s)`
+    : `▶ Start Stage ${S.wave + 1}`;
 
   if ($('auto')) {
-    $('auto').textContent = S.autoStart ? 'Auto: ON' : 'Auto: OFF';
-    $('auto').className = S.autoStart ? 'active' : '';
+    $('auto').textContent = S.autoStart ? '⚡ Auto: ON' : 'Auto: OFF';
+    $('auto').className = S.autoStart ? 'btn-hud-secondary active' : 'btn-hud-secondary';
   }
 
   if ($('speed')) {
@@ -80,16 +81,71 @@ function updateUI() {
   const selectedTower = S.towers.find((t) => t.id === S.sel);
   const selectedEl = $('selected');
   const upgradesEl = $('upgrades');
+  const shopSection = $('shop-section');
+  const buildAlert = $('build-alert');
 
+  // Handle Active Build Alert
+  if (buildAlert) {
+    if (S.build) {
+      const bDef = TOWER_DEFINITIONS[S.build];
+      buildAlert.style.display = 'flex';
+      buildAlert.innerHTML = `
+        <div class="build-alert-info">
+          <span class="pulsing-radar">⚡</span>
+          <span>Deploying <strong>${S.build}</strong> (${bDef?.cost || 0}🪙) · Tap map terrain</span>
+        </div>
+        <button id="btn-cancel-build" class="btn-cancel-mini" aria-label="Cancel placement">✕ Cancel</button>
+      `;
+      const cancelBtn = $('btn-cancel-build');
+      if (cancelBtn) {
+        cancelBtn.onclick = (e) => {
+          e.stopPropagation();
+          S.build = null;
+          updateUI();
+          showMessage('Placement cancelled.');
+        };
+      }
+    } else {
+      buildAlert.style.display = 'none';
+      buildAlert.innerHTML = '';
+    }
+  }
+
+  // Handle Selected Tower & Inspector View
   if (selectedTower) {
     const def = TOWER_DEFINITIONS[selectedTower.type];
     const branchName = def.branch || (def.isRailgun ? 'Laser Railgun' : 'Tactical');
+    const sellRefund = Math.floor((def.cost || 80) * 0.7);
+    const targetMode = (selectedTower.targetMode || 'first').toUpperCase();
+
+    if (shopSection) shopSection.style.display = 'none';
     if (selectedEl) {
-      selectedEl.style.display = 'flex';
+      selectedEl.style.display = 'block';
       selectedEl.innerHTML = `
-        <div class="selected-text"><strong>${selectedTower.type}</strong> <span class="selected-branch">[${branchName}]</span> · ${def.dmg} dmg · ${def.range} rng</div>
-        <button id="btn-deselect-tower" class="btn-deselect-mini" aria-label="Deselect tower">✕</button>
+        <div class="inspector-card">
+          <div class="inspector-header">
+            <div class="inspector-title-group">
+              <span class="inspector-icon">${selectedTower.type.includes('Railgun') ? '⚡' : '🛡️'}</span>
+              <div>
+                <div class="inspector-title">${selectedTower.type}</div>
+                <div class="inspector-subtitle">${branchName} Discipline</div>
+              </div>
+            </div>
+            <button id="btn-deselect-tower" class="btn-deselect-icon" aria-label="Close Inspector">✕</button>
+          </div>
+          <div class="inspector-stats-grid">
+            <div class="inspector-stat-box"><span class="lbl">DAMAGE</span><span class="val">💥 ${def.dmg}</span></div>
+            <div class="inspector-stat-box"><span class="lbl">RANGE</span><span class="val">🎯 ${def.range}</span></div>
+            <div class="inspector-stat-box"><span class="lbl">FIRE RATE</span><span class="val">⏱️ ${def.rate}s</span></div>
+            <div class="inspector-stat-box"><span class="lbl">DPS</span><span class="val">⚡ ${(def.dmg / (def.rate || 0.5)).toFixed(1)}</span></div>
+          </div>
+          <div class="inspector-actions-row">
+            <button id="btn-target-mode" class="btn-inspector-action btn-target-action">🎯 Target: ${targetMode}</button>
+            <button id="btn-sell-tower" class="btn-inspector-action btn-sell-action">💰 Sell (+${sellRefund}🪙)</button>
+          </div>
+        </div>
       `;
+
       const deselectBtn = $('btn-deselect-tower');
       if (deselectBtn) {
         deselectBtn.onclick = (e) => {
@@ -98,9 +154,24 @@ function updateUI() {
           updateUI();
         };
       }
+      const targetBtn = $('btn-target-mode');
+      if (targetBtn) {
+        targetBtn.onclick = (e) => {
+          e.stopPropagation();
+          game.cycleTargetMode(selectedTower.id);
+        };
+      }
+      const sellBtn = $('btn-sell-tower');
+      if (sellBtn) {
+        sellBtn.onclick = (e) => {
+          e.stopPropagation();
+          game.sellTower(selectedTower.id, TOWER_DEFINITIONS);
+        };
+      }
     }
-    if (upgradesEl) upgradesEl.style.display = 'flex';
+    if (upgradesEl) upgradesEl.style.display = 'block';
   } else {
+    if (shopSection) shopSection.style.display = 'block';
     if (selectedEl) {
       selectedEl.style.display = 'none';
       selectedEl.innerHTML = '';
@@ -123,30 +194,58 @@ function updateUI() {
       upgradesEl.innerHTML = '';
       if (selectedTower) {
         const nextUpgrades = TOWER_DEFINITIONS[selectedTower.type].next || [];
-        nextUpgrades.forEach((nextName) => {
-          const upgradeDef = TOWER_DEFINITIONS[nextName];
-          const btn = document.createElement('button');
-          if (nextName.includes('Railgun')) {
-            btn.className = 'btn-upgrade-railgun';
-            btn.innerHTML = `<span class="upgrade-btn-name">⚡ ${nextName}</span><span class="upgrade-btn-cost">${upgradeDef.cost}🪙</span>`;
-          } else {
-            btn.innerHTML = `<span class="upgrade-btn-name">${nextName}</span><span class="upgrade-btn-cost">${upgradeDef.cost}🪙</span>`;
-          }
-          btn.dataset.cost = upgradeDef.cost;
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            if (S.coins < upgradeDef.cost) {
-              showMessage('Not enough coins!');
-              return;
-            }
-            S.coins -= upgradeDef.cost;
-            selectedTower.type = nextName;
-            updateUI();
-            game.saveGame();
-            showMessage(`Upgraded to ${nextName}!`);
-          };
-          upgradesEl.appendChild(btn);
-        });
+        if (nextUpgrades.length > 0) {
+          const title = document.createElement('div');
+          title.className = 'upgrades-header-title';
+          title.textContent = `⚡ AVAILABLE UPGRADES (${nextUpgrades.length})`;
+          upgradesEl.appendChild(title);
+
+          const grid = document.createElement('div');
+          grid.className = 'upgrades-grid';
+
+          nextUpgrades.forEach((nextName) => {
+            const upgradeDef = TOWER_DEFINITIONS[nextName];
+            const currentDef = TOWER_DEFINITIONS[selectedTower.type];
+            const dmgDiff = upgradeDef.dmg - currentDef.dmg;
+            const btn = document.createElement('button');
+            const isRail = nextName.includes('Railgun');
+            btn.className = `upgrade-card ${isRail ? 'upgrade-card-railgun' : ''}`;
+            btn.dataset.cost = upgradeDef.cost;
+
+            btn.innerHTML = `
+              <div class="upgrade-card-header">
+                <span class="upgrade-name">${isRail ? '⚡ ' : ''}${nextName}</span>
+                <span class="upgrade-cost">${upgradeDef.cost} 🪙</span>
+              </div>
+              <div class="upgrade-card-stats">
+                <span class="stat-chip">💥 ${upgradeDef.dmg} (${dmgDiff >= 0 ? '+' : ''}${dmgDiff})</span>
+                <span class="stat-chip">🎯 ${upgradeDef.range}</span>
+                <span class="stat-chip">⏱️ ${upgradeDef.rate}s</span>
+              </div>
+              <div class="upgrade-card-hint">${isRail ? 'Fires penetrating laser beam' : (upgradeDef.branch ? `${upgradeDef.branch} discipline` : 'Advanced tactical enhancement')}</div>
+            `;
+
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              if (S.coins < upgradeDef.cost) {
+                showMessage('Not enough coins!');
+                return;
+              }
+              S.coins -= upgradeDef.cost;
+              selectedTower.type = nextName;
+              updateUI();
+              game.saveGame();
+              showMessage(`Upgraded to ${nextName}!`);
+            };
+            grid.appendChild(btn);
+          });
+          upgradesEl.appendChild(grid);
+        } else {
+          const maxedNotice = document.createElement('div');
+          maxedNotice.className = 'maxed-branch-notice';
+          maxedNotice.innerHTML = `⭐ <strong>Apex Discipline Reached</strong> · Fully upgraded!`;
+          upgradesEl.appendChild(maxedNotice);
+        }
       }
     }
   }
@@ -349,11 +448,21 @@ function enterGameScreen() {
   lastRenderedTowerId = null;
   lastRenderedTowerType = null;
   $('home').style.display = 'none';
-  $('game').style.display = 'block';
+  $('game').style.display = 'flex';
   renderShop();
   updateUI();
   showMessage(`Welcome to ${game.getCurrentMap().name}! Build your towers.`);
 }
+
+const TOWER_METADATA = {
+  Spammer: { icon: '⚡', branch: 'Rapid', perk: 'Continuous rapid stream' },
+  Scout: { icon: '🎯', branch: 'Sniper', perk: 'Long sight single shots' },
+  Railgun: { icon: '⚡', branch: 'Laser', perk: 'Piercing blue laser beam' },
+  Shotgun: { icon: '💥', branch: 'Spread', perk: 'Multi-pellet heavy spread' },
+  Double: { icon: '⚔️', branch: 'Twin', perk: 'Twin synchronized barrels' },
+  'Side Turret': { icon: '🔄', branch: 'Flank', perk: 'Multi-angle omni coverage' },
+  Spiker: { icon: '❇️', branch: 'Spike', perk: 'Omni-directional thorn burst' }
+};
 
 function renderShop() {
   const shopEl = $('shop');
@@ -362,17 +471,33 @@ function renderShop() {
   BASE_TOWERS.forEach((towerName, idx) => {
     const def = TOWER_DEFINITIONS[towerName];
     const cost = def.cost;
+    const meta = TOWER_METADATA[towerName] || { icon: '🛡️', branch: 'Tactical', perk: 'Combat turret' };
     const btn = document.createElement('button');
+    const isRail = towerName === 'Railgun';
+    btn.className = `turret-card ${isRail ? 'turret-card-railgun' : ''}`;
     btn.dataset.cost = cost;
+    btn.dataset.tower = towerName;
 
     const kbd = `<span class="kbd-hint">${idx + 1}</span>`;
 
-    if (towerName === 'Railgun') {
-      btn.className = 'shop-btn-railgun';
-      btn.innerHTML = `${kbd}<span class="turret-btn-name">⚡ Railgun</span><span class="turret-btn-cost">${cost}🪙</span>`;
-    } else {
-      btn.innerHTML = `${kbd}<span class="turret-btn-name">${towerName}</span><span class="turret-btn-cost">${cost}🪙</span>`;
-    }
+    btn.innerHTML = `
+      <div class="card-header">
+        <div class="card-icon-title">
+          <span class="card-icon">${meta.icon}</span>
+          <div>
+            <div class="card-name">${kbd}${isRail ? '⚡ ' : ''}${towerName}</div>
+            <div class="card-branch-tag">${meta.branch}</div>
+          </div>
+        </div>
+        <div class="card-cost-badge">${cost} 🪙</div>
+      </div>
+      <div class="card-stats-row">
+        <span class="stat-chip">💥 ${def.dmg}</span>
+        <span class="stat-chip">🎯 ${def.range}</span>
+        <span class="stat-chip">⏱️ ${def.rate}s</span>
+      </div>
+      <div class="card-perk-desc">${meta.perk}</div>
+    `;
 
     btn.onclick = () => {
       if (!game.state) return;
@@ -385,7 +510,7 @@ function renderShop() {
       game.state.build = towerName;
       game.state.sel = null;
       updateUI();
-      showMessage(`[${idx + 1}] Tap clear terrain to place ${towerName} (${def.branch || 'Base Turret'}).`);
+      showMessage(`Tap clear terrain to place ${towerName} (${cost}🪙)`);
     };
     shopEl.appendChild(btn);
   });
