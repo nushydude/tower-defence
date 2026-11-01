@@ -1,0 +1,48 @@
+{
+  "name": "Tower Defence: Tactical Outpost",
+  "short_name": "Tower Defence",
+  "description": "Tactical mobile tower defence game with 7 disciplines and 60+ upgrade tank branches.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "fullscreen",
+    "window-controls-overlay"
+  ],
+  "orientation": "portrait",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "categories": [
+    "games",
+    "strategy",
+    "action"
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

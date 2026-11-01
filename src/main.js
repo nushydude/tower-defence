@@ -832,3 +832,62 @@ function gameLoop(now) {
 renderShop();
 renderSlotList();
 requestAnimationFrame(gameLoop);
+
+// =========================================================
+// PROGRESSIVE WEB APP (PWA): FULL-SCREEN & SERVICE WORKER
+// =========================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      console.log('PWA Service Worker active:', reg.scope);
+    }).catch((err) => {
+      console.warn('PWA SW registration notice:', err);
+    });
+  });
+}
+
+// PWA Install Prompt Handler & Standalone Mode Detection
+let deferredInstallPrompt = null;
+const installBtn = $('btn-install-pwa');
+
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+if (isStandalone) {
+  document.body.classList.add('pwa-standalone');
+  if (installBtn) installBtn.style.display = 'none';
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (installBtn && !isStandalone) {
+    installBtn.style.display = 'inline-flex';
+  }
+});
+
+if (installBtn) {
+  installBtn.onclick = async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        showMessage('Installing Tower Defence Outpost...');
+      }
+      deferredInstallPrompt = null;
+      installBtn.style.display = 'none';
+    } else {
+      // iOS Safari guide
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        showMessage('To install on iPhone/iPad: Tap Share ⎋ and choose "Add to Home Screen" ⊞');
+      } else {
+        showMessage('To install: Use your browser menu (⋮) and tap "Install App" or "Add to Home screen".');
+      }
+    }
+  };
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (installBtn) installBtn.style.display = 'none';
+  showMessage('App installed! Launch from home screen for full-screen gameplay.');
+});
