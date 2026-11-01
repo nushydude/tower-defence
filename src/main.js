@@ -881,11 +881,13 @@ canvas.addEventListener('pointerdown', (ev) => {
   game.handleCanvasClick(x, y, TOWER_DEFINITIONS);
 });
 
-// HiDPI Canvas Backing Resolution
+// HiDPI Canvas Backing Resolution (1:1 physical pixel density for razor-sharp rendering)
 function resizeCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 3);
-  const targetW = Math.round(CANVAS_WIDTH * dpr);
-  const targetH = Math.round(CANVAS_HEIGHT * dpr);
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  const targetW = Math.round(rect.width * dpr);
+  const targetH = Math.round(rect.height * dpr);
   if (canvas.width !== targetW || canvas.height !== targetH) {
     canvas.width = targetW;
     canvas.height = targetH;
@@ -903,6 +905,8 @@ function gameLoop(now) {
     resizeCanvas();
     ctx.save();
     ctx.scale(canvas.width / CANVAS_WIDTH, canvas.height / CANVAS_HEIGHT);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     renderGame(ctx, game.state, TOWER_DEFINITIONS);
     ctx.restore();
   }

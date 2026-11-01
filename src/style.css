@@ -1029,6 +1029,7 @@ body.pwa-standalone {
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7);
+  container-type: size;
 }
 
 .canvas-stage {
@@ -1036,24 +1037,23 @@ body.pwa-standalone {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: min(100cqw, calc(100cqh * (480 / 720)));
+  height: min(100cqh, calc(100cqw * (720 / 480)));
+  aspect-ratio: 480 / 720;
   max-width: 100%;
   max-height: 100%;
-  height: 100%;
-  width: auto;
-  aspect-ratio: 480 / 720;
 }
 
 canvas#map {
   width: 100%;
   height: 100%;
-  aspect-ratio: 480 / 720;
-  object-fit: contain;
   display: block;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.35);
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .boss-banner {
@@ -1958,14 +1958,39 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     border-bottom: none;
     background: #040814;
     background-image: 
-      radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 60%),
-      linear-gradient(rgba(56, 189, 248, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(56, 189, 248, 0.02) 1px, transparent 1px);
+      radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 70%),
+      linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
     background-size: 100% 100%, 36px 36px, 36px 36px;
-    padding: 16px;
+    padding: 24px;
     box-sizing: border-box;
     overflow: hidden;
     position: relative;
+    container-type: size;
+  }
+
+  .canvas-wrapper::before {
+    content: "TACTICAL COMMAND // BATTLEFIELD SECTOR 01";
+    position: absolute;
+    top: 14px;
+    left: 20px;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 1.5px;
+    color: rgba(56, 189, 248, 0.5);
+    pointer-events: none;
+  }
+
+  .canvas-wrapper::after {
+    content: "DEFENSE GRID: ACTIVE • MONITORING THREAT VECTORS";
+    position: absolute;
+    bottom: 14px;
+    left: 20px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    color: rgba(148, 163, 184, 0.4);
+    pointer-events: none;
   }
 
   .canvas-stage {
@@ -1973,20 +1998,20 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-height: calc(100vh - 32px);
-    max-width: 100%;
-    height: 100%;
-    width: auto;
+    width: min(calc(100cqw - 48px), calc((100cqh - 48px) * (480 / 720)));
+    height: min(calc(100cqh - 48px), calc((100cqw - 48px) * (720 / 480)));
     aspect-ratio: 480 / 720;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   canvas#map {
     width: 100%;
     height: 100%;
     aspect-ratio: 480 / 720;
-    object-fit: contain;
     border-radius: 12px;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(56, 189, 248, 0.3);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(56, 189, 248, 0.45), 0 0 24px rgba(56, 189, 248, 0.15);
+    image-rendering: -webkit-optimize-contrast;
   }
 
   /* Anchored directly onto canvas top-right! */
@@ -2038,12 +2063,40 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 8px;
+    gap: 5px;
+    padding: 7px 8px;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 850;
     border-radius: 8px;
     white-space: nowrap;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #23354f;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .stat-gold {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.4);
+  }
+
+  .stat-gems {
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.4);
+  }
+
+  .stat-stage {
+    color: #f1f5f9;
+    border-color: rgba(241, 245, 249, 0.25);
+  }
+
+  .stat-hp {
+    color: #f43f5e;
+    border-color: rgba(244, 63, 94, 0.4);
+  }
+
+  .stat-map {
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.4);
   }
 
   .stat-gold span,
@@ -2066,13 +2119,17 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .intel-wave-title {
     font-size: 13px;
     font-weight: 850;
+    color: #f8fafc;
   }
 
   .intel-badge {
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     padding: 2px 8px;
     border-radius: 6px;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.4);
   }
 
   .intel-progress-track {
@@ -2151,12 +2208,12 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .turret-dock-card {
     flex: none;
     width: 100%;
-    height: 74px;
-    padding: 6px 10px;
+    height: 78px;
+    padding: 7px 10px;
     border-radius: 8px;
-    background: linear-gradient(180deg, #16253b 0%, #0e1726 100%);
-    border: 1px solid #283e5c;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    background: linear-gradient(180deg, #182844 0%, #0d1728 100%);
+    border: 1px solid #2b456e;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2166,9 +2223,16 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 
   .turret-dock-card:hover:not(:disabled) {
     border-color: #38bdf8;
-    background: linear-gradient(180deg, #1e3350 0%, #131e30 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+    background: linear-gradient(180deg, #1e3558 0%, #112038 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(56, 189, 248, 0.35);
+  }
+
+  .turret-dock-card.active-build {
+    border-color: #38bdf8 !important;
+    background: linear-gradient(180deg, #1e3f6e 0%, #102644 100%) !important;
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.7), inset 0 0 12px rgba(56, 189, 248, 0.3) !important;
+    transform: translateY(-2px);
   }
 
   .dock-card-icon-wrap {
@@ -2180,47 +2244,49 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   }
 
   .dock-card-icon {
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
   .dock-card-num {
     position: static;
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 10px;
+    font-weight: 900;
     color: #38bdf8;
-    background: rgba(56, 189, 248, 0.15);
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    padding: 1px 5px;
+    background: rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    padding: 1px 6px;
     border-radius: 4px;
     line-height: 1.2;
   }
 
   .dock-card-name {
-    font-size: 12px;
-    font-weight: 800;
-    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 850;
+    color: #ffffff;
     max-width: none;
     margin: 1px 0 0;
+    letter-spacing: 0.3px;
   }
 
   .dock-card-stats-preview {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #94a3b8;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 750;
+    color: #cbd5e1;
   }
 
   .dock-card-cost {
-    font-size: 11px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 900;
     color: #fbbf24;
-    background: rgba(251, 191, 36, 0.15);
-    border: 1px solid rgba(251, 191, 36, 0.3);
-    padding: 2px 8px;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    padding: 2px 10px;
     border-radius: 6px;
   }
 
@@ -2228,8 +2294,8 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .turret-dock-card:nth-child(7) {
     grid-column: 1 / -1;
     flex-direction: row;
-    height: 48px;
-    padding: 0 12px;
+    height: 52px;
+    padding: 0 14px;
     justify-content: space-between;
   }
 
@@ -2240,15 +2306,18 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 
   .turret-dock-card:nth-child(7) .dock-card-name {
     margin: 0;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 850;
   }
 
   .turret-dock-card:nth-child(7) .dock-card-stats-preview {
     margin: 0;
+    font-size: 11px;
   }
 
   .turret-dock-card:nth-child(7) .dock-card-cost {
     margin: 0;
+    font-size: 12px;
   }
 
   /* Desktop Tactical Deck (Keys & Live Intel, dynamically fills vertical space) */

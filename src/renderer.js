@@ -144,11 +144,13 @@ function renderEnvironment(ctx, map) {
     ctx.fill();
   }
 
-  // Terrain grid texture
-  for (let x = 10; x < CANVAS_WIDTH; x += 32) {
-    for (let y = 10; y < CANVAS_HEIGHT; y += 32) {
-      ctx.fillStyle = map.gridColor;
-      ctx.fillRect(x, y, 15, 15);
+  // Crisp alternating terrain grid
+  ctx.fillStyle = map.gridColor;
+  for (let x = 0; x < CANVAS_WIDTH; x += 30) {
+    for (let y = 0; y < CANVAS_HEIGHT; y += 30) {
+      if ((Math.floor(x / 30) + Math.floor(y / 30)) % 2 === 0) {
+        ctx.fillRect(x, y, 30, 30);
+      }
     }
   }
 }
@@ -1129,19 +1131,64 @@ export function renderGame(ctx, state, towerDefs) {
   ctx.beginPath();
   map.path.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
 
+  // Outer curb / roadway shadow
   ctx.strokeStyle = map.pathOuter;
   ctx.lineWidth = 48;
   ctx.stroke();
 
+  // Inner paved highway
   ctx.strokeStyle = map.pathInner;
-  ctx.lineWidth = 39;
+  ctx.lineWidth = 38;
   ctx.stroke();
 
-  ctx.setLineDash([12, 12]);
+  // High-visibility dashed centerline
+  ctx.setLineDash([12, 10]);
   ctx.strokeStyle = map.pathDash;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
   ctx.setLineDash([]);
+
+  // Spawn Entry Portal & Base Destination Outpost Markers
+  if (map.path.length >= 2) {
+    const startP = map.path[0];
+    const nextP = map.path[1];
+    const sAngle = Math.atan2(nextP[1] - startP[1], nextP[0] - startP[0]);
+
+    // Red Entry Gate Marker
+    ctx.save();
+    ctx.translate(startP[0], startP[1]);
+    ctx.rotate(sAngle);
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+    ctx.fillRect(-12, -22, 24, 44);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-12, -22, 24, 44);
+    ctx.fillStyle = '#fee2e2';
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ENTRY', 0, 0);
+    ctx.restore();
+
+    // Blue Base Outpost Marker
+    const endP = map.path[map.path.length - 1];
+    const prevP = map.path[map.path.length - 2];
+    const eAngle = Math.atan2(endP[1] - prevP[1], endP[0] - prevP[0]);
+    ctx.save();
+    ctx.translate(endP[0], endP[1]);
+    ctx.rotate(eAngle);
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+    ctx.fillRect(-14, -22, 28, 44);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-14, -22, 28, 44);
+    ctx.fillStyle = '#f0f9ff';
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BASE', 0, 0);
+    ctx.restore();
+  }
 
   if (!state) return;
 
@@ -1152,40 +1199,110 @@ export function renderGame(ctx, state, towerDefs) {
       const def = towerDefs[selectedTower.type];
       ctx.beginPath();
       ctx.arc(selectedTower.x, selectedTower.y, def.range, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
+      ctx.setLineDash([]);
     }
   }
 
   // Draw towers & multi-directional barrels
   state.towers.forEach((tower) => {
     const def = towerDefs[tower.type];
+    const isSelected = state.sel === tower.id;
 
-    // Draw visible barrels for multi-directional turrets
-    drawTowerBarrels(ctx, tower, def);
-
+    // 1. Drop shadow for 3D elevation depth
     ctx.beginPath();
-    ctx.arc(tower.x, tower.y, 12, 0, Math.PI * 2);
-    ctx.fillStyle = def.color;
+    ctx.arc(tower.x + 2, tower.y + 3, 14, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fill();
 
-    const isSelected = state.sel === tower.id;
-    ctx.lineWidth = isSelected ? 4 : 2;
-    ctx.strokeStyle = isSelected ? 'white' : '#263448';
+    // 2. Heavy Armored Gunmetal Pedestal
+    ctx.beginPath();
+    ctx.arc(tower.x, tower.y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e293b';
+    ctx.fill();
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    ctx.fillStyle = '#142030';
-    ctx.font = 'bold 9px system-ui';
-    ctx.textAlign = 'center';
+    // Mounting bolts on pedestal
+    const boltAngles = [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4];
+    ctx.fillStyle = '#64748b';
+    boltAngles.forEach((ba) => {
+      ctx.beginPath();
+      ctx.arc(tower.x + Math.cos(ba) * 11, tower.y + Math.sin(ba) * 11, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 3. Draw visible barrels & emitters
+    drawTowerBarrels(ctx, tower, def);
+
+    // 4. Rotating Turret Dome / Core
+    ctx.beginPath();
+    ctx.arc(tower.x, tower.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = def.color || '#38bdf8';
+    ctx.fill();
+
+    // Metallic Specular Bevel Ring
+    ctx.strokeStyle = isSelected ? '#ffffff' : '#0f172a';
+    ctx.lineWidth = isSelected ? 2.5 : 1.8;
+    ctx.stroke();
+
+    // Specular highlight gleam
+    ctx.beginPath();
+    ctx.arc(tower.x - 2.5, tower.y - 2.5, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fill();
+
+    // 5. Centered crisp abbreviation label
     const label = def.abbr || (tower.type === 'ALLSPIKER' ? 'ALL' : tower.type.slice(0, 3).toUpperCase());
-    ctx.fillText(label, tower.x, tower.y + 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 8px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, tower.x, tower.y + 1);
+
+    // 6. Holographic Selection Reticle
+    if (isSelected) {
+      ctx.save();
+      const time = performance.now() * 0.002;
+      ctx.beginPath();
+      ctx.arc(tower.x, tower.y, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.lineDashOffset = -time * 8;
+      ctx.stroke();
+
+      // 4 Corner targeting ticks
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2;
+      const tickDist = 21;
+      const tickLen = 4;
+      [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].forEach((a) => {
+        const ca = Math.cos(a + time);
+        const sa = Math.sin(a + time);
+        ctx.beginPath();
+        ctx.moveTo(tower.x + ca * (tickDist - tickLen), tower.y + sa * (tickDist - tickLen));
+        ctx.lineTo(tower.x + ca * tickDist, tower.y + sa * tickDist);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
   });
 
   // Draw enemies
   state.enemies.forEach((enemy) => {
+    // Drop shadow under enemy for depth
+    ctx.beginPath();
+    ctx.ellipse(enemy.x + 1.5, enemy.y + 2.5, enemy.r * 1.05, enemy.r * 0.65, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fill();
+
     drawEnemyShape(ctx, enemy);
 
     const healthFraction = Math.max(0, enemy.hp / enemy.max);
@@ -1196,7 +1313,7 @@ export function renderGame(ctx, state, towerDefs) {
       const barH = 8;
       const barY = enemy.y - enemy.r - 20;
 
-      ctx.fillStyle = '#28070b';
+      ctx.fillStyle = '#1c0a0e';
       ctx.fillRect(enemy.x - barW / 2 - 1, barY - 1, barW + 2, barH + 2);
       ctx.fillStyle = enemy.color || '#ff4652';
       ctx.fillRect(enemy.x - barW / 2, barY, barW * healthFraction, barH);
@@ -1211,15 +1328,20 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.fillText(bossTitle, enemy.x, barY - 5);
     } else {
       // Standard / elite enemy health bar
-      const barWidth = Math.max(16, enemy.r * 2);
+      const barWidth = Math.max(18, enemy.r * 2);
       const barHeight = 4;
       const barY = enemy.y - enemy.r - 7;
 
-      ctx.fillStyle = '#1d2937';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
       ctx.fillRect(enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
 
-      ctx.fillStyle = enemy.color || '#69f29b';
+      const hpColor = healthFraction > 0.5 ? '#10b981' : healthFraction > 0.25 ? '#fbbf24' : '#ef4444';
+      ctx.fillStyle = hpColor;
       ctx.fillRect(enemy.x - barWidth / 2, barY, barWidth * healthFraction, barHeight);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, barHeight + 2);
     }
   });
 
@@ -1427,9 +1549,12 @@ export function renderGame(ctx, state, towerDefs) {
       ctx.lineWidth = 1;
       ctx.stroke();
     } else {
-      // Standard bullet
-      ctx.fillStyle = '#fff7c2';
+      // Standard bullet with radiant molten core & crisp border
+      ctx.fillStyle = '#fef08a';
       ctx.fill();
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
   });
 
