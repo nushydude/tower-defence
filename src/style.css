@@ -1411,6 +1411,13 @@ canvas#map {
   line-height: 1.2;
 }
 
+/* Hidden by default on mobile */
+.dock-card-stats-preview,
+.shop-header-desktop,
+.desktop-tactical-deck {
+  display: none;
+}
+
 /* Compact Selected Tower Inspector Bar */
 .selected-tower-panel {
   display: none;
@@ -1903,7 +1910,7 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 /* Desktop PC (> 900px): Dedicated Right-Hand Controls Sidebar, Portrait Battlefield Left */
 @media (min-width: 900px) {
   main {
-    max-width: 1400px;
+    max-width: 1440px;
   }
 
   #home {
@@ -1914,11 +1921,11 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 
   #game.active {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr clamp(420px, 32vw, 480px);
     grid-template-rows: auto auto auto 1fr auto;
     height: 100vh;
     height: 100dvh;
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
     overflow: hidden;
     background: #060a13;
@@ -1938,19 +1945,46 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     border-right: 1px solid #1a273b;
     border-bottom: none;
     background: #020610;
-    padding: 10px;
+    padding: 14px;
     box-sizing: border-box;
   }
 
   canvas#map {
     height: 100%;
-    max-height: calc(100vh - 24px);
+    max-height: calc(100vh - 28px);
     max-width: 100%;
     width: auto;
     aspect-ratio: 480 / 720;
     object-fit: contain;
-    border-radius: 10px;
-    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.7);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.75);
+  }
+
+  .floating-hud-corner {
+    top: 14px;
+    right: 14px;
+    gap: 8px;
+  }
+
+  .canvas-hud-pill {
+    height: 38px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .canvas-hud-pill:hover {
+    background: rgba(30, 41, 59, 0.98);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
   }
 
   /* Right-Hand Controls Sidebar */
@@ -1958,23 +1992,61 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     grid-column: 2;
     grid-row: 1;
     border-bottom: 1px solid #1a273b;
-    padding: 12px 14px;
+    padding: 12px 16px;
+    gap: 8px;
     background: rgba(10, 16, 28, 0.98);
+    justify-content: space-between;
+  }
+
+  .stat-pill {
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 8px;
+    gap: 6px;
+  }
+
+  .stat-gold span,
+  .stat-gems span,
+  .stat-stage span,
+  .stat-hp span {
+    font-size: 14px;
+    font-weight: 900;
   }
 
   .combat-intel-bar {
     grid-column: 2;
     grid-row: 2;
     border-bottom: 1px solid #1a273b;
-    padding: 8px 14px;
+    padding: 10px 16px;
     height: auto;
     background: rgba(12, 18, 32, 0.98);
+  }
+
+  .intel-wave-title {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .intel-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .intel-progress-track {
+    height: 8px;
+    border-radius: 6px;
+    margin-top: 6px;
   }
 
   .build-alert-banner {
     grid-column: 2;
     grid-row: 3;
-    margin: 6px 12px;
+    margin: 8px 16px;
+    padding: 10px 14px;
+    font-size: 13px;
   }
 
   .dock-drawer {
@@ -1987,26 +2059,50 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     overflow-x: hidden;
     border-top: none;
     border-bottom: 1px solid #1a273b;
-    padding: 12px 14px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 12px;
     background: #080d18;
   }
 
   .shop-section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
+  }
+
+  .shop-header-desktop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2px 2px;
+  }
+
+  .shop-header-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+  }
+
+  .shop-header-subtitle {
+    font-size: 10px;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
   }
 
   .turret-dock {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 10px;
     overflow-x: visible;
     width: 100%;
   }
@@ -2014,76 +2110,392 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .turret-dock-card {
     flex: none;
     width: 100%;
-    height: 64px;
-    padding: 6px 4px;
+    height: 86px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #18283e 0%, #101a2a 100%);
+    border: 1px solid #283e5c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.15s ease;
+  }
+
+  .turret-dock-card:hover:not(:disabled) {
+    border-color: #38bdf8;
+    background: linear-gradient(180deg, #1e3350 0%, #142236 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+  }
+
+  .dock-card-icon-wrap {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px;
+  }
+
+  .dock-card-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .dock-card-num {
+    position: static;
+    font-size: 10px;
+    font-weight: 800;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 1px 6px;
+    border-radius: 4px;
+    line-height: 1.2;
   }
 
   .dock-card-name {
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #f8fafc;
     max-width: none;
+    margin: 2px 0 0;
+  }
+
+  .dock-card-stats-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
   }
 
   .dock-card-cost {
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    padding: 2px 10px;
+    border-radius: 6px;
   }
 
+  /* Desktop Tactical Deck (Keys & Live Intel) */
+  .desktop-tactical-deck {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 12px;
+    background: rgba(14, 23, 38, 0.85);
+    border: 1px solid #1f3350;
+    border-radius: 10px;
+  }
+
+  .tactical-deck-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #7dd3fc;
+  }
+
+  .keybinds-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 10px;
+  }
+
+  .keybind-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #cbd5e1;
+  }
+
+  .keybind-item kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 800;
+    font-family: inherit;
+    color: #38bdf8;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  .desktop-turret-intel {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(8, 13, 24, 0.9);
+    border: 1px solid #1c2c44;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #94a3b8;
+    min-height: 48px;
+  }
+
+  .intel-tip-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .intel-tip-text {
+    flex: 1;
+  }
+
+  /* Desktop Selected Tower Inspector */
   .compact-inspector-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-    padding: 8px;
-    background: linear-gradient(180deg, #142136 0%, #0e1726 100%);
-    border: 1px solid #2a4163;
-    border-radius: 10px;
+    gap: 12px;
+    padding: 14px;
+    background: linear-gradient(180deg, #15243b 0%, #0d1726 100%);
+    border: 1px solid #2e476e;
+    border-radius: 12px;
+  }
+
+  .inspector-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .inspector-icon {
+    font-size: 32px;
+  }
+
+  .inspector-name {
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .inspector-tag {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+  }
+
+  .inspector-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .inspector-chips .chip {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
   }
 
   .inspector-actions {
     width: 100%;
     display: flex;
-    gap: 8px;
+    gap: 10px;
   }
 
   .mini-inspector-btn {
-    flex: 1;
-    height: 34px;
-    font-size: 11px;
+    height: 44px;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 8px;
+    padding: 0 14px;
+  }
+
+  .mini-btn-close {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+    border-radius: 8px;
+    flex-shrink: 0;
   }
 
   .upgrades-horizontal-scroll {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
     overflow-x: visible;
+    width: 100%;
   }
 
   .upgrade-dock-card {
     flex: none;
     width: 100%;
-    height: 56px;
-    padding: 6px 8px;
+    height: 76px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #1d304a 0%, #131e30 100%);
+    border: 1px solid #36537c;
   }
 
+  .upgrade-dock-name {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .upgrade-dock-cost {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+
+  .stat-pill-mini {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* Desktop Command Navigation Deck */
   .mobile-bottom-nav {
     grid-column: 2;
     grid-row: 5;
-    height: 66px;
-    border-top: 1px solid #1a273b;
-    padding: 8px 12px;
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    padding: 14px 16px;
     background: rgba(10, 16, 28, 0.98);
+    border-top: 1px solid #1a273b;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
   }
 
   .bottom-nav-primary-btn {
-    width: 62px;
-    height: 62px;
-    margin-top: -16px;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    height: 56px;
+    margin: 0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+    border: 1px solid rgba(52, 211, 153, 0.5);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .bottom-nav-primary-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 26px rgba(16, 185, 129, 0.65);
+    background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%);
+  }
+
+  .bottom-nav-primary-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .bottom-nav-primary-btn:disabled {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: none;
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .start-btn-icon {
-    font-size: 18px;
+    font-size: 22px;
   }
 
   .start-btn-text {
-    font-size: 10px;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  .bottom-nav-item {
+    max-width: none;
+    width: 100%;
+    height: 44px;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: rgba(22, 36, 56, 0.85);
+    border: 1px solid #283e5c;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .bottom-nav-item:hover {
+    background: rgba(30, 48, 76, 0.95);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+    color: #fff;
+  }
+
+  .bottom-nav-icon {
+    font-size: 18px;
+  }
+
+  .bottom-nav-label {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  #nav-tab-arsenal {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  #game-techtree-btn {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  #homebtn {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  #nav-tab-tower {
+    display: none;
+  }
+
+  /* Desktop Home Screen Scaling */
+  .slots-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .slot-card {
+    padding: 20px 18px;
+    border-radius: 14px;
+  }
+
+  .btn-resume,
+  .btn-primary {
+    height: 44px;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 8px;
+  }
+
+  .btn-slot-delete {
+    height: 44px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 8px;
   }
 
   .techtree-grid {
@@ -2095,15 +2507,40 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 @media (min-width: 601px) and (max-width: 899px) {
   .turret-dock {
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
   }
   .turret-dock-card {
-    flex: 0 0 74px;
-    height: 62px;
+    flex: 0 0 92px;
+    height: 72px;
+    padding: 6px 8px;
+  }
+  .dock-card-icon {
+    font-size: 20px;
+  }
+  .dock-card-name {
+    font-size: 11px;
+  }
+  .dock-card-cost {
+    font-size: 10px;
+  }
+  .bottom-nav-primary-btn {
+    width: 68px;
+    height: 68px;
+    margin-top: -16px;
+  }
+  .start-btn-icon {
+    font-size: 20px;
+  }
+  .start-btn-text {
+    font-size: 11px;
+  }
+  .bottom-nav-item {
+    max-width: 80px;
+    height: 50px;
   }
   .slots-grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
   .techtree-grid {
     grid-template-columns: repeat(2, 1fr);

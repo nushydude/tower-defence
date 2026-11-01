@@ -211,9 +211,33 @@
         <!-- Upgrade Cards Deck -->
         <div id="upgrades" class="upgrades-container" style="display: none;"></div>
 
-        <!-- Low-Profile Turret Selection Dock (Single-Row Horizontal Carousel, ~58px) -->
+        <!-- Low-Profile Turret Selection Dock (Single-Row Horizontal Carousel on Mobile, Tactical Grid on Desktop) -->
         <div id="shop-section" class="shop-section">
+          <div class="shop-header-desktop">
+            <span class="shop-header-title">TACTICAL ARSENAL</span>
+            <span class="shop-header-subtitle">Keys [1–7]</span>
+          </div>
           <div id="shop" class="turret-dock"></div>
+
+          <!-- Desktop Tactical Deck (Fills empty space on desktop with keyboard controls & live intel) -->
+          <div class="desktop-tactical-deck">
+            <div class="tactical-deck-header">
+              <span class="tactical-deck-icon">⌨️</span>
+              <span class="tactical-deck-title">COMMAND CONTROLS</span>
+            </div>
+            <div class="keybinds-grid">
+              <div class="keybind-item"><kbd>Space</kbd> <span>Launch Wave</span></div>
+              <div class="keybind-item"><kbd>1–7</kbd> <span>Deploy Turret</span></div>
+              <div class="keybind-item"><kbd>A</kbd> <span>Toggle Auto</span></div>
+              <div class="keybind-item"><kbd>S</kbd> <span>Cycle Speed</span></div>
+              <div class="keybind-item"><kbd>T</kbd> <span>Tech Trees</span></div>
+              <div class="keybind-item"><kbd>Esc</kbd> <span>Cancel Action</span></div>
+            </div>
+            <div id="desktop-turret-intel" class="desktop-turret-intel">
+              <div class="intel-tip-icon">💡</div>
+              <div id="desktop-intel-text" class="intel-tip-text">Hover or select any turret to inspect combat stats and specialization perks.</div>
+            </div>
+          </div>
         </div>
       </div>
 

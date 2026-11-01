@@ -591,20 +591,46 @@ function renderShop() {
         <span class="dock-card-num">${idx + 1}</span>
       </div>
       <div class="dock-card-name">${isRail ? '⚡' : ''}${towerName}</div>
+      <div class="dock-card-stats-preview">💥${def.dmg} · 🎯${def.range} · ⏱️${def.rate}s</div>
       <div class="dock-card-cost">${cost}🪙</div>
     `;
+
+    btn.onmouseenter = () => {
+      const intelEl = $('desktop-intel-text');
+      if (intelEl) {
+        intelEl.innerHTML = `<strong style="color:#f8fafc">${isRail ? '⚡ ' : ''}${towerName}</strong> (${cost}🪙) · <span style="color:#7dd3fc">${meta.perk}</span><br><span style="color:#38bdf8; font-weight:700;">💥${def.dmg} Damage · 🎯${def.range} Range · ⏱️${def.rate}s Speed · Branch: ${meta.branch}</span>`;
+      }
+    };
+    btn.onmouseleave = () => {
+      const intelEl = $('desktop-intel-text');
+      if (intelEl) {
+        if (game.state && game.state.build) {
+          const bName = game.state.build;
+          const bDef = TOWER_DEFINITIONS[bName];
+          intelEl.innerHTML = `<strong style="color:#facc15">DEPLOYING ${bName.toUpperCase()}</strong> (${bDef?.cost || 0}🪙) · Tap any clear grass on the map to place!`;
+        } else {
+          intelEl.textContent = 'Hover or select any turret to inspect combat stats and specialization perks.';
+        }
+      }
+    };
 
     btn.onclick = () => {
       if (!game.state) return;
       if (game.state.build === towerName) {
         game.state.build = null;
         updateUI();
+        const intelEl = $('desktop-intel-text');
+        if (intelEl) intelEl.textContent = 'Hover or select any turret to inspect combat stats and specialization perks.';
         showMessage('Placement cancelled.');
         return;
       }
       game.state.build = towerName;
       game.state.sel = null;
       updateUI();
+      const intelEl = $('desktop-intel-text');
+      if (intelEl) {
+        intelEl.innerHTML = `<strong style="color:#facc15">DEPLOYING ${towerName.toUpperCase()}</strong> (${cost}🪙) · Tap any clear grass on the map to place!`;
+      }
       showMessage(`Tap clear terrain to place ${towerName} (${cost}🪙)`);
     };
     shopEl.appendChild(btn);
