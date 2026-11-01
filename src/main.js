@@ -329,7 +329,11 @@ function updateUI() {
             btn.onclick = (e) => {
               e.stopPropagation();
               if (S.coins < upgradeDef.cost) {
-                showMessage('Not enough coins!');
+                const needed = upgradeDef.cost - Math.floor(S.coins);
+                showMessage(`Need ${needed} more 🪙 to upgrade to ${nextName}!`);
+                btn.classList.remove('card-shake');
+                void btn.offsetWidth;
+                btn.classList.add('card-shake');
                 return;
               }
               S.coins -= upgradeDef.cost;
@@ -351,22 +355,39 @@ function updateUI() {
     }
   }
 
-  // Update disabled state for upgrade buttons in real time based on coin balance
+  // Update affordable state for upgrade buttons in real time based on coin balance
   if (upgradesEl) {
     const upgradeButtons = upgradesEl.querySelectorAll('button');
     upgradeButtons.forEach((btn) => {
       const cost = Number(btn.dataset.cost);
-      btn.disabled = S.coins < cost;
+      const canAfford = !isNaN(cost) && S.coins >= cost;
+      btn.classList.toggle('unaffordable', !canAfford);
+      btn.classList.toggle('affordable', canAfford);
+      btn.disabled = false;
+      btn.setAttribute('aria-disabled', String(!canAfford));
     });
   }
 
-  // Update disabled state and active build state for shop buttons
-  const shopButtons = $('shop').querySelectorAll('button');
+  // Update affordable/unaffordable and active build state for shop buttons
+  const shopButtons = $('shop').querySelectorAll('.turret-dock-card');
   shopButtons.forEach((btn, index) => {
     const cost = Number(btn.dataset.cost);
-    if (!isNaN(cost)) {
-      btn.disabled = S.coins < cost;
+    const canAfford = !isNaN(cost) && S.coins >= cost;
+    btn.classList.toggle('unaffordable', !canAfford);
+    btn.classList.toggle('affordable', canAfford);
+    // Never disable button with native disabled attribute to prevent event suppression and blackout
+    btn.disabled = false;
+    btn.setAttribute('aria-disabled', String(!canAfford));
+
+    const costBadge = btn.querySelector('.dock-card-cost');
+    if (costBadge) {
+      if (!canAfford) {
+        costBadge.title = `Need ${cost - Math.floor(S.coins)} more 🪙`;
+      } else {
+        costBadge.removeAttribute('title');
+      }
     }
+
     const towerName = BASE_TOWERS[index];
     if (towerName && S.build === towerName) {
       btn.classList.add('active-build');
@@ -585,22 +606,52 @@ function renderShop() {
     btn.dataset.tower = towerName;
     btn.title = `${towerName} (${cost}🪙): 💥${def.dmg} 🎯${def.range} ⏱️${def.rate}s — ${meta.perk}`;
 
+    const dps = (def.dmg / (def.rate || 0.5)).toFixed(0);
     btn.innerHTML = `
-      <div class="dock-card-icon-wrap">
+      <div class="dock-card-leading">
         <span class="dock-card-icon">${meta.icon}</span>
         <span class="dock-card-num">${idx + 1}</span>
       </div>
-      <div class="dock-card-name">${isRail ? '⚡' : ''}${towerName}</div>
-      <div class="dock-card-stats-preview">💥${def.dmg} · 🎯${def.range} · ⏱️${def.rate}s</div>
-      <div class="dock-card-cost">${cost}🪙</div>
+      <div class="dock-card-body">
+        <div class="dock-card-title-row">
+          <span class="dock-card-name">${isRail ? '⚡ ' : ''}${towerName}</span>
+          <span class="dock-card-role">${meta.branch}</span>
+        </div>
+        <div class="dock-card-stats-preview">
+          <span class="micro-stat stat-dmg" title="Damage">💥 ${def.dmg}</span>
+          <span class="micro-stat stat-rng" title="Range">🎯 ${def.range}</span>
+          <span class="micro-stat stat-rate" title="Attack Period">⏱️ ${def.rate}s</span>
+          <span class="micro-stat stat-dps" title="Damage Per Second">⚡ ${dps}/s</span>
+        </div>
+      </div>
+      <div class="dock-card-trailing">
+        <div class="dock-card-cost">${cost}🪙</div>
+      </div>
     `;
 
     btn.onmouseenter = () => {
       const intelEl = $('desktop-intel-text');
       if (intelEl) {
-        intelEl.innerHTML = `<strong style="color:#f8fafc">${isRail ? '⚡ ' : ''}${towerName}</strong> (${cost}🪙) · <span style="color:#7dd3fc">${meta.perk}</span><br><span style="color:#38bdf8; font-weight:700;">💥${def.dmg} Damage · 🎯${def.range} Range · ⏱️${def.rate}s Speed · Branch: ${meta.branch}</span>`;
+        const coins = game.state ? Math.floor(game.state.coins) : 0;
+        const canAfford = coins >= cost;
+        const needed = Math.max(0, cost - coins);
+        const statusBadge = canAfford
+          ? `<span style="color:#34d399; font-weight:800; background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.35); padding:1px 6px; border-radius:4px;">✓ READY TO DEPLOY</span>`
+          : `<span style="color:#f87171; font-weight:800; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); padding:1px 6px; border-radius:4px;">⚠️ NEED ${needed} MORE 🪙</span>`;
+
+        intelEl.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <strong style="color:#f8fafc; font-size:12px;">${isRail ? '⚡ ' : ''}${towerName} (${cost}🪙)</strong>
+            ${statusBadge}
+          </div>
+          <div style="color:#38bdf8; font-weight:750; font-size:11px; margin-bottom:2px;">
+            💥 ${def.dmg} Damage · 🎯 ${def.range} Range · ⏱️ ${def.rate}s Speed · ⚡ ${dps} DPS
+          </div>
+          <div style="color:#94a3b8; font-size:10px;">Branch: <span style="color:#cbd5e1; font-weight:700;">${meta.branch}</span> — ${meta.perk}</div>
+        `;
       }
     };
+
     btn.onmouseleave = () => {
       const intelEl = $('desktop-intel-text');
       if (intelEl) {
@@ -616,6 +667,14 @@ function renderShop() {
 
     btn.onclick = () => {
       if (!game.state) return;
+      if (game.state.coins < cost) {
+        const needed = cost - Math.floor(game.state.coins);
+        showMessage(`Need ${needed} more 🪙 to deploy ${towerName}!`);
+        btn.classList.remove('card-shake');
+        void btn.offsetWidth;
+        btn.classList.add('card-shake');
+        return;
+      }
       if (game.state.build === towerName) {
         game.state.build = null;
         updateUI();

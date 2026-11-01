@@ -1331,10 +1331,10 @@ canvas#map {
   display: none;
 }
 
-/* Compact Turret Dock Card with zero text clipping */
+/* Compact Turret Dock Card Base */
 .turret-dock-card {
-  flex: 0 0 68px;
-  height: 60px;
+  flex: 0 0 74px;
+  height: 64px;
   background: linear-gradient(180deg, #162438 0%, #101928 100%);
   border: 1px solid #283e5c;
   border-radius: 8px;
@@ -1342,92 +1342,121 @@ canvas#map {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 3px 2px 3px;
+  padding: 4px 4px;
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
   margin: 0;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
-.turret-dock-card:hover:not(:disabled) {
+.turret-dock-card:hover {
   border-color: #38bdf8;
   transform: translateY(-1px);
 }
 
-.turret-dock-card:active:not(:disabled) {
-  transform: scale(0.95);
+.turret-dock-card:active {
+  transform: scale(0.96);
+}
+
+.turret-dock-card.affordable {
+  border-color: #2b456e;
+}
+
+.turret-dock-card.unaffordable {
+  opacity: 0.82;
+  border-color: #1e2c40;
+  background: linear-gradient(180deg, #121c2b 0%, #0a111c 100%);
+}
+
+.turret-dock-card.unaffordable .dock-card-cost {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .turret-dock-card.active-build {
   border-color: #38bdf8 !important;
   background: rgba(56, 189, 248, 0.22) !important;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6) !important;
 }
 
 .turret-dock-card.turret-card-railgun {
   border-color: #0284c7;
   background: linear-gradient(180deg, #102642 0%, #0c192d 100%);
-  box-shadow: 0 0 8px rgba(2, 132, 199, 0.25);
 }
 
-.turret-dock-card:disabled {
-  opacity: 0.38;
-  filter: grayscale(0.5);
-  cursor: not-allowed;
-}
-
-.dock-card-icon-wrap {
+/* Card internal components - default (mobile) */
+.dock-card-leading {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
+  justify-content: space-between;
   width: 100%;
 }
 
 .dock-card-icon {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
 }
 
 .dock-card-num {
-  position: absolute;
-  top: -1px;
-  right: 2px;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   color: #64748b;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 3px;
+  border-radius: 3px;
 }
 
-.dock-card-name {
-  font-size: 10px;
-  font-weight: 700;
-  color: #f1f5f9;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
-  max-width: 64px;
-  line-height: 1.25;
-  margin: 1px 0;
+.dock-card-body {
+  width: 100%;
   text-align: center;
 }
 
-.dock-card-cost {
-  font-size: 9px;
-  font-weight: 800;
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.15);
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  padding: 1px 5px;
-  border-radius: 6px;
-  line-height: 1.2;
+.dock-card-name {
+  font-size: 11px;
+  font-weight: 750;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 68px;
+  margin: 0 auto;
 }
 
-/* Hidden by default on mobile */
+.dock-card-role,
 .dock-card-stats-preview,
 .shop-header-desktop,
 .desktop-tactical-deck {
   display: none;
+}
+
+.dock-card-trailing {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.dock-card-cost {
+  font-size: 10px;
+  font-weight: 850;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.18);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  padding: 1px 6px;
+  border-radius: 5px;
+  line-height: 1.2;
+}
+
+@keyframes card-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.card-shake {
+  animation: card-shake 0.3s ease;
 }
 
 /* Compact Selected Tower Inspector Bar */
@@ -1605,9 +1634,20 @@ canvas#map {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.35) !important;
 }
 
-.upgrade-dock-card:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.upgrade-dock-card.unaffordable {
+  opacity: 0.82;
+  border-color: #1e2e46;
+  background: linear-gradient(180deg, #121c2b 0%, #0a111a 100%);
+}
+
+.upgrade-dock-card.unaffordable .upgrade-dock-cost {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.upgrade-dock-card.affordable {
+  border-color: #2b456e;
 }
 
 .upgrade-dock-top {
@@ -2197,50 +2237,93 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     border-radius: 4px;
   }
 
+  /* Desktop 1-Column Tactical Deploy Roster */
   .turret-dock {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
     overflow-x: visible;
     width: 100%;
+    margin-bottom: 4px;
   }
 
   .turret-dock-card {
     flex: none;
     width: 100%;
-    height: 78px;
-    padding: 7px 10px;
+    height: 52px;
+    padding: 6px 12px;
     border-radius: 8px;
-    background: linear-gradient(180deg, #182844 0%, #0d1728 100%);
-    border: 1px solid #2b456e;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, #152338 0%, #0d1726 100%);
+    border: 1px solid #233857;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: space-between;
     transition: all 0.15s ease;
+    cursor: pointer;
   }
 
-  .turret-dock-card:hover:not(:disabled) {
+  .turret-dock-card:hover {
     border-color: #38bdf8;
-    background: linear-gradient(180deg, #1e3558 0%, #112038 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(56, 189, 248, 0.35);
+    background: linear-gradient(135deg, #1c3250 0%, #112034 100%);
+    transform: translateX(3px);
+    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+  }
+
+  .turret-dock-card.affordable {
+    border-color: #2b456e;
+  }
+
+  .turret-dock-card.affordable .dock-card-cost {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+  }
+
+  .turret-dock-card.unaffordable {
+    opacity: 0.82;
+    background: linear-gradient(135deg, #121c2b 0%, #0a111a 100%);
+    border-color: #1b283d;
+  }
+
+  .turret-dock-card.unaffordable .dock-card-name {
+    color: #e2e8f0;
+  }
+
+  .turret-dock-card.unaffordable .dock-card-cost {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+  }
+
+  .turret-dock-card.unaffordable:hover {
+    opacity: 1;
+    border-color: #38bdf8;
+    background: linear-gradient(135deg, #18283e 0%, #0e1828 100%);
   }
 
   .turret-dock-card.active-build {
     border-color: #38bdf8 !important;
-    background: linear-gradient(180deg, #1e3f6e 0%, #102644 100%) !important;
-    box-shadow: 0 0 24px rgba(56, 189, 248, 0.7), inset 0 0 12px rgba(56, 189, 248, 0.3) !important;
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #1e4170 0%, #0e2646 100%) !important;
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.7), inset 0 0 10px rgba(56, 189, 248, 0.25) !important;
+    transform: translateX(4px);
   }
 
-  .dock-card-icon-wrap {
-    width: 100%;
+  /* Desktop Leading Box */
+  .dock-card-leading {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    background: #091220;
+    border: 1px solid #1c304d;
+    border-radius: 6px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 2px;
+    justify-content: center;
+    position: relative;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
   }
 
   .dock-card-icon {
@@ -2250,34 +2333,91 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   }
 
   .dock-card-num {
-    position: static;
-    font-size: 10px;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    font-size: 9px;
     font-weight: 900;
     color: #38bdf8;
-    background: rgba(56, 189, 248, 0.2);
-    border: 1px solid rgba(56, 189, 248, 0.5);
-    padding: 1px 6px;
-    border-radius: 4px;
+    background: #060e1a;
+    border: 1px solid #38bdf8;
+    padding: 0 4px;
+    border-radius: 3px;
     line-height: 1.2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Desktop Body */
+  .dock-card-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 0 10px;
+    gap: 2px;
+    text-align: left;
+  }
+
+  .dock-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .dock-card-name {
     font-size: 13px;
     font-weight: 850;
     color: #ffffff;
-    max-width: none;
-    margin: 1px 0 0;
     letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    max-width: none;
+    text-align: left;
+  }
+
+  .dock-card-role {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 750;
+    color: #7dd3fc;
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
   }
 
   .dock-card-stats-preview {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: 8px;
     font-size: 11px;
-    font-weight: 750;
+    font-weight: 700;
     color: #cbd5e1;
+    white-space: nowrap;
+  }
+
+  .micro-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-dmg { color: #f87171; }
+  .stat-rng { color: #60a5fa; }
+  .stat-rate { color: #cbd5e1; }
+  .stat-dps { color: #34d399; }
+
+  /* Desktop Trailing */
+  .dock-card-trailing {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .dock-card-cost {
@@ -2286,38 +2426,12 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     color: #fbbf24;
     background: rgba(251, 191, 36, 0.2);
     border: 1px solid rgba(251, 191, 36, 0.45);
-    padding: 2px 10px;
+    padding: 4px 12px;
     border-radius: 6px;
-  }
-
-  /* Spiker (Card 7) spans across both columns as a balanced wide feature card */
-  .turret-dock-card:nth-child(7) {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    height: 52px;
-    padding: 0 14px;
-    justify-content: space-between;
-  }
-
-  .turret-dock-card:nth-child(7) .dock-card-icon-wrap {
-    width: auto;
-    gap: 8px;
-  }
-
-  .turret-dock-card:nth-child(7) .dock-card-name {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 850;
-  }
-
-  .turret-dock-card:nth-child(7) .dock-card-stats-preview {
-    margin: 0;
-    font-size: 11px;
-  }
-
-  .turret-dock-card:nth-child(7) .dock-card-cost {
-    margin: 0;
-    font-size: 12px;
+    min-width: 64px;
+    text-align: center;
+    letter-spacing: 0.2px;
+    line-height: 1.2;
   }
 
   /* Desktop Tactical Deck (Keys & Live Intel, dynamically fills vertical space) */
