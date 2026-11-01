@@ -20,9 +20,17 @@ let lastRenderedTowerType = null;
 let pendingMapSlotIndex = 0;
 let pendingDeleteSlotIndex = null;
 
+let msgFadeTimer = null;
 function showMessage(text) {
   const msgEl = $('msg');
-  if (msgEl) msgEl.textContent = text;
+  if (msgEl) {
+    msgEl.textContent = text;
+    msgEl.classList.add('visible');
+    clearTimeout(msgFadeTimer);
+    msgFadeTimer = setTimeout(() => {
+      msgEl.classList.remove('visible');
+    }, 2400);
+  }
 }
 
 const game = new GameModel(showMessage, updateUI);
@@ -41,16 +49,20 @@ function updateUI() {
 
   $('start').disabled = S.running;
   $('start').textContent = S.over
-    ? 'Restart Game'
+    ? 'Restart'
     : S.running
-    ? 'Stage in progress'
+    ? 'In Progress'
     : (S.autoStart && S.autoCountdown > 0)
-    ? `Auto starting (${S.autoCountdown.toFixed(1)}s)...`
-    : 'Start Stage';
+    ? `Auto (${S.autoCountdown.toFixed(1)}s)`
+    : '▶ Start Stage';
 
   if ($('auto')) {
-    $('auto').textContent = `Auto-Start: ${S.autoStart ? 'ON' : 'OFF'}`;
+    $('auto').textContent = S.autoStart ? 'Auto: ON' : 'Auto: OFF';
     $('auto').className = S.autoStart ? 'active' : '';
+  }
+
+  if ($('speed')) {
+    $('speed').textContent = `${S.speed || 1}×`;
   }
 
   const isBossWave = S.wave % 10 === 0 && S.wave > 0;
@@ -59,19 +71,44 @@ function updateUI() {
     if (isBossWave && (S.running || hasActiveBoss)) {
       const bossConfig = getBossConfigForWave(S.wave);
       $('boss').style.display = 'block';
-      $('boss').textContent = `⚠️ BOSS BATTLE (STAGE ${S.wave}) — ${bossConfig.name.toUpperCase()}`;
+      $('boss').textContent = `⚠️ BOSS (STAGE ${S.wave}) — ${bossConfig.name.toUpperCase()}`;
     } else {
       $('boss').style.display = 'none';
     }
   }
 
   const selectedTower = S.towers.find((t) => t.id === S.sel);
+  const selectedEl = $('selected');
+  const upgradesEl = $('upgrades');
+
   if (selectedTower) {
     const def = TOWER_DEFINITIONS[selectedTower.type];
     const branchName = def.branch || (def.isRailgun ? 'Laser Railgun' : 'Tactical');
-    $('selected').innerHTML = `<strong>Selected: ${selectedTower.type}</strong> [${branchName} Branch] · Damage ${def.dmg} · Range ${def.range}`;
+    if (selectedEl) {
+      selectedEl.style.display = 'flex';
+      selectedEl.innerHTML = `
+        <div class="selected-text"><strong>${selectedTower.type}</strong> <span class="selected-branch">[${branchName}]</span> · ${def.dmg} dmg · ${def.range} rng</div>
+        <button id="btn-deselect-tower" class="btn-deselect-mini" aria-label="Deselect tower">✕</button>
+      `;
+      const deselectBtn = $('btn-deselect-tower');
+      if (deselectBtn) {
+        deselectBtn.onclick = (e) => {
+          e.stopPropagation();
+          S.sel = null;
+          updateUI();
+        };
+      }
+    }
+    if (upgradesEl) upgradesEl.style.display = 'flex';
   } else {
-    $('selected').textContent = 'No tower selected';
+    if (selectedEl) {
+      selectedEl.style.display = 'none';
+      selectedEl.innerHTML = '';
+    }
+    if (upgradesEl) {
+      upgradesEl.style.display = 'none';
+      upgradesEl.innerHTML = '';
+    }
   }
 
   // Render upgrade options ONLY when selection changes or tower upgrades
@@ -82,42 +119,46 @@ function updateUI() {
     lastRenderedTowerId = currentTowerId;
     lastRenderedTowerType = currentTowerType;
 
-    $('upgrades').innerHTML = '';
-    if (selectedTower) {
-      const nextUpgrades = TOWER_DEFINITIONS[selectedTower.type].next || [];
-      nextUpgrades.forEach((nextName) => {
-        const upgradeDef = TOWER_DEFINITIONS[nextName];
-        const btn = document.createElement('button');
-        if (nextName.includes('Railgun')) {
-          btn.className = 'btn-upgrade-railgun';
-          btn.innerHTML = `⚡ Upgrade to ${nextName} · ${upgradeDef.cost}`;
-        } else {
-          btn.textContent = `Upgrade to ${nextName} · ${upgradeDef.cost}`;
-        }
-        btn.dataset.cost = upgradeDef.cost;
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          if (S.coins < upgradeDef.cost) {
-            showMessage('Not enough coins!');
-            return;
+    if (upgradesEl) {
+      upgradesEl.innerHTML = '';
+      if (selectedTower) {
+        const nextUpgrades = TOWER_DEFINITIONS[selectedTower.type].next || [];
+        nextUpgrades.forEach((nextName) => {
+          const upgradeDef = TOWER_DEFINITIONS[nextName];
+          const btn = document.createElement('button');
+          if (nextName.includes('Railgun')) {
+            btn.className = 'btn-upgrade-railgun';
+            btn.innerHTML = `<span class="upgrade-btn-name">⚡ ${nextName}</span><span class="upgrade-btn-cost">${upgradeDef.cost}🪙</span>`;
+          } else {
+            btn.innerHTML = `<span class="upgrade-btn-name">${nextName}</span><span class="upgrade-btn-cost">${upgradeDef.cost}🪙</span>`;
           }
-          S.coins -= upgradeDef.cost;
-          selectedTower.type = nextName;
-          updateUI();
-          game.saveGame();
-          showMessage(`Upgraded to ${nextName}!`);
-        };
-        $('upgrades').appendChild(btn);
-      });
+          btn.dataset.cost = upgradeDef.cost;
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            if (S.coins < upgradeDef.cost) {
+              showMessage('Not enough coins!');
+              return;
+            }
+            S.coins -= upgradeDef.cost;
+            selectedTower.type = nextName;
+            updateUI();
+            game.saveGame();
+            showMessage(`Upgraded to ${nextName}!`);
+          };
+          upgradesEl.appendChild(btn);
+        });
+      }
     }
   }
 
   // Update disabled state for upgrade buttons in real time based on coin balance
-  const upgradeButtons = $('upgrades').querySelectorAll('button');
-  upgradeButtons.forEach((btn) => {
-    const cost = Number(btn.dataset.cost);
-    btn.disabled = S.coins < cost;
-  });
+  if (upgradesEl) {
+    const upgradeButtons = upgradesEl.querySelectorAll('button');
+    upgradeButtons.forEach((btn) => {
+      const cost = Number(btn.dataset.cost);
+      btn.disabled = S.coins < cost;
+    });
+  }
 
   // Update disabled state and active build state for shop buttons
   const shopButtons = $('shop').querySelectorAll('button');
@@ -328,9 +369,9 @@ function renderShop() {
 
     if (towerName === 'Railgun') {
       btn.className = 'shop-btn-railgun';
-      btn.innerHTML = `${kbd}⚡ ${towerName} (Laser) · ${cost}`;
+      btn.innerHTML = `${kbd}<span class="turret-btn-name">⚡ Railgun</span><span class="turret-btn-cost">${cost}🪙</span>`;
     } else {
-      btn.innerHTML = `${kbd}${towerName} · ${cost}`;
+      btn.innerHTML = `${kbd}<span class="turret-btn-name">${towerName}</span><span class="turret-btn-cost">${cost}🪙</span>`;
     }
 
     btn.onclick = () => {

@@ -138,32 +138,35 @@
 
     <!-- Active Game Screen -->
     <section id="game">
-      <div class="row">
-        <div class="panel stat-panel">🪙 <span id="coins">300</span></div>
-        <div class="panel stat-panel">💎 <span id="gems">0</span></div>
-        <div class="panel stat-panel">STAGE <span id="stage">1</span></div>
-        <div class="panel stat-panel">BASE HP <span id="hp">100</span></div>
-        <div class="panel stat-panel">MAP <span id="active-map-name">Plains</span></div>
+      <div class="row hud-stats-row">
+        <div class="stat-panel">🪙 <span id="coins">300</span></div>
+        <div class="stat-panel">💎 <span id="gems">0</span></div>
+        <div class="stat-panel">STAGE <span id="stage">1</span></div>
+        <div class="stat-panel">HP <span id="hp">100</span></div>
+        <div class="stat-panel">MAP <span id="active-map-name">Plains</span></div>
       </div>
-      <div id="boss" class="panel boss-banner" style="display: none">
-        ⚠️ BOSS BATTLE
+
+      <div class="canvas-wrapper">
+        <div id="boss" class="boss-banner" style="display: none">
+          ⚠️ BOSS BATTLE
+        </div>
+        <canvas id="map" width="720" height="470"></canvas>
+        <div id="msg" class="floating-toast">Build your defence!</div>
       </div>
-      <canvas id="map" width="720" height="470"></canvas>
+
       <div class="actions hud-actions">
         <button id="start" class="btn-hud-primary">Start Stage</button>
-        <button id="auto">Auto-Start: OFF</button>
-        <button id="speed">Speed: 1×</button>
-        <button id="game-techtree-btn" class="btn-hud-secondary">📜 Tech Tree</button>
-        <button id="homebtn" class="btn-hud-secondary">Home Menu</button>
+        <button id="auto">Auto: OFF</button>
+        <button id="speed">1×</button>
+        <button id="game-techtree-btn" class="btn-hud-secondary">📜 Tech</button>
+        <button id="homebtn" class="btn-hud-secondary">🏠 Home</button>
       </div>
-      <div class="panel shop-panel">
-        <div class="shop-title">Deploy Turret</div>
-        <div id="shop" class="actions"></div>
-        <div class="small shop-hint">Select a turret, then click clear terrain to build. Click an existing turret to view upgrade trees.</div>
-        <div id="selected" class="selected-tower-info">No tower selected</div>
-        <div id="upgrades" class="actions"></div>
+
+      <div class="shop-panel">
+        <div id="selected" class="selected-tower-info" style="display: none;"></div>
+        <div id="upgrades" class="actions deck-scroll" style="display: none;"></div>
+        <div id="shop" class="actions shop-deck deck-scroll"></div>
       </div>
-      <div id="msg" class="small status-message">Build your defence!</div>
     </section>
   </main>
   <script type="module" src="/src/main.js"></script>
