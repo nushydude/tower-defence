@@ -21,6 +21,21 @@
   <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
 </head>
 <body>
+  <!-- PWA In-App Live Update Notification Banner -->
+  <aside id="pwa-update-banner" class="pwa-update-banner" style="display: none;" role="alert" aria-live="polite">
+    <div class="update-banner-content">
+      <span class="update-banner-icon">🚀</span>
+      <div class="update-banner-text">
+        <span class="update-banner-title">Update Ready</span>
+        <span class="update-banner-subtitle">New tactical enhancements available!</span>
+      </div>
+    </div>
+    <div class="update-banner-actions">
+      <button id="btn-update-reload" class="btn-update-action btn-update-confirm">⚡ Reload</button>
+      <button id="btn-update-dismiss" class="btn-update-action btn-update-close" aria-label="Dismiss">✕</button>
+    </div>
+  </aside>
+
   <main>
     <!-- Start / Home Screen -->
     <section id="home">

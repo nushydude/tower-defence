@@ -1,9 +1,10 @@
-const CACHE_NAME = 'tower-defence-pwa-v1';
+const CACHE_NAME = 'tower-defence-pwa-v1.1.0';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/manifest.json',
   '/favicon.svg',
   '/icon-192.png',
   '/icon-512.png',
@@ -19,7 +20,7 @@ self.addEventListener('install', (event) => {
       });
     })
   );
-  self.skipWaiting();
+  // Do NOT skipWaiting automatically on updates so we don't break active wave gameplay
 });
 
 self.addEventListener('activate', (event) => {
@@ -31,6 +32,13 @@ self.addEventListener('activate', (event) => {
     })
   );
   self.clients.claim();
+});
+
+// Client requests update activation (triggered only when safe / between waves)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {

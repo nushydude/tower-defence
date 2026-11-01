@@ -35,6 +35,26 @@ function showMessage(text) {
   }
 }
 
+// PWA update state & battle-safe guard
+let pendingUpdateWorker = null;
+let updateDismissed = false;
+
+function isGameActive() {
+  const gameRunning = game && game.state && game.state.running && !game.state.over;
+  const inGameScreen = $('game') && $('game').style.display !== 'none';
+  return Boolean(gameRunning && inGameScreen);
+}
+
+function checkAndShowUpdatePrompt() {
+  const banner = $('pwa-update-banner');
+  if (!banner) return;
+  if (!pendingUpdateWorker || updateDismissed || isGameActive()) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'flex';
+}
+
 const game = new GameModel(showMessage, updateUI);
 
 function updateUI() {
@@ -325,6 +345,11 @@ function updateUI() {
       btn.classList.remove('active-build');
     }
   });
+
+  // If a pending PWA update was delayed during battle, safely prompt now that wave is finished
+  if (!S.running) {
+    checkAndShowUpdatePrompt();
+  }
 }
 
 function renderSlotList() {
@@ -752,6 +777,7 @@ $('homebtn').onclick = () => {
   renderSlotList();
   $('game').style.display = 'none';
   $('home').style.display = 'block';
+  checkAndShowUpdatePrompt();
 };
 
 $('speed').onclick = () => {
@@ -834,16 +860,87 @@ renderSlotList();
 requestAnimationFrame(gameLoop);
 
 // =========================================================
-// PROGRESSIVE WEB APP (PWA): FULL-SCREEN & SERVICE WORKER
+// PROGRESSIVE WEB APP (PWA): SMART UPDATE SYSTEM & INSTALL
 // =========================================================
+
+function setupUpdateListeners(reg) {
+  function handleWaitingWorker(worker) {
+    if (!worker) return;
+    pendingUpdateWorker = worker;
+    // Check if safe to display immediately (not in active battle)
+    checkAndShowUpdatePrompt();
+  }
+
+  // Check if an updated worker is already waiting in the background
+  if (reg.waiting) {
+    handleWaitingWorker(reg.waiting);
+  }
+
+  // Listen for new worker installing in the background
+  reg.addEventListener('updatefound', () => {
+    const newWorker = reg.installing;
+    if (!newWorker) return;
+
+    newWorker.addEventListener('statechange', () => {
+      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        // A new version is ready and waiting
+        handleWaitingWorker(newWorker);
+      }
+    });
+  });
+
+  // Periodically check for updates every 15 minutes
+  setInterval(() => {
+    reg.update().catch(() => {});
+  }, 15 * 60 * 1000);
+
+  // Check for updates when app regains focus or comes back from background
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      reg.update().catch(() => {});
+    }
+  });
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then((reg) => {
       console.log('PWA Service Worker active:', reg.scope);
+      setupUpdateListeners(reg);
     }).catch((err) => {
       console.warn('PWA SW registration notice:', err);
     });
   });
+
+  // When new SW activates and claims control, reload cleanly with new version
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
+
+// Banner action buttons
+const btnUpdateReload = $('btn-update-reload');
+if (btnUpdateReload) {
+  btnUpdateReload.onclick = () => {
+    if (pendingUpdateWorker) {
+      if (game) game.saveGame();
+      btnUpdateReload.disabled = true;
+      btnUpdateReload.textContent = 'Updating...';
+      pendingUpdateWorker.postMessage({ type: 'SKIP_WAITING' });
+    }
+  };
+}
+
+const btnUpdateDismiss = $('btn-update-dismiss');
+if (btnUpdateDismiss) {
+  btnUpdateDismiss.onclick = () => {
+    updateDismissed = true;
+    const banner = $('pwa-update-banner');
+    if (banner) banner.style.display = 'none';
+  };
 }
 
 // PWA Install Prompt Handler & Standalone Mode Detection
