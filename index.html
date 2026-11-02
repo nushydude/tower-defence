@@ -62,8 +62,13 @@
             <h2 class="section-title">CAMPAIGN SLOTS</h2>
             <div class="small">Choose a slot to continue your mission or deploy a new outpost. Progress saves automatically.</div>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button id="hero-techtree-banner-btn" class="btn-primary" style="padding: 6px 14px; font-size: 13px; font-weight: 700; white-space: nowrap;">📜 7 Branches Guide</button>
+            <button id="cloud-account-btn" class="cloud-pill-btn" style="display: none;" title="Account & Cloud Sync">
+              <span class="cloud-pill-icon">☁️</span>
+              <span id="cloud-pill-label">Cloud Save</span>
+              <span id="cloud-pill-dot" class="cloud-pill-dot"></span>
+            </button>
             <div id="save-status-indicator" class="save-indicator">
               <span class="pulse-dot"></span> Storage Active
             </div>
@@ -159,6 +164,133 @@
         <div id="techtree-content" class="techtree-grid"></div>
         <div class="modal-actions">
           <button id="close-techtree-btn" class="btn-primary">Close Guide</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cloud Account & State Persistence Modal -->
+    <div id="account-modal" class="modal-overlay" style="display: none">
+      <div class="modal-box account-modal-box">
+        <div class="modal-header">
+          <div class="account-header-info">
+            <div class="modal-pretitle">TACTICAL PERSISTENCE</div>
+            <h3 class="modal-title">Cloud Save &amp; Account</h3>
+          </div>
+          <button id="close-account-modal-x" class="modal-close-btn" aria-label="Close modal">&times;</button>
+        </div>
+
+        <!-- Section A: Sign In / Sign Up Form (When not logged in) -->
+        <div id="account-login-view" class="account-view">
+          <p class="small modal-desc">
+            Synchronize your campaign progress, defenses, and rewards across all devices. We use passwordless authorization — just enter your email and we'll dispatch a secure one-time code.
+          </p>
+
+          <form id="auth-email-form" class="auth-form" onsubmit="return false;">
+            <label class="auth-label" for="auth-email-input">Commander Email Address</label>
+            <div class="auth-input-group">
+              <span class="auth-input-icon">✉️</span>
+              <input
+                id="auth-email-input"
+                type="email"
+                class="auth-text-input"
+                placeholder="commander@domain.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+            
+            <div id="auth-email-error" class="auth-error-msg" style="display: none;"></div>
+
+            <button id="send-code-btn" type="submit" class="btn-primary auth-submit-btn">
+              ⚡ Send Tactical Code
+            </button>
+          </form>
+
+          <div class="account-guest-note">
+            <span class="guest-note-icon">🛡️</span>
+            <div>
+              <strong>Guest Mode Active:</strong> Signing up is 100% optional. If you prefer playing without an account, your progress is automatically saved to your browser's local storage.
+            </div>
+          </div>
+        </div>
+
+        <!-- Section B: OTP Verification Form (After email is submitted) -->
+        <div id="account-verify-view" class="account-view" style="display: none;">
+          <p class="small modal-desc">
+            A 6-digit tactical authorization code has been dispatched to <strong id="verify-email-display" style="color: #38bdf8;"></strong>.
+          </p>
+
+          <form id="auth-verify-form" class="auth-form" onsubmit="return false;">
+            <label class="auth-label" for="auth-code-input">Enter 6-Digit Passcode</label>
+            <div class="auth-input-group">
+              <span class="auth-input-icon">🔑</span>
+              <input
+                id="auth-code-input"
+                type="text"
+                class="auth-code-input"
+                placeholder="123456"
+                maxlength="6"
+                pattern="[0-9]{6}"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                required
+              />
+            </div>
+
+            <div id="auth-verify-error" class="auth-error-msg" style="display: none;"></div>
+
+            <button id="verify-code-btn" type="submit" class="btn-primary auth-submit-btn">
+              ✓ Authorize &amp; Synchronize
+            </button>
+          </form>
+
+          <div class="auth-actions-row">
+            <button id="resend-code-btn" class="btn-secondary" style="font-size: 12px; padding: 6px 12px;">
+              🔄 Resend Code (<span id="resend-timer-sec">60</span>s)
+            </button>
+            <button id="change-email-btn" class="btn-secondary" style="font-size: 12px; padding: 6px 12px;">
+              ← Change Email
+            </button>
+          </div>
+        </div>
+
+        <!-- Section C: Active Profile & Sync Status (When logged in) -->
+        <div id="account-profile-view" class="account-view" style="display: none;">
+          <div class="account-profile-card">
+            <div class="profile-avatar">👨‍✈️</div>
+            <div class="profile-details">
+              <div class="profile-label">AUTHENTICATED COMMANDER</div>
+              <div id="profile-email-display" class="profile-email">operator@domain.com</div>
+              <div class="profile-status-row">
+                <span id="profile-sync-badge" class="profile-sync-badge">☁️ Synced with Cloud</span>
+                <span id="profile-last-sync" class="profile-last-sync">Just now</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-persistence-info">
+            <div class="persistence-stat-item">
+              <div class="persistence-stat-label">Database Cluster</div>
+              <div class="persistence-stat-val">MongoDB Atlas</div>
+            </div>
+            <div class="persistence-stat-item">
+              <div class="persistence-stat-label">Cloud Persistence</div>
+              <div class="persistence-stat-val" style="color: #10b981;">Online &amp; Active</div>
+            </div>
+            <div class="persistence-stat-item">
+              <div class="persistence-stat-label">Multi-Device Access</div>
+              <div class="persistence-stat-val" style="color: #38bdf8;">Enabled</div>
+            </div>
+          </div>
+
+          <div class="modal-actions" style="margin-top: 16px;">
+            <button id="manual-sync-btn" class="btn-primary" style="flex: 1;">🔄 Force Sync Now</button>
+            <button id="sign-out-btn" class="btn-danger" style="flex: 1;">🚪 Sign Out</button>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+          <button id="close-account-modal-btn" class="btn-secondary" style="width: 100%;">Close</button>
         </div>
       </div>
     </div>

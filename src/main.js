@@ -11,6 +11,7 @@ import {
 import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
 import { formatSaveTime } from './storage.js';
+import { cloudStorage } from './cloudStorage.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('map');
@@ -790,11 +791,322 @@ $('confirm-delete-btn').onclick = () => {
   }
 };
 
+// =========================================================
+// CLOUD ACCOUNT & STATE PERSISTENCE SYSTEM
+// =========================================================
+
+let resendCountdownTimer = null;
+let resendSecondsRemaining = 60;
+let activeAuthEmail = '';
+
+function updateCloudUI(cloudState) {
+  const pillBtn = $('cloud-account-btn');
+  const pillLabel = $('cloud-pill-label');
+  const saveIndicator = $('save-status-indicator');
+
+  if (!pillBtn) return;
+
+  // Auto-detection: Only display if backend is configured and working!
+  if (!cloudState.status.enabled) {
+    pillBtn.style.display = 'none';
+    if (saveIndicator) {
+      saveIndicator.innerHTML = '<span class="pulse-dot"></span> Storage Active';
+    }
+    return;
+  }
+
+  // Backend is enabled & wired up!
+  pillBtn.style.display = 'inline-flex';
+
+  if (cloudState.isLoggedIn && cloudState.user) {
+    const emailPrefix = cloudState.user.email.split('@')[0];
+    pillBtn.classList.remove('syncing');
+    pillBtn.classList.add('synced');
+    if (cloudState.syncState === 'syncing') {
+      pillBtn.classList.add('syncing');
+      if (pillLabel) pillLabel.textContent = `${emailPrefix} · Syncing...`;
+    } else {
+      if (pillLabel) pillLabel.textContent = `${emailPrefix} · Synced ✓`;
+    }
+    if (saveIndicator) {
+      saveIndicator.innerHTML = '<span class="pulse-dot" style="background:#10b981; box-shadow:0 0 8px #10b981;"></span> Cloud Active';
+    }
+  } else {
+    pillBtn.classList.remove('synced', 'syncing');
+    if (pillLabel) pillLabel.textContent = 'Cloud Save';
+    if (saveIndicator) {
+      saveIndicator.innerHTML = '<span class="pulse-dot"></span> Storage Active';
+    }
+  }
+}
+
+function openAccountModal() {
+  const modal = $('account-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  const cloudState = cloudStorage.getState();
+  if (cloudState.isLoggedIn && cloudState.user) {
+    showAccountView('profile');
+    const profileEmail = $('profile-email-display');
+    if (profileEmail) profileEmail.textContent = cloudState.user.email;
+    const badge = $('profile-sync-badge');
+    if (badge) {
+      badge.textContent = cloudState.syncState === 'syncing' ? '⏳ Syncing with Cloud...' : '☁️ Synced with Cloud';
+    }
+    const lastSyncEl = $('profile-last-sync');
+    if (lastSyncEl) {
+      lastSyncEl.textContent = cloudState.lastSynced ? `Saved ${formatSaveTime(cloudState.lastSynced)}` : 'Just now';
+    }
+  } else {
+    showAccountView('login');
+    const emailInput = $('auth-email-input');
+    if (emailInput) {
+      emailInput.value = '';
+      setTimeout(() => emailInput.focus(), 100);
+    }
+  }
+}
+
+function closeAccountModal() {
+  const modal = $('account-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  clearInterval(resendCountdownTimer);
+}
+
+function showAccountView(view) {
+  const loginView = $('account-login-view');
+  const verifyView = $('account-verify-view');
+  const profileView = $('account-profile-view');
+  const emailErr = $('auth-email-error');
+  const verifyErr = $('auth-verify-error');
+
+  if (emailErr) emailErr.style.display = 'none';
+  if (verifyErr) verifyErr.style.display = 'none';
+
+  if (loginView) loginView.style.display = view === 'login' ? 'flex' : 'none';
+  if (verifyView) verifyView.style.display = view === 'verify' ? 'flex' : 'none';
+  if (profileView) profileView.style.display = view === 'profile' ? 'flex' : 'none';
+}
+
+function startResendCountdown() {
+  clearInterval(resendCountdownTimer);
+  resendSecondsRemaining = 60;
+  const resendBtn = $('resend-code-btn');
+  const timerSpan = $('resend-timer-sec');
+  if (resendBtn) resendBtn.disabled = true;
+  if (timerSpan) timerSpan.textContent = '60';
+
+  resendCountdownTimer = setInterval(() => {
+    resendSecondsRemaining--;
+    if (timerSpan) timerSpan.textContent = String(resendSecondsRemaining);
+    if (resendSecondsRemaining <= 0) {
+      clearInterval(resendCountdownTimer);
+      if (resendBtn) {
+        resendBtn.disabled = false;
+        resendBtn.textContent = '🔄 Resend Code';
+      }
+    }
+  }, 1000);
+}
+
+// Modal Trigger
+if ($('cloud-account-btn')) {
+  $('cloud-account-btn').onclick = openAccountModal;
+}
+if ($('close-account-modal-x')) {
+  $('close-account-modal-x').onclick = closeAccountModal;
+}
+if ($('close-account-modal-btn')) {
+  $('close-account-modal-btn').onclick = closeAccountModal;
+}
+if ($('account-modal')) {
+  $('account-modal').onclick = (e) => {
+    if (e.target === $('account-modal')) closeAccountModal();
+  };
+}
+
+// Form A: Send Verification Code
+const authEmailForm = $('auth-email-form');
+if (authEmailForm) {
+  authEmailForm.onsubmit = (e) => {
+    e.preventDefault();
+    const emailInput = $('auth-email-input');
+    const emailErr = $('auth-email-error');
+    const sendBtn = $('send-code-btn');
+    const email = (emailInput?.value || '').trim();
+
+    if (!email || !email.includes('@')) {
+      if (emailErr) {
+        emailErr.textContent = 'Please enter a valid email address.';
+        emailErr.style.display = 'block';
+      }
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = '⚡ Dispatching Code...';
+    if (emailErr) emailErr.style.display = 'none';
+
+    cloudStorage.sendTacticalCode(email)
+      .then((data) => {
+        activeAuthEmail = email;
+        const display = $('verify-email-display');
+        if (display) display.textContent = email;
+        showAccountView('verify');
+        const codeInput = $('auth-code-input');
+        if (codeInput) {
+          codeInput.value = data?.devCode || '';
+          setTimeout(() => codeInput.focus(), 100);
+        }
+        startResendCountdown();
+        if (data?.devCode) {
+          showMessage(`Passcode: ${data.devCode} (Dev Mode)`);
+        } else {
+          showMessage('Tactical code dispatched! Check your inbox.');
+        }
+      })
+      .catch((err) => {
+        if (emailErr) {
+          emailErr.textContent = err.message || 'Failed to dispatch code.';
+          emailErr.style.display = 'block';
+        }
+      })
+      .finally(() => {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '⚡ Send Tactical Code';
+      });
+  };
+}
+
+// Form B: Verify OTP Code
+const authVerifyForm = $('auth-verify-form');
+if (authVerifyForm) {
+  authVerifyForm.onsubmit = (e) => {
+    e.preventDefault();
+    const codeInput = $('auth-code-input');
+    const verifyErr = $('auth-verify-error');
+    const verifyBtn = $('verify-code-btn');
+    const code = (codeInput?.value || '').trim();
+
+    if (code.length < 6) {
+      if (verifyErr) {
+        verifyErr.textContent = 'Please enter the full 6-digit passcode.';
+        verifyErr.style.display = 'block';
+      }
+      return;
+    }
+
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = 'Authorizing...';
+    if (verifyErr) verifyErr.style.display = 'none';
+
+    cloudStorage.verifyTacticalCode(activeAuthEmail, code, (mergedSaves) => {
+      game.saves = mergedSaves;
+      renderSlotList();
+    })
+      .then((result) => {
+        clearInterval(resendCountdownTimer);
+        showAccountView('profile');
+        const profileEmail = $('profile-email-display');
+        if (profileEmail) profileEmail.textContent = result.user.email;
+        const badge = $('profile-sync-badge');
+        if (badge) badge.textContent = '☁️ Synced with Cloud';
+        const lastSync = $('profile-last-sync');
+        if (lastSync) lastSync.textContent = 'Just now';
+        renderSlotList();
+        showMessage(`Welcome Commander ${result.user.email}! Cloud saves synchronized.`);
+      })
+      .catch((err) => {
+        if (verifyErr) {
+          verifyErr.textContent = err.message || 'Verification failed.';
+          verifyErr.style.display = 'block';
+        }
+      })
+      .finally(() => {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = '✓ Authorize & Synchronize';
+      });
+  };
+}
+
+// Resend Code Listener
+const resendCodeBtn = $('resend-code-btn');
+if (resendCodeBtn) {
+  resendCodeBtn.onclick = () => {
+    if (resendSecondsRemaining <= 0 && activeAuthEmail) {
+      resendCodeBtn.disabled = true;
+      cloudStorage.sendTacticalCode(activeAuthEmail)
+        .then(() => {
+          showMessage('New authorization code dispatched.');
+          startResendCountdown();
+        })
+        .catch((err) => {
+          const verifyErr = $('auth-verify-error');
+          if (verifyErr) {
+            verifyErr.textContent = err.message;
+            verifyErr.style.display = 'block';
+          }
+        });
+    }
+  };
+}
+
+// Change Email Listener
+const changeEmailBtn = $('change-email-btn');
+if (changeEmailBtn) {
+  changeEmailBtn.onclick = () => {
+    clearInterval(resendCountdownTimer);
+    showAccountView('login');
+  };
+}
+
+// Force Sync Listener
+const manualSyncBtn = $('manual-sync-btn');
+if (manualSyncBtn) {
+  manualSyncBtn.onclick = () => {
+    manualSyncBtn.disabled = true;
+    manualSyncBtn.textContent = 'Syncing...';
+    cloudStorage.syncWithCloud((mergedSaves) => {
+      game.saves = mergedSaves;
+      renderSlotList();
+    })
+      .then(() => {
+        showMessage('Cloud saves synchronized.');
+        const lastSync = $('profile-last-sync');
+        if (lastSync) lastSync.textContent = 'Just now';
+      })
+      .catch((err) => {
+        showMessage(`Sync error: ${err.message}`);
+      })
+      .finally(() => {
+        manualSyncBtn.disabled = false;
+        manualSyncBtn.textContent = '🔄 Force Sync Now';
+      });
+  };
+}
+
+// Sign Out Listener
+const signOutBtn = $('sign-out-btn');
+if (signOutBtn) {
+  signOutBtn.onclick = () => {
+    cloudStorage.signOut();
+    showAccountView('login');
+    renderSlotList();
+    showMessage('Signed out. Local guest mode active.');
+  };
+}
+
 // Keyboard Shortcuts (Desktop PC & Hardware Keyboards)
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   if (e.key === 'Escape') {
+    if ($('account-modal') && $('account-modal').style.display === 'flex') {
+      closeAccountModal();
+      return;
+    }
     if ($('techtree-modal') && $('techtree-modal').style.display === 'flex') {
       hideTechTree();
       return;
@@ -976,6 +1288,11 @@ function gameLoop(now) {
 // Initialise
 renderShop();
 renderSlotList();
+cloudStorage.subscribe(updateCloudUI);
+cloudStorage.init((mergedSaves) => {
+  game.saves = mergedSaves;
+  renderSlotList();
+});
 requestAnimationFrame(gameLoop);
 
 // =========================================================

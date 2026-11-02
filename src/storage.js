@@ -3,6 +3,8 @@
  * Handles localStorage persistence, automatic backups, crash recovery, and save metadata.
  */
 
+import { cloudStorage } from './cloudStorage.js';
+
 const STORAGE_KEY = 'tower_defense_saves_v2';
 const ACTIVE_SLOT_KEY = 'tower_defense_active_slot_v2';
 
@@ -62,6 +64,15 @@ export function saveSlotToStorage(slotIndex, state) {
       };
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+
+    // Queue cloud synchronization if logged into an account
+    try {
+      if (cloudStorage.getState().isLoggedIn) {
+        cloudStorage.queueSync(saves, getStoredActiveSlot());
+      }
+    } catch (syncErr) {
+      console.warn('Could not queue cloud sync:', syncErr);
+    }
   } catch (err) {
     console.error('Failed to write save to localStorage:', err);
   }
