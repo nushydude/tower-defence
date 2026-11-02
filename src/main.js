@@ -1183,17 +1183,34 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Crash / Termination Persistence Listeners
-window.addEventListener('beforeunload', () => {
-  if (game.state) {
-    game.saveGame();
-  }
-});
-
+// Page Visibility & Auto-save on Backgrounding
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && game.state) {
     game.saveGame();
   }
+});
+
+// =========================================================
+// PAGE RELOAD CONFIRMATION & TERMINATION SAFETY GUARD
+// =========================================================
+let bypassReloadConfirmation = false;
+
+window.addEventListener('beforeunload', (e) => {
+  // Always persist state to storage on exit or reload
+  if (game && game.state) {
+    try {
+      game.saveGame();
+    } catch (err) {
+      console.warn('Could not auto-save on beforeunload:', err);
+    }
+  }
+
+  if (bypassReloadConfirmation) return;
+
+  // Modern browser standard for showing reload confirmation prompt
+  e.preventDefault();
+  e.returnValue = '';
+  return '';
 });
 
 // Game In-HUD Buttons & Bottom Navigation
@@ -1353,6 +1370,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
     refreshing = true;
+    bypassReloadConfirmation = true;
     window.location.reload();
   });
 }
@@ -1362,6 +1380,7 @@ const btnUpdateReload = $('btn-update-reload');
 if (btnUpdateReload) {
   btnUpdateReload.onclick = () => {
     if (pendingUpdateWorker) {
+      bypassReloadConfirmation = true;
       if (game) game.saveGame();
       btnUpdateReload.disabled = true;
       btnUpdateReload.textContent = 'Updating...';
