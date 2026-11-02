@@ -1,4 +1,5 @@
 import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT, getBossConfigForWave } from './config.js';
+import { tacticalConfig } from './tacticalConfig.js';
 import {
   loadAllSaves,
   saveSlotToStorage,
@@ -66,6 +67,57 @@ export class GameModel {
   getCurrentMap() {
     const mapId = this.state?.mapId || 'grassland';
     return MAP_CONFIGS[mapId] || MAP_CONFIGS.grassland;
+  }
+
+  getTowerCost(towerType, towerDefs) {
+    const baseCost = towerDefs?.[towerType]?.cost || 0;
+    return tacticalConfig.calculateTowerCost(baseCost, towerType, this.state?.towers || []);
+  }
+
+  applyDamage(enemy, rawDmg, bullet) {
+    if (!enemy || enemy.dead || enemy.hp <= 0) return 0;
+
+    let dmg = rawDmg;
+
+    // 1. Vantage Pad buff: +15% damage bonus
+    if (bullet && bullet.isVantage) {
+      dmg = Math.round(dmg * 1.15);
+    }
+
+    // 2. Phase Energy Shields: Absorbs damage first
+    if (enemy.shield && enemy.shield > 0) {
+      // Directed energy/laser weapons deal 2.0x damage to energy shields!
+      const isEnergy = Boolean(bullet && (bullet.isRailgun || bullet.isLaser || bullet.isAtomic || bullet.isGamma || bullet.isPulsar));
+      const shieldDmg = isEnergy ? Math.round(dmg * 2.0) : dmg;
+
+      if (enemy.shield >= shieldDmg) {
+        enemy.shield -= shieldDmg;
+        return shieldDmg;
+      } else {
+        // Shield broken! Remaining damage carries over
+        const absorbed = enemy.shield;
+        const remainder = Math.round((shieldDmg - absorbed) / (isEnergy ? 2.0 : 1.0));
+        enemy.shield = 0;
+        dmg = remainder;
+      }
+    }
+
+    // 3. Flat Enemy Armor: Reduces damage per hit (anti-spam plating)
+    if (enemy.armor && enemy.armor > 0) {
+      let effectiveArmor = enemy.armor;
+      // Vantage pad towers ignore 50% armor
+      if (bullet && bullet.isVantage) {
+        effectiveArmor = Math.round(effectiveArmor * 0.5);
+      }
+      // Piercing lances / Railguns pierce heavy armor
+      if (bullet && (bullet.isPiercing || bullet.isRailgun)) {
+        effectiveArmor = Math.round(effectiveArmor * 0.25);
+      }
+      dmg = Math.max(1, dmg - effectiveArmor);
+    }
+
+    enemy.hp -= dmg;
+    return dmg;
   }
 
   hasSave(slotIndex) {
@@ -152,6 +204,8 @@ export class GameModel {
 
     if (isBossWave) {
       const bossConfig = getBossConfigForWave(this.state.wave);
+      const bossArmor = tacticalConfig.getEnemyArmor(bossConfig.shape, true, bossConfig.tier);
+      const bossShield = tacticalConfig.getEnemyShield(bossConfig.shape, bossConfig.hp, true);
       this.state.enemies.push({
         x: startX,
         y: startY,
@@ -167,6 +221,9 @@ export class GameModel {
         boss: true,
         hp: bossConfig.hp,
         max: bossConfig.hp,
+        armor: bossArmor,
+        shield: bossShield,
+        maxShield: bossShield,
         speed: bossConfig.speed,
         rewardCoins: bossConfig.rewardCoins,
         rewardGems: bossConfig.rewardGems,
@@ -182,6 +239,8 @@ export class GameModel {
     const waveFactor = Math.max(0, this.state.wave - 1);
     const hp = Math.round(def.baseHp + waveFactor * def.hpPerWave);
     const speed = Math.round(def.speed + Math.min(waveFactor * def.speedPerWave, 35));
+    const armor = tacticalConfig.getEnemyArmor(def.shape, false, 1);
+    const shield = tacticalConfig.getEnemyShield(def.shape, hp, false);
 
     this.state.enemies.push({
       x: startX,
@@ -197,6 +256,9 @@ export class GameModel {
       boss: false,
       hp,
       max: hp,
+      armor,
+      shield,
+      maxShield: shield,
       speed,
       reward: def.reward + Math.floor(this.state.wave / 4),
       r: def.r,
@@ -349,13 +411,31 @@ export class GameModel {
 
       // Towers acquire targets and fire (prioritizes furthest along track)
       this.state.towers.forEach((tower) => {
-        tower.cool = (tower.cool || 0) - scaledDt;
         const def = towerDefs[tower.type];
         if (!def) return;
 
-        // Smoothly track targets based on tower.targetMode
+        // Check adjacency command synergy (+15% cadence boost if near advanced tier 3+ tower)
+        let cdMult = 1.0;
+        if (tacticalConfig.get().adjacencySynergyEnabled) {
+          const hasAlly = this.state.towers.some((other) => {
+            if (other.id === tower.id) return false;
+            return Math.hypot(other.x - tower.x, other.y - tower.y) <= 95 && (towerDefs[other.type]?.cost >= 160 || other.isVantage);
+          });
+          tower.hasSynergy = hasAlly;
+          if (hasAlly) cdMult = 1.15;
+        } else {
+          tower.hasSynergy = false;
+        }
+
+        tower.cool = (tower.cool || 0) - scaledDt * cdMult;
+
+        // Smoothly track targets based on tower.targetMode and Vantage Overlook buff (+25% range)
+        const effectiveRange = (tower.isVantage && tacticalConfig.get().vantagePadsEnabled)
+          ? def.range * 1.25
+          : def.range;
+
         const inRange = this.state.enemies
-          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range);
+          .filter((e) => !e.dead && Math.hypot(e.x - tower.x, e.y - tower.y) <= effectiveRange);
         let target;
         const mode = tower.targetMode || 'first';
         if (mode === 'strongest') {
@@ -374,6 +454,7 @@ export class GameModel {
         }
 
         if (tower.cool <= 0 && target) {
+          const bulletsStart = this.state.bullets.length;
           const aimAngle = tower.angle !== undefined ? tower.angle : Math.atan2(target.y - tower.y, target.x - tower.x);
 
           if (def.multiDir) {
@@ -645,6 +726,11 @@ export class GameModel {
               splashDmg: def.splashDmg || 0
             });
           }
+            if (tower.isVantage && tacticalConfig.get().vantagePadsEnabled) {
+              for (let i = bulletsStart; i < this.state.bullets.length; i++) {
+                this.state.bullets[i].isVantage = true;
+              }
+            }
             tower.cool = def.rate;
           }
         });
@@ -695,7 +781,7 @@ export class GameModel {
                   bullet.hitEnemies = bullet.hitEnemies || [];
                   if (!bullet.hitEnemies.includes(enemy)) {
                     bullet.hitEnemies.push(enemy);
-                    enemy.hp -= bullet.dmg;
+                    this.applyDamage(enemy, bullet.dmg, bullet);
                     bullet.pierceLeft = (bullet.pierceLeft || 1) - 1;
                     if (bullet.pierceLeft <= 0) {
                       bullet.dead = true;
@@ -703,7 +789,7 @@ export class GameModel {
                     }
                   }
                 } else {
-                  enemy.hp -= bullet.dmg;
+                  this.applyDamage(enemy, bullet.dmg, bullet);
                   bullet.dead = true;
                   break;
                 }
@@ -780,7 +866,7 @@ export class GameModel {
           const dist = Math.hypot(dx, dy) || 1;
 
           if (dist < bullet.speed * scaledDt + target.r) {
-            target.hp -= bullet.dmg;
+            this.applyDamage(target, bullet.dmg, bullet);
             bullet.dead = true;
 
             // Area of effect splash damage (Bombard, Colossus)
@@ -790,7 +876,7 @@ export class GameModel {
                   const splashDist = Math.hypot(otherEnemy.x - bullet.x, otherEnemy.y - bullet.y);
                   if (splashDist <= bullet.splashRadius + otherEnemy.r) {
                     const falloff = 1 - (splashDist / (bullet.splashRadius + otherEnemy.r)) * 0.5;
-                    otherEnemy.hp -= Math.max(5, Math.round((bullet.splashDmg || bullet.dmg * 0.5) * falloff));
+                    this.applyDamage(otherEnemy, Math.max(5, Math.round((bullet.splashDmg || bullet.dmg * 0.5) * falloff)), bullet);
                   }
                 }
               }
@@ -918,34 +1004,57 @@ export class GameModel {
       const map = this.getCurrentMap();
       const path = map.path;
 
-      if (this.state.coins < def.cost) {
-        this.onMessage('Not enough coins!');
+      // Check command deployment cap
+      if (tacticalConfig.isCapReached(this.state.towers.length)) {
+        const max = tacticalConfig.get().maxTowers;
+        this.onMessage(`⚡ Command Cap Reached (${max}/${max})! Upgrade existing towers or sell.`);
         return;
+      }
+
+      // Calculate dynamic cost with duplicate surcharge
+      const dynamicCost = tacticalConfig.calculateTowerCost(def.cost, type, this.state.towers);
+
+      if (this.state.coins < dynamicCost) {
+        this.onMessage(`Not enough coins! (${dynamicCost}🪙 required)`);
+        return;
+      }
+
+      // Check vantage pad snapping
+      let finalX = x;
+      let finalY = y;
+      let isVantage = false;
+      const vantagePad = tacticalConfig.checkVantage(x, y, this.state.mapId);
+      if (vantagePad) {
+        finalX = vantagePad.x;
+        finalY = vantagePad.y;
+        isVantage = true;
       }
 
       // Check distance from all road segments
-      const isOnRoad = isPointNearPath(x, y, path, 34);
-      const isNearTower = this.state.towers.some((t) => Math.hypot(t.x - x, t.y - y) < 28);
+      const isOnRoad = isPointNearPath(finalX, finalY, path, 34);
+      const isNearTower = this.state.towers.some((t) => Math.hypot(t.x - finalX, t.y - finalY) < 28);
 
       if (isOnRoad || isNearTower) {
-        this.onMessage('Place towers on clear terrain, away from the path.');
+        this.onMessage('Place towers on clear terrain or tactical vantage pads.');
         return;
       }
 
-      this.state.coins -= def.cost;
+      this.state.coins -= dynamicCost;
       this.state.towers.push({
         id: this.nextTowerId++,
-        x,
-        y,
+        x: finalX,
+        y: finalY,
         type,
         cool: 0,
-        angle: 0
+        angle: 0,
+        isVantage
       });
       this.state.sel = this.state.towers.at(-1).id;
       this.state.build = null;
       this.onUIUpdate();
       this.saveGame();
-      this.onMessage(`${type} placed!`);
+      const vantageNotice = isVantage ? ` on ${vantagePad.name}! (+25% Range & +15% Dmg)` : ' placed!';
+      this.onMessage(`${type}${vantageNotice}`);
       return;
     }
 

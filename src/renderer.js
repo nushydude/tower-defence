@@ -1,4 +1,5 @@
 import { CANVAS_WIDTH, CANVAS_HEIGHT, MAP_CONFIGS } from './config.js';
+import { tacticalConfig } from './tacticalConfig.js';
 
 export function drawPolygon(ctx, x, y, r, n, rotation = 0) {
   ctx.beginPath();
@@ -1192,18 +1193,65 @@ export function renderGame(ctx, state, towerDefs) {
 
   if (!state) return;
 
+  // Tactical Vantage Platforms (High Ground / Overlook)
+  if (tacticalConfig.get().vantagePadsEnabled) {
+    const pads = tacticalConfig.getVantagePads(mapId);
+    pads.forEach((pad) => {
+      const isOccupied = state.towers.some((t) => Math.hypot(t.x - pad.x, t.y - pad.y) < 18);
+
+      ctx.save();
+      // Drop shadow
+      ctx.beginPath();
+      ctx.arc(pad.x + 2, pad.y + 3, 20, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fill();
+
+      // Hexagonal platform foundation
+      drawPolygon(ctx, pad.x, pad.y, 20, 6, Math.PI / 6);
+      ctx.fillStyle = isOccupied ? '#112238' : '#081424';
+      ctx.fill();
+      ctx.strokeStyle = isOccupied ? '#f59e0b' : '#0284c7';
+      ctx.lineWidth = isOccupied ? 2.5 : 1.5;
+      ctx.stroke();
+
+      // Inner tactical perimeter ring
+      ctx.beginPath();
+      ctx.arc(pad.x, pad.y, 13, 0, Math.PI * 2);
+      ctx.strokeStyle = isOccupied ? 'rgba(245, 158, 11, 0.45)' : 'rgba(56, 189, 248, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (!isOccupied) {
+        // Glowing star icon on unoccupied vantage pads
+        drawStar(ctx, pad.x, pad.y, 6, 2.5, 4, 0);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = 'bold 7px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('VANTAGE', pad.x, pad.y + 9.5);
+      }
+      ctx.restore();
+    });
+  }
+
   // Selected tower range indicator
   if (state.sel) {
     const selectedTower = state.towers.find((t) => t.id === state.sel);
     if (selectedTower) {
       const def = towerDefs[selectedTower.type];
+      const isVantage = Boolean(selectedTower.isVantage && tacticalConfig.get().vantagePadsEnabled);
+      const effectiveRange = isVantage ? def.range * 1.25 : def.range;
+
       ctx.beginPath();
-      ctx.arc(selectedTower.x, selectedTower.y, def.range, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+      ctx.arc(selectedTower.x, selectedTower.y, effectiveRange, 0, Math.PI * 2);
+      ctx.fillStyle = isVantage ? 'rgba(245, 158, 11, 0.12)' : 'rgba(56, 189, 248, 0.08)';
       ctx.fill();
       ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isVantage ? 'rgba(245, 158, 11, 0.85)' : 'rgba(56, 189, 248, 0.55)';
+      ctx.lineWidth = isVantage ? 2 : 1.5;
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -1213,19 +1261,37 @@ export function renderGame(ctx, state, towerDefs) {
   state.towers.forEach((tower) => {
     const def = towerDefs[tower.type];
     const isSelected = state.sel === tower.id;
+    const isVantage = Boolean(tower.isVantage && tacticalConfig.get().vantagePadsEnabled);
 
     // 1. Drop shadow for 3D elevation depth
     ctx.beginPath();
-    ctx.arc(tower.x + 2, tower.y + 3, 14, 0, Math.PI * 2);
+    ctx.arc(tower.x + 2, tower.y + 3, isVantage ? 16 : 14, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fill();
+
+    // Vantage Overlook energetic pedestal ring
+    if (isVantage) {
+      ctx.beginPath();
+      ctx.arc(tower.x, tower.y, 17, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      const pins = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+      ctx.fillStyle = '#fef08a';
+      pins.forEach((pa) => {
+        ctx.beginPath();
+        ctx.arc(tower.x + Math.cos(pa) * 17, tower.y + Math.sin(pa) * 17, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
 
     // 2. Heavy Armored Gunmetal Pedestal
     ctx.beginPath();
     ctx.arc(tower.x, tower.y, 14, 0, Math.PI * 2);
     ctx.fillStyle = '#1e293b';
     ctx.fill();
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = isVantage ? '#d97706' : '#334155';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -1304,6 +1370,49 @@ export function renderGame(ctx, state, towerDefs) {
     ctx.fill();
 
     drawEnemyShape(ctx, enemy);
+
+    // 1. Energy Shield forcefield bubble & shield bar (if active)
+    if (enemy.shield && enemy.shield > 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.r + 4.5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
+      ctx.fill();
+      ctx.restore();
+
+      const shieldRatio = Math.min(1, enemy.shield / (enemy.maxShield || enemy.max));
+      const sBarW = enemy.boss ? Math.max(74, enemy.r * 2.5) : Math.max(18, enemy.r * 2);
+      const sBarH = enemy.boss ? 4 : 3;
+      const sBarY = enemy.boss ? enemy.y - enemy.r - 26 : enemy.y - enemy.r - 12;
+
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+      ctx.fillRect(enemy.x - sBarW / 2 - 1, sBarY - 1, sBarW + 2, sBarH + 2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(enemy.x - sBarW / 2, sBarY, sBarW * shieldRatio, sBarH);
+    }
+
+    // 2. Flat Armor badge (anti-spam plating indicator)
+    if (enemy.armor && enemy.armor > 0) {
+      ctx.save();
+      const ax = enemy.x + enemy.r + 3;
+      const ay = enemy.y - enemy.r + 3;
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(ax, ay, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 6px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('A', ax, ay);
+      ctx.restore();
+    }
 
     const healthFraction = Math.max(0, enemy.hp / enemy.max);
 

@@ -18,7 +18,8 @@ function sanitizeSaveSlot(slot) {
           x: Number(t.x) || 0,
           y: Number(t.y) || 0,
           angle: Number(t.angle) || 0,
-          cool: 0
+          cool: 0,
+          isVantage: Boolean(t.isVantage)
         }))
       : [],
     createdAt: Number(slot.createdAt) || Date.now(),

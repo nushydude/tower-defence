@@ -56,7 +56,8 @@ export function saveSlotToStorage(slotIndex, state) {
               x: t.x,
               y: t.y,
               angle: t.angle || 0,
-              cool: 0
+              cool: 0,
+              isVantage: Boolean(t.isVantage)
             }))
           : [],
         createdAt: state.createdAt || Date.now(),

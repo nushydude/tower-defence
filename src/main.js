@@ -12,6 +12,7 @@ import { GameModel } from './game.js';
 import { renderGame } from './renderer.js';
 import { formatSaveTime } from './storage.js';
 import { cloudStorage } from './cloudStorage.js';
+import { tacticalConfig, PRESET_PROFILES } from './tacticalConfig.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('map');
@@ -98,6 +99,33 @@ function updateUI() {
   $('stage').textContent = S.wave + 1;
   $('hp').textContent = S.hp;
   $('active-map-name').textContent = currentMap.name.split(' ')[0];
+
+  // Update Towers Deployment Cap HUD
+  const towersCountEl = $('towers-count');
+  const towersCapEl = $('towers-cap');
+  const towersCapWrap = $('towers-cap-wrap');
+  const statTowersPill = $('stat-towers-pill');
+  const currentTowers = S.towers ? S.towers.length : 0;
+  const cfg = tacticalConfig.get();
+
+  if (towersCountEl) towersCountEl.textContent = currentTowers;
+  if (statTowersPill) {
+    if (cfg.deploymentCapEnabled) {
+      if (towersCapEl) towersCapEl.textContent = cfg.maxTowers;
+      if (towersCapWrap) towersCapWrap.style.display = 'inline';
+      if (currentTowers >= cfg.maxTowers) {
+        statTowersPill.classList.add('cap-reached');
+      } else {
+        statTowersPill.classList.remove('cap-reached');
+      }
+    } else {
+      if (towersCapWrap) towersCapWrap.style.display = 'none';
+      statTowersPill.classList.remove('cap-reached');
+    }
+  }
+
+  // Update Dynamic Shop Costs (Duplicate Surcharge)
+  updateShopCosts();
 
   const enemiesLeft = S.enemies ? S.enemies.filter((e) => !e.dead).length : 0;
   
@@ -226,6 +254,10 @@ function updateUI() {
     const branchName = def.branch || (def.isRailgun ? 'Laser' : 'Tactical');
     const sellRefund = Math.floor((def.cost || 80) * 0.7);
     const targetMode = (selectedTower.targetMode || 'first').toUpperCase();
+    const isVantage = Boolean(selectedTower.isVantage && tacticalConfig.get().vantagePadsEnabled);
+    const effectiveRange = isVantage ? Math.round(def.range * 1.25) : def.range;
+    const effectiveDmg = isVantage ? Math.round(def.dmg * 1.15) : def.dmg;
+    const effectiveDps = (effectiveDmg / (def.rate || 0.5)).toFixed(0);
 
     if (shopSection) shopSection.style.display = 'none';
     if (selectedEl) {
@@ -240,10 +272,12 @@ function updateUI() {
                 <span class="inspector-tag">${branchName}</span>
               </div>
               <div class="inspector-chips">
-                <span class="chip">💥${def.dmg}</span>
-                <span class="chip">🎯${def.range}</span>
+                <span class="chip">💥${effectiveDmg}</span>
+                <span class="chip">🎯${effectiveRange}</span>
                 <span class="chip">⏱️${def.rate}s</span>
-                <span class="chip">⚡${(def.dmg / (def.rate || 0.5)).toFixed(0)}dps</span>
+                <span class="chip">⚡${effectiveDps}dps</span>
+                ${isVantage ? '<span class="chip" style="color:#f59e0b; border-color:#d97706; background:rgba(245,158,11,0.15); font-weight:800;">⭐ VANTAGE</span>' : ''}
+                ${selectedTower.hasSynergy ? '<span class="chip" style="color:#38bdf8; border-color:#0284c7; background:rgba(56,189,248,0.15); font-weight:800;">📡 SYNERGY</span>' : ''}
               </div>
             </div>
           </div>
@@ -592,13 +626,41 @@ const TOWER_METADATA = {
   Spiker: { icon: '❇️', branch: 'Spike', perk: 'Omni-directional thorn burst' }
 };
 
+function updateShopCosts() {
+  const shopEl = $('shop');
+  if (!shopEl) return;
+  const cards = shopEl.querySelectorAll('.turret-dock-card');
+  cards.forEach((btn) => {
+    const towerName = btn.dataset.tower;
+    if (!towerName) return;
+    const def = TOWER_DEFINITIONS[towerName];
+    const cost = game.getTowerCost ? game.getTowerCost(towerName, TOWER_DEFINITIONS) : def.cost;
+    const hasTax = cost > def.cost;
+    btn.dataset.cost = cost;
+    const costEl = btn.querySelector('.dock-card-cost');
+    if (costEl) {
+      costEl.textContent = `${cost}🪙`;
+      if (hasTax) {
+        costEl.style.color = '#f87171';
+        costEl.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+        costEl.style.background = 'rgba(239, 68, 68, 0.15)';
+      } else {
+        costEl.style.color = '';
+        costEl.style.borderColor = '';
+        costEl.style.background = '';
+      }
+    }
+  });
+}
+
 function renderShop() {
   const shopEl = $('shop');
   if (!shopEl) return;
   shopEl.innerHTML = '';
   BASE_TOWERS.forEach((towerName, idx) => {
     const def = TOWER_DEFINITIONS[towerName];
-    const cost = def.cost;
+    const cost = game.getTowerCost ? game.getTowerCost(towerName, TOWER_DEFINITIONS) : def.cost;
+    const hasTax = cost > def.cost;
     const meta = TOWER_METADATA[towerName] || { icon: '🛡️', branch: 'Tactical', perk: 'Combat turret' };
     const btn = document.createElement('button');
     const isRail = towerName === 'Railgun';
@@ -626,7 +688,7 @@ function renderShop() {
         </div>
       </div>
       <div class="dock-card-trailing">
-        <div class="dock-card-cost">${cost}🪙</div>
+        <div class="dock-card-cost" style="${hasTax ? 'color:#f87171; border-color:rgba(239,68,68,0.6); background:rgba(239,68,68,0.15);' : ''}">${cost}🪙</div>
       </div>
     `;
 
@@ -1098,11 +1160,147 @@ if (signOutBtn) {
   };
 }
 
+// =========================================================
+// TACTICAL LAB & MODIFIERS CONFIG CONTROLLER
+// =========================================================
+
+function openTacticalModal() {
+  const modal = $('tactical-modal');
+  if (!modal) return;
+  syncTacticalLabUI();
+  modal.style.display = 'flex';
+}
+
+function closeTacticalModal() {
+  const modal = $('tactical-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
+
+function syncTacticalLabUI() {
+  const cfg = tacticalConfig.get();
+
+  // 1. Sync Preset Buttons active state
+  const presetCards = document.querySelectorAll('.preset-card');
+  presetCards.forEach((btn) => {
+    const pId = btn.dataset.preset;
+    if (pId === cfg.profile) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // 2. Sync Modifiers Inputs
+  const capCheck = $('cfg-cap-enabled');
+  const capVal = $('cfg-cap-value');
+  if (capCheck) capCheck.checked = Boolean(cfg.deploymentCapEnabled);
+  if (capVal) capVal.value = String(cfg.maxTowers || 8);
+
+  const taxCheck = $('cfg-tax-enabled');
+  const taxVal = $('cfg-tax-value');
+  if (taxCheck) taxCheck.checked = Boolean(cfg.surchargeEnabled);
+  if (taxVal) taxVal.value = String(cfg.surchargePercent || 15);
+
+  const armorCheck = $('cfg-armor-enabled');
+  const armorVal = $('cfg-armor-value');
+  if (armorCheck) armorCheck.checked = Boolean(cfg.enemyArmorEnabled);
+  if (armorVal) armorVal.value = cfg.armorTier || 'medium';
+
+  const shieldCheck = $('cfg-shield-enabled');
+  const shieldVal = $('cfg-shield-value');
+  if (shieldCheck) shieldCheck.checked = Boolean(cfg.shieldsEnabled);
+  if (shieldVal) shieldVal.value = cfg.shieldTier || 'medium';
+
+  const vantageCheck = $('cfg-vantage-enabled');
+  if (vantageCheck) vantageCheck.checked = Boolean(cfg.vantagePadsEnabled);
+
+  const synergyCheck = $('cfg-synergy-enabled');
+  if (synergyCheck) synergyCheck.checked = Boolean(cfg.adjacencySynergyEnabled);
+}
+
+function readAndApplyLabInputs() {
+  const partial = {
+    deploymentCapEnabled: Boolean($('cfg-cap-enabled')?.checked),
+    maxTowers: parseInt($('cfg-cap-value')?.value || '8', 10),
+    surchargeEnabled: Boolean($('cfg-tax-enabled')?.checked),
+    surchargePercent: parseInt($('cfg-tax-value')?.value || '15', 10),
+    enemyArmorEnabled: Boolean($('cfg-armor-enabled')?.checked),
+    armorTier: $('cfg-armor-value')?.value || 'medium',
+    shieldsEnabled: Boolean($('cfg-shield-enabled')?.checked),
+    shieldTier: $('cfg-shield-value')?.value || 'medium',
+    vantagePadsEnabled: Boolean($('cfg-vantage-enabled')?.checked),
+    adjacencySynergyEnabled: Boolean($('cfg-synergy-enabled')?.checked)
+  };
+
+  tacticalConfig.update(partial);
+  syncTacticalLabUI();
+  updateUI();
+  showMessage('Tactical lab modifiers updated!');
+}
+
+// Preset card clicks
+const labPresetCards = document.querySelectorAll('.preset-card');
+labPresetCards.forEach((btn) => {
+  btn.onclick = () => {
+    const pId = btn.dataset.preset;
+    tacticalConfig.setPreset(pId);
+    syncTacticalLabUI();
+    updateUI();
+    showMessage(`Applied ${PRESET_PROFILES[pId]?.name || pId} profile!`);
+  };
+});
+
+// Granular input changes
+const labInputIds = [
+  'cfg-cap-enabled', 'cfg-cap-value',
+  'cfg-tax-enabled', 'cfg-tax-value',
+  'cfg-armor-enabled', 'cfg-armor-value',
+  'cfg-shield-enabled', 'cfg-shield-value',
+  'cfg-vantage-enabled', 'cfg-synergy-enabled'
+];
+labInputIds.forEach((id) => {
+  const el = $(id);
+  if (el) {
+    el.onchange = () => {
+      readAndApplyLabInputs();
+    };
+  }
+});
+
+// Modal triggers & action buttons
+if ($('hero-tactical-lab-btn')) $('hero-tactical-lab-btn').onclick = openTacticalModal;
+if ($('game-tactical-lab-btn')) $('game-tactical-lab-btn').onclick = openTacticalModal;
+if ($('close-tactical-modal-x')) $('close-tactical-modal-x').onclick = closeTacticalModal;
+if ($('btn-apply-tactical-cfg')) {
+  $('btn-apply-tactical-cfg').onclick = () => {
+    readAndApplyLabInputs();
+    closeTacticalModal();
+  };
+}
+if ($('btn-reset-tactical-cfg')) {
+  $('btn-reset-tactical-cfg').onclick = () => {
+    tacticalConfig.reset();
+    syncTacticalLabUI();
+    updateUI();
+    showMessage('Tactical lab reset to Strategic defaults.');
+  };
+}
+if ($('tactical-modal')) {
+  $('tactical-modal').onclick = (e) => {
+    if (e.target === $('tactical-modal')) closeTacticalModal();
+  };
+}
+
 // Keyboard Shortcuts (Desktop PC & Hardware Keyboards)
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   if (e.key === 'Escape') {
+    if ($('tactical-modal') && $('tactical-modal').style.display === 'flex') {
+      closeTacticalModal();
+      return;
+    }
     if ($('account-modal') && $('account-modal').style.display === 'flex') {
       closeAccountModal();
       return;

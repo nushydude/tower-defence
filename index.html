@@ -63,6 +63,7 @@
             <div class="small">Choose a slot to continue your mission or deploy a new outpost. Progress saves automatically.</div>
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button id="hero-tactical-lab-btn" class="btn-primary" style="padding: 6px 14px; font-size: 13px; font-weight: 700; white-space: nowrap; background: linear-gradient(135deg, #0284c7, #0369a1);">⚙️ Tactical Lab</button>
             <button id="hero-techtree-banner-btn" class="btn-primary" style="padding: 6px 14px; font-size: 13px; font-weight: 700; white-space: nowrap;">📜 7 Branches Guide</button>
             <button id="cloud-account-btn" class="cloud-pill-btn" style="display: none;" title="Account & Cloud Sync">
               <span class="cloud-pill-icon">☁️</span>
@@ -295,6 +296,187 @@
       </div>
     </div>
 
+    <!-- Tactical Sandbox Lab & Modifiers Configuration Modal -->
+    <div id="tactical-modal" class="modal-overlay" style="display: none">
+      <div class="modal-box tactical-modal-box">
+        <div class="modal-header">
+          <div>
+            <div class="modal-pretitle">TACTICAL SANDBOX LAB</div>
+            <h3 class="modal-title">Combat &amp; Balance Modifiers</h3>
+          </div>
+          <button id="close-tactical-modal-x" class="modal-close-btn" aria-label="Close modal">&times;</button>
+        </div>
+
+        <p class="small modal-desc">
+          Fine-tune tactical constraints to eliminate mindless turret spamming and force strategic positioning. Test individual mechanics live or select a difficulty profile:
+        </p>
+
+        <!-- Difficulty Preset Profiles Quick Selector -->
+        <div class="preset-profiles-row">
+          <button class="preset-card active" data-preset="tactical" type="button">
+            <div class="preset-card-top">
+              <span class="preset-icon">⚡</span>
+              <span class="preset-badge badge-tactical">TACTICAL</span>
+            </div>
+            <div class="preset-name">Strategic Tactical</div>
+            <div class="preset-desc">8-tower cap, armor plating, vantage pads, duplicate tax.</div>
+          </button>
+
+          <button class="preset-card" data-preset="hardcore" type="button">
+            <div class="preset-card-top">
+              <span class="preset-icon">💀</span>
+              <span class="preset-badge badge-hardcore">EXTREME</span>
+            </div>
+            <div class="preset-name">Nightmare Outpost</div>
+            <div class="preset-desc">6-tower hard cap, heavy armor, energy shields, high tax.</div>
+          </button>
+
+          <button class="preset-card" data-preset="classic" type="button">
+            <div class="preset-card-top">
+              <span class="preset-icon">🌱</span>
+              <span class="preset-badge badge-classic">CASUAL</span>
+            </div>
+            <div class="preset-name">Classic Arcade</div>
+            <div class="preset-desc">No cap, no armor, no tax. Infinite placement freedom.</div>
+          </button>
+        </div>
+
+        <!-- Granular Modifiers Controls List -->
+        <div class="modifiers-list">
+
+          <!-- Modifier 1: Command Deployment Cap -->
+          <div class="modifier-row">
+            <div class="modifier-info">
+              <div class="modifier-title-wrap">
+                <span class="modifier-icon">🏰</span>
+                <span class="modifier-title">Command Deployment Cap</span>
+              </div>
+              <div class="modifier-desc">Limits concurrent active turrets on the field. Upgrades do not consume cap, incentivizing deep tech evolution over spam.</div>
+            </div>
+            <div class="modifier-controls">
+              <label class="toggle-switch">
+                <input id="cfg-cap-enabled" type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+              <select id="cfg-cap-value" class="modifier-select">
+                <option value="6">Max 6 Towers</option>
+                <option value="8" selected>Max 8 Towers</option>
+                <option value="10">Max 10 Towers</option>
+                <option value="12">Max 12 Towers</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Modifier 2: Duplicate Surcharge Tax -->
+          <div class="modifier-row">
+            <div class="modifier-info">
+              <div class="modifier-title-wrap">
+                <span class="modifier-icon">🪙</span>
+                <span class="modifier-title">Duplicate Purchase Surcharge</span>
+              </div>
+              <div class="modifier-desc">Each additional tower of the same root branch costs more, penalizing mono-spamming and rewarding diverse weapon combinations.</div>
+            </div>
+            <div class="modifier-controls">
+              <label class="toggle-switch">
+                <input id="cfg-tax-enabled" type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+              <select id="cfg-tax-value" class="modifier-select">
+                <option value="10">+10% / Duplicate</option>
+                <option value="15" selected>+15% / Duplicate</option>
+                <option value="25">+25% / Duplicate</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Modifier 3: Flat Enemy Armor -->
+          <div class="modifier-row">
+            <div class="modifier-info">
+              <div class="modifier-title-wrap">
+                <span class="modifier-icon">🛡️</span>
+                <span class="modifier-title">Flat Enemy Armor (Anti-Spam Plating)</span>
+              </div>
+              <div class="modifier-desc">Heavy enemies reduce damage per hit flat. Bounces weak rapid-fire bullets (1 dmg); heavy Snipers, Railguns, and Shotguns punch through.</div>
+            </div>
+            <div class="modifier-controls">
+              <label class="toggle-switch">
+                <input id="cfg-armor-enabled" type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+              <select id="cfg-armor-value" class="modifier-select">
+                <option value="light">Light (-4 to -8)</option>
+                <option value="medium" selected>Medium (-6 to -14)</option>
+                <option value="heavy">Heavy (-9 to -20)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Modifier 4: Energy Phase Shields -->
+          <div class="modifier-row">
+            <div class="modifier-info">
+              <div class="modifier-title-wrap">
+                <span class="modifier-icon">⚡</span>
+                <span class="modifier-title">Energy Phase Barriers</span>
+              </div>
+              <div class="modifier-desc">Fast and elite creeps gain blue energy barriers. Normal bullets chip slowly, while Laser Railguns and Quantum Energy towers deal 200% bonus damage!</div>
+            </div>
+            <div class="modifier-controls">
+              <label class="toggle-switch">
+                <input id="cfg-shield-enabled" type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+              <select id="cfg-shield-value" class="modifier-select">
+                <option value="light">Light (20%)</option>
+                <option value="medium" selected>Medium (35%)</option>
+                <option value="heavy">Heavy (50%)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Modifier 5: High-Ground Vantage Pads -->
+          <div class="modifier-row">
+            <div class="modifier-info">
+              <div class="modifier-title-wrap">
+                <span class="modifier-icon">⭐</span>
+                <span class="modifier-title">Tactical Overlook Vantage Pads</span>
+              </div>
+              <div class="modifier-desc">Places glowing tactical pedestals on the map. Towers stationed on them gain +25% Range, +15% Damage, and ignore 50% enemy armor.</div>
+            </div>
+            <div class="modifier-controls">
+              <label class="toggle-switch">
+                <input id="cfg-vantage-enabled" type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Modifier 6: Adjacency Command Synergy -->
+          <div class="modifier-row">
+            <div class="modifier-info">
+              <div class="modifier-title-wrap">
+                <span class="modifier-icon">📡</span>
+                <span class="modifier-title">Adjacency Command Synergy</span>
+              </div>
+              <div class="modifier-desc">Advanced upgraded towers emit a command aura, boosting adjacent towers within 90px with +15% attack cadence.</div>
+            </div>
+            <div class="modifier-controls">
+              <label class="toggle-switch">
+                <input id="cfg-synergy-enabled" type="checkbox" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-actions" style="margin-top: 18px;">
+          <button id="btn-reset-tactical-cfg" class="btn-secondary" type="button">↺ Reset Defaults</button>
+          <button id="btn-apply-tactical-cfg" class="btn-primary" style="flex: 1;" type="button">✓ Apply &amp; Resume Battle</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Active Game Screen -->
     <section id="game" class="hidden" style="display: none;">
       <!-- Zone 1: Native Mobile Top Status Bar -->
@@ -302,6 +484,7 @@
         <div class="stat-pill stat-gold">🪙 <span id="coins">300</span></div>
         <div class="stat-pill stat-gems">💎 <span id="gems">0</span></div>
         <div class="stat-pill stat-stage">STAGE <span id="stage">1</span></div>
+        <div id="stat-towers-pill" class="stat-pill stat-towers">🏰 <span id="towers-count">0</span><span id="towers-cap-wrap">/<span id="towers-cap">8</span></span></div>
         <div class="stat-pill stat-hp">❤️ <span id="hp">100</span></div>
         <div class="stat-pill stat-map">🗺️ <span id="active-map-name">Plains</span></div>
       </header>
@@ -315,6 +498,7 @@
           <canvas id="map" width="480" height="720"></canvas>
           <div id="msg" class="floating-toast">Build your defence!</div>
           <div class="floating-hud-corner">
+            <button id="game-tactical-lab-btn" class="canvas-hud-pill">⚙️ Lab</button>
             <button id="auto" class="canvas-hud-pill">Auto: OFF</button>
             <button id="speed" class="canvas-hud-pill">1×</button>
           </div>
