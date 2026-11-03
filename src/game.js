@@ -1,4 +1,4 @@
-import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT, getBossConfigForWave } from './config.js';
+import { MAP_CONFIGS, ENEMY_TYPES, CANVAS_WIDTH, CANVAS_HEIGHT, getBossConfigForWave, TOWER_DEFINITIONS } from './config.js';
 import { tacticalConfig } from './tacticalConfig.js';
 import {
   loadAllSaves,
@@ -62,6 +62,36 @@ export class GameModel {
     this.state = null;
     this.nextTowerId = 1;
     this.autoSaveTimer = 0;
+
+    tacticalConfig.subscribe(() => {
+      this.recomputeSynergies(TOWER_DEFINITIONS);
+    });
+  }
+
+  recomputeSynergies(towerDefs = TOWER_DEFINITIONS) {
+    if (!this.state || !this.state.towers) return;
+    const cfg = tacticalConfig.get();
+    if (!cfg.adjacencySynergyEnabled) {
+      for (let i = 0; i < this.state.towers.length; i++) {
+        this.state.towers[i].hasSynergy = false;
+      }
+      return;
+    }
+    const towers = this.state.towers;
+    const n = towers.length;
+    for (let i = 0; i < n; i++) {
+      const tower = towers[i];
+      let hasAlly = false;
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const other = towers[j];
+        if (Math.hypot(other.x - tower.x, other.y - tower.y) <= 95 && ((towerDefs[other.type]?.cost || 0) >= 160 || other.isVantage)) {
+          hasAlly = true;
+          break;
+        }
+      }
+      tower.hasSynergy = hasAlly;
+    }
   }
 
   getCurrentMap() {
@@ -153,6 +183,7 @@ export class GameModel {
       if (Array.isArray(saved.towers) && saved.towers.length > 0) {
         const maxId = saved.towers.reduce((max, t) => Math.max(max, t.id || 0), 0);
         this.nextTowerId = maxId + 1;
+        this.recomputeSynergies(TOWER_DEFINITIONS);
       } else {
         this.nextTowerId = 1;
       }
@@ -332,6 +363,8 @@ export class GameModel {
     const map = this.getCurrentMap();
     const path = map.path;
     const scaledDt = dt * this.state.speed;
+    const cfg = tacticalConfig.get();
+    const vantageEnabled = cfg.vantagePadsEnabled;
 
     // 1. Spawning & Movement when stage is actively running
     if (this.state.running) {
@@ -414,23 +447,11 @@ export class GameModel {
         const def = towerDefs[tower.type];
         if (!def) return;
 
-        // Check adjacency command synergy (+15% cadence boost if near advanced tier 3+ tower)
-        let cdMult = 1.0;
-        if (tacticalConfig.get().adjacencySynergyEnabled) {
-          const hasAlly = this.state.towers.some((other) => {
-            if (other.id === tower.id) return false;
-            return Math.hypot(other.x - tower.x, other.y - tower.y) <= 95 && (towerDefs[other.type]?.cost >= 160 || other.isVantage);
-          });
-          tower.hasSynergy = hasAlly;
-          if (hasAlly) cdMult = 1.15;
-        } else {
-          tower.hasSynergy = false;
-        }
-
+        const cdMult = tower.hasSynergy ? 1.15 : 1.0;
         tower.cool = (tower.cool || 0) - scaledDt * cdMult;
 
         // Smoothly track targets based on tower.targetMode and Vantage Overlook buff (+25% range)
-        const effectiveRange = (tower.isVantage && tacticalConfig.get().vantagePadsEnabled)
+        const effectiveRange = (tower.isVantage && vantageEnabled)
           ? def.range * 1.25
           : def.range;
 
@@ -726,7 +747,7 @@ export class GameModel {
               splashDmg: def.splashDmg || 0
             });
           }
-            if (tower.isVantage && tacticalConfig.get().vantagePadsEnabled) {
+            if (tower.isVantage && vantageEnabled) {
               for (let i = bulletsStart; i < this.state.bullets.length; i++) {
                 this.state.bullets[i].isVantage = true;
               }
@@ -1049,6 +1070,7 @@ export class GameModel {
         angle: 0,
         isVantage
       });
+      this.recomputeSynergies(towerDefs);
       this.state.sel = this.state.towers.at(-1).id;
       this.state.build = null;
       this.onUIUpdate();
@@ -1072,6 +1094,7 @@ export class GameModel {
     const refund = Math.floor((def?.cost || 80) * 0.7);
     this.state.coins += refund;
     this.state.towers.splice(index, 1);
+    this.recomputeSynergies(towerDefs);
     if (this.state.sel === towerId) this.state.sel = null;
     this.onUIUpdate();
     this.saveGame();

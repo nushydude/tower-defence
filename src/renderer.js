@@ -1193,8 +1193,11 @@ export function renderGame(ctx, state, towerDefs) {
 
   if (!state) return;
 
+  const tacticalCfg = tacticalConfig.get();
+  const vantagePadsEnabled = Boolean(tacticalCfg.vantagePadsEnabled);
+
   // Tactical Vantage Platforms (High Ground / Overlook)
-  if (tacticalConfig.get().vantagePadsEnabled) {
+  if (vantagePadsEnabled) {
     const pads = tacticalConfig.getVantagePads(mapId);
     pads.forEach((pad) => {
       const isOccupied = state.towers.some((t) => Math.hypot(t.x - pad.x, t.y - pad.y) < 18);
@@ -1242,7 +1245,7 @@ export function renderGame(ctx, state, towerDefs) {
     const selectedTower = state.towers.find((t) => t.id === state.sel);
     if (selectedTower) {
       const def = towerDefs[selectedTower.type];
-      const isVantage = Boolean(selectedTower.isVantage && tacticalConfig.get().vantagePadsEnabled);
+      const isVantage = Boolean(selectedTower.isVantage && vantagePadsEnabled);
       const effectiveRange = isVantage ? def.range * 1.25 : def.range;
 
       ctx.beginPath();
@@ -1261,7 +1264,7 @@ export function renderGame(ctx, state, towerDefs) {
   state.towers.forEach((tower) => {
     const def = towerDefs[tower.type];
     const isSelected = state.sel === tower.id;
-    const isVantage = Boolean(tower.isVantage && tacticalConfig.get().vantagePadsEnabled);
+    const isVantage = Boolean(tower.isVantage && vantagePadsEnabled);
 
     // 1. Drop shadow for 3D elevation depth
     ctx.beginPath();

@@ -88,6 +88,17 @@ function checkAndShowUpdatePrompt() {
 
 const game = new GameModel(showMessage, updateUI);
 
+let lastRenderedBuild = null;
+let lastRenderedSelFingerprint = null;
+let lastShopTowerFingerprint = '';
+
+tacticalConfig.subscribe(() => {
+  lastShopTowerFingerprint = '';
+  lastRenderedSelFingerprint = null;
+  updateShopCosts();
+  updateUI();
+});
+
 function updateUI() {
   const S = game.state;
   if (!S) return;
@@ -124,13 +135,19 @@ function updateUI() {
     }
   }
 
-  // Update Dynamic Shop Costs (Duplicate Surcharge)
-  updateShopCosts();
+  // Update Dynamic Shop Costs only when towers fingerprint changes
+  const currentShopFingerprint = S.towers ? `${S.towers.length}_${S.towers.map(t => t.type).join(',')}` : '0';
+  if (currentShopFingerprint !== lastShopTowerFingerprint) {
+    lastShopTowerFingerprint = currentShopFingerprint;
+    updateShopCosts();
+  }
 
   const enemiesLeft = S.enemies ? S.enemies.filter((e) => !e.dead).length : 0;
   
   // Update prominent central elevated Start button in bottom nav
   const startBtn = $('start');
+  const startBtnIcon = $('start-btn-icon');
+  const startBtnText = $('start-btn-text');
   if (startBtn) {
     startBtn.disabled = S.running;
     let icon = '▶';
@@ -143,12 +160,14 @@ function updateUI() {
       text = `${enemiesLeft}`;
     } else if (S.autoStart && S.autoCountdown > 0) {
       icon = '⏳';
-      text = `${S.autoCountdown.toFixed(0)}s`;
+      text = `${Math.ceil(S.autoCountdown)}s`;
     }
-    startBtn.innerHTML = `
-      <span class="start-btn-icon">${icon}</span>
-      <span class="start-btn-text">${text}</span>
-    `;
+    if (startBtnIcon && startBtnIcon.textContent !== icon) {
+      startBtnIcon.textContent = icon;
+    }
+    if (startBtnText && startBtnText.textContent !== text) {
+      startBtnText.textContent = text;
+    }
   }
 
   // Update Combat Intel Radar Bar
@@ -176,18 +195,34 @@ function updateUI() {
     }
   }
 
-  // Update Floating Canvas HUD (Auto & Speed)
-  if ($('auto')) {
-    $('auto').textContent = S.autoStart ? '⚡ Auto' : 'Auto';
-    if (S.autoStart) {
-      $('auto').classList.add('active');
-    } else {
-      $('auto').classList.remove('active');
+  // Update Floating Canvas HUD (Auto & Speed) and Command Deck Auto Next Wave Toggle
+  const autoBtn = $('auto');
+  if (autoBtn) {
+    const autoLabel = S.autoStart ? '⚡ Auto: ON' : 'Auto: OFF';
+    if (autoBtn.textContent !== autoLabel) {
+      autoBtn.textContent = autoLabel;
+    }
+    autoBtn.classList.toggle('active', Boolean(S.autoStart));
+  }
+
+  const autoWaveBtn = $('btn-auto-wave');
+  const autoWaveText = $('auto-wave-text');
+  if (autoWaveBtn) {
+    autoWaveBtn.classList.toggle('active', Boolean(S.autoStart));
+    let waveAutoText = S.autoStart ? 'AUTO: ON' : 'AUTO: OFF';
+    if (S.autoStart && S.autoCountdown > 0 && !S.running && !S.over) {
+      waveAutoText = `NEXT IN ${Math.ceil(S.autoCountdown)}s`;
+    }
+    if (autoWaveText && autoWaveText.textContent !== waveAutoText) {
+      autoWaveText.textContent = waveAutoText;
     }
   }
 
   if ($('speed')) {
-    $('speed').textContent = `${S.speed || 1}×`;
+    const speedText = `${S.speed || 1}×`;
+    if ($('speed').textContent !== speedText) {
+      $('speed').textContent = speedText;
+    }
   }
 
   const isBossWave = S.wave % 10 === 0 && S.wave > 0;
@@ -224,27 +259,33 @@ function updateUI() {
   // Handle Active Build Alert
   if (buildAlert) {
     if (S.build) {
-      const bDef = TOWER_DEFINITIONS[S.build];
-      buildAlert.style.display = 'flex';
-      buildAlert.innerHTML = `
-        <div class="build-alert-info">
-          <span class="pulsing-radar">⚡</span>
-          <span>Deploying <strong>${S.build}</strong> (${bDef?.cost || 0}🪙) · Tap map terrain</span>
-        </div>
-        <button id="btn-cancel-build" class="btn-cancel-mini" aria-label="Cancel placement">✕ Cancel</button>
-      `;
-      const cancelBtn = $('btn-cancel-build');
-      if (cancelBtn) {
-        cancelBtn.onclick = (e) => {
-          e.stopPropagation();
-          S.build = null;
-          updateUI();
-          showMessage('Placement cancelled.');
-        };
+      if (lastRenderedBuild !== S.build) {
+        lastRenderedBuild = S.build;
+        const bDef = TOWER_DEFINITIONS[S.build];
+        buildAlert.style.display = 'flex';
+        buildAlert.innerHTML = `
+          <div class="build-alert-info">
+            <span class="pulsing-radar">⚡</span>
+            <span>Deploying <strong>${S.build}</strong> (${bDef?.cost || 0}🪙) · Tap map terrain</span>
+          </div>
+          <button id="btn-cancel-build" class="btn-cancel-mini" aria-label="Cancel placement">✕ Cancel</button>
+        `;
+        const cancelBtn = $('btn-cancel-build');
+        if (cancelBtn) {
+          cancelBtn.onclick = (e) => {
+            e.stopPropagation();
+            S.build = null;
+            updateUI();
+            showMessage('Placement cancelled.');
+          };
+        }
       }
     } else {
-      buildAlert.style.display = 'none';
-      buildAlert.innerHTML = '';
+      if (lastRenderedBuild !== null) {
+        lastRenderedBuild = null;
+        buildAlert.style.display = 'none';
+        buildAlert.innerHTML = '';
+      }
     }
   }
 
@@ -255,69 +296,77 @@ function updateUI() {
     const sellRefund = Math.floor((def.cost || 80) * 0.7);
     const targetMode = (selectedTower.targetMode || 'first').toUpperCase();
     const isVantage = Boolean(selectedTower.isVantage && tacticalConfig.get().vantagePadsEnabled);
-    const effectiveRange = isVantage ? Math.round(def.range * 1.25) : def.range;
-    const effectiveDmg = isVantage ? Math.round(def.dmg * 1.15) : def.dmg;
-    const effectiveDps = (effectiveDmg / (def.rate || 0.5)).toFixed(0);
+    const selFingerprint = `${selectedTower.id}_${selectedTower.type}_${targetMode}_${isVantage}_${Boolean(selectedTower.hasSynergy)}`;
 
     if (shopSection) shopSection.style.display = 'none';
     if (selectedEl) {
       selectedEl.style.display = 'flex';
-      selectedEl.innerHTML = `
-        <div class="compact-inspector-bar">
-          <div class="inspector-summary">
-            <span class="inspector-icon">${selectedTower.type.includes('Railgun') ? '⚡' : '🛡️'}</span>
-            <div class="inspector-info">
-              <div class="inspector-name-row">
-                <span class="inspector-name">${selectedTower.type}</span>
-                <span class="inspector-tag">${branchName}</span>
-              </div>
-              <div class="inspector-chips">
-                <span class="chip">💥${effectiveDmg}</span>
-                <span class="chip">🎯${effectiveRange}</span>
-                <span class="chip">⏱️${def.rate}s</span>
-                <span class="chip">⚡${effectiveDps}dps</span>
-                ${isVantage ? '<span class="chip" style="color:#f59e0b; border-color:#d97706; background:rgba(245,158,11,0.15); font-weight:800;">⭐ VANTAGE</span>' : ''}
-                ${selectedTower.hasSynergy ? '<span class="chip" style="color:#38bdf8; border-color:#0284c7; background:rgba(56,189,248,0.15); font-weight:800;">📡 SYNERGY</span>' : ''}
+      if (lastRenderedSelFingerprint !== selFingerprint) {
+        lastRenderedSelFingerprint = selFingerprint;
+        const effectiveRange = isVantage ? Math.round(def.range * 1.25) : def.range;
+        const effectiveDmg = isVantage ? Math.round(def.dmg * 1.15) : def.dmg;
+        const effectiveDps = (effectiveDmg / (def.rate || 0.5)).toFixed(0);
+
+        selectedEl.innerHTML = `
+          <div class="compact-inspector-bar">
+            <div class="inspector-summary">
+              <span class="inspector-icon">${selectedTower.type.includes('Railgun') ? '⚡' : '🛡️'}</span>
+              <div class="inspector-info">
+                <div class="inspector-name-row">
+                  <span class="inspector-name">${selectedTower.type}</span>
+                  <span class="inspector-tag">${branchName}</span>
+                </div>
+                <div class="inspector-chips">
+                  <span class="chip">💥${effectiveDmg}</span>
+                  <span class="chip">🎯${effectiveRange}</span>
+                  <span class="chip">⏱️${def.rate}s</span>
+                  <span class="chip">⚡${effectiveDps}dps</span>
+                  ${isVantage ? '<span class="chip" style="color:#f59e0b; border-color:#d97706; background:rgba(245,158,11,0.15); font-weight:800;">⭐ VANTAGE</span>' : ''}
+                  ${selectedTower.hasSynergy ? '<span class="chip" style="color:#38bdf8; border-color:#0284c7; background:rgba(56,189,248,0.15); font-weight:800;">📡 SYNERGY</span>' : ''}
+                </div>
               </div>
             </div>
+            <div class="inspector-actions">
+              <button id="btn-target-mode" class="mini-inspector-btn mini-btn-target" title="Target Priority">🎯 ${targetMode}</button>
+              <button id="btn-sell-tower" class="mini-inspector-btn mini-btn-sell" title="Sell for 70% refund">💰 +${sellRefund}🪙</button>
+              <button id="btn-deselect-tower" class="mini-inspector-btn mini-btn-close" aria-label="Close Inspector">✕</button>
+            </div>
           </div>
-          <div class="inspector-actions">
-            <button id="btn-target-mode" class="mini-inspector-btn mini-btn-target" title="Target Priority">🎯 ${targetMode}</button>
-            <button id="btn-sell-tower" class="mini-inspector-btn mini-btn-sell" title="Sell for 70% refund">💰 +${sellRefund}🪙</button>
-            <button id="btn-deselect-tower" class="mini-inspector-btn mini-btn-close" aria-label="Close Inspector">✕</button>
-          </div>
-        </div>
-      `;
+        `;
 
-      const deselectBtn = $('btn-deselect-tower');
-      if (deselectBtn) {
-        deselectBtn.onclick = (e) => {
-          e.stopPropagation();
-          S.sel = null;
-          updateUI();
-        };
-      }
-      const targetBtn = $('btn-target-mode');
-      if (targetBtn) {
-        targetBtn.onclick = (e) => {
-          e.stopPropagation();
-          game.cycleTargetMode(selectedTower.id);
-        };
-      }
-      const sellBtn = $('btn-sell-tower');
-      if (sellBtn) {
-        sellBtn.onclick = (e) => {
-          e.stopPropagation();
-          game.sellTower(selectedTower.id, TOWER_DEFINITIONS);
-        };
+        const deselectBtn = $('btn-deselect-tower');
+        if (deselectBtn) {
+          deselectBtn.onclick = (e) => {
+            e.stopPropagation();
+            S.sel = null;
+            updateUI();
+          };
+        }
+        const targetBtn = $('btn-target-mode');
+        if (targetBtn) {
+          targetBtn.onclick = (e) => {
+            e.stopPropagation();
+            game.cycleTargetMode(selectedTower.id);
+          };
+        }
+        const sellBtn = $('btn-sell-tower');
+        if (sellBtn) {
+          sellBtn.onclick = (e) => {
+            e.stopPropagation();
+            game.sellTower(selectedTower.id, TOWER_DEFINITIONS);
+          };
+        }
       }
     }
     if (upgradesEl) upgradesEl.style.display = 'flex';
   } else {
     if (shopSection) shopSection.style.display = 'flex';
     if (selectedEl) {
-      selectedEl.style.display = 'none';
-      selectedEl.innerHTML = '';
+      if (lastRenderedSelFingerprint !== null) {
+        lastRenderedSelFingerprint = null;
+        selectedEl.style.display = 'none';
+        selectedEl.innerHTML = '';
+      }
     }
     if (upgradesEl) {
       upgradesEl.style.display = 'none';
@@ -373,6 +422,8 @@ function updateUI() {
               }
               S.coins -= upgradeDef.cost;
               selectedTower.type = nextName;
+              game.recomputeSynergies(TOWER_DEFINITIONS);
+              lastShopTowerFingerprint = '';
               updateUI();
               game.saveGame();
               showMessage(`Upgraded to ${nextName}!`);
@@ -1427,6 +1478,13 @@ $('speed').onclick = () => {
 
 if ($('auto')) {
   $('auto').onclick = () => {
+    game.toggleAutoStart();
+    updateUI();
+  };
+}
+
+if ($('btn-auto-wave')) {
+  $('btn-auto-wave').onclick = () => {
     game.toggleAutoStart();
     updateUI();
   };

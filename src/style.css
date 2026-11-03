@@ -1140,9 +1140,10 @@ canvas#map {
 }
 
 .canvas-hud-pill.active {
-  border-color: #fbbf24;
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.2);
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+  background: rgba(6, 78, 59, 0.85) !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45) !important;
 }
 
 /* Widescreen Rotate Hint Floating Button */
@@ -1804,6 +1805,8 @@ canvas#map {
   font-size: 17px;
   line-height: 1;
   margin-left: 2px;
+  pointer-events: none;
+  user-select: none;
 }
 
 .start-btn-text {
@@ -1812,6 +1815,18 @@ canvas#map {
   letter-spacing: 0.5px;
   line-height: 1;
   text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
+
+.launch-wave-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-auto-wave-toggle {
+  display: none;
 }
 
 /* Active buttons in HUD */
@@ -2083,6 +2098,14 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     border-color: #38bdf8;
     transform: translateY(-1px);
     box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+  }
+
+  .canvas-hud-pill.active,
+  button.canvas-hud-pill.active {
+    background: rgba(6, 78, 59, 0.95) !important;
+    border-color: #10b981 !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.5) !important;
   }
 
   /* Right-Hand Controls Sidebar */
@@ -2452,11 +2475,36 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .tactical-deck-header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: space-between;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1px;
     color: #7dd3fc;
+  }
+
+  .tactical-deck-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tactical-deck-lab-btn {
+    background: rgba(14, 165, 233, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    color: #38bdf8;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .tactical-deck-lab-btn:hover {
+    background: rgba(14, 165, 233, 0.35);
+    border-color: #38bdf8;
+    color: #ffffff;
+    transform: translateY(-1px);
   }
 
   .keybinds-grid {
@@ -2631,10 +2679,18 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.5);
   }
 
-  .bottom-nav-primary-btn {
+  .launch-wave-cluster {
     grid-column: 1 / -1;
     grid-row: 1;
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
     width: 100%;
+  }
+
+  .launch-wave-cluster .bottom-nav-primary-btn {
+    flex: 1 1 auto;
+    width: auto;
     height: 50px;
     margin: 0;
     border-radius: 8px;
@@ -2650,22 +2706,74 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     transition: all 0.15s ease;
   }
 
-  .bottom-nav-primary-btn:hover:not(:disabled) {
+  .launch-wave-cluster .bottom-nav-primary-btn:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 5px 20px rgba(16, 185, 129, 0.6);
     background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%);
   }
 
-  .bottom-nav-primary-btn:active:not(:disabled) {
+  .launch-wave-cluster .bottom-nav-primary-btn:active:not(:disabled) {
     transform: scale(0.98);
   }
 
-  .bottom-nav-primary-btn:disabled {
+  .launch-wave-cluster .bottom-nav-primary-btn:disabled {
     background: #1e293b;
     border-color: #334155;
     box-shadow: none;
     opacity: 0.65;
     cursor: not-allowed;
+  }
+
+  .btn-auto-wave-toggle {
+    flex: 0 0 115px;
+    height: 50px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .btn-auto-wave-toggle:hover {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: #38bdf8;
+    color: #f8fafc;
+  }
+
+  .btn-auto-wave-toggle.active {
+    background: rgba(6, 78, 59, 0.75);
+    border-color: #10b981;
+    color: #34d399;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+  }
+
+  .auto-wave-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #64748b;
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+
+  .btn-auto-wave-toggle.active .auto-wave-dot {
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+  }
+
+  .auto-wave-text {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    pointer-events: none;
   }
 
   .start-btn-icon {

@@ -113,11 +113,15 @@ export const TOWER_ROOT_BRANCHES = {
   Spiker: ['Spiker', 'Double Spiker', 'ALLSPIKER', 'Bastion', 'Citadel', 'Ballista', 'Javelin', 'Trident']
 };
 
-export function getTowerRootBranch(towerType) {
-  for (const [root, members] of Object.entries(TOWER_ROOT_BRANCHES)) {
-    if (members.includes(towerType)) return root;
+const TOWER_TO_ROOT = {};
+for (const [root, members] of Object.entries(TOWER_ROOT_BRANCHES)) {
+  for (const m of members) {
+    TOWER_TO_ROOT[m] = root;
   }
-  return 'Spammer';
+}
+
+export function getTowerRootBranch(towerType) {
+  return TOWER_TO_ROOT[towerType] || 'Spammer';
 }
 
 class TacticalConfigManager {
@@ -153,7 +157,7 @@ class TacticalConfigManager {
   }
 
   get() {
-    return { ...this.config };
+    return this.config;
   }
 
   update(partial) {
@@ -200,7 +204,12 @@ class TacticalConfigManager {
       return baseCost;
     }
     const rootBranch = getTowerRootBranch(towerType);
-    const duplicates = existingTowers.filter((t) => getTowerRootBranch(t.type) === rootBranch).length;
+    let duplicates = 0;
+    for (let i = 0; i < existingTowers.length; i++) {
+      if (getTowerRootBranch(existingTowers[i].type) === rootBranch) {
+        duplicates++;
+      }
+    }
     if (duplicates <= 0) return baseCost;
 
     const rate = this.config.surchargePercent / 100;

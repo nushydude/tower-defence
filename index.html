@@ -498,9 +498,8 @@
           <canvas id="map" width="480" height="720"></canvas>
           <div id="msg" class="floating-toast">Build your defence!</div>
           <div class="floating-hud-corner">
-            <button id="game-tactical-lab-btn" class="canvas-hud-pill">⚙️ Lab</button>
-            <button id="auto" class="canvas-hud-pill">Auto: OFF</button>
-            <button id="speed" class="canvas-hud-pill">1×</button>
+            <button id="auto" class="canvas-hud-pill" aria-label="Toggle Auto Wave Start">Auto: OFF</button>
+            <button id="speed" class="canvas-hud-pill" aria-label="Cycle Game Speed">1×</button>
           </div>
         </div>
       </div>
@@ -540,8 +539,11 @@
           <!-- Desktop Tactical Deck (Fills empty space on desktop with keyboard controls & live intel) -->
           <div class="desktop-tactical-deck">
             <div class="tactical-deck-header">
-              <span class="tactical-deck-icon">⌨️</span>
-              <span class="tactical-deck-title">COMMAND CONTROLS</span>
+              <div class="tactical-deck-title-group">
+                <span class="tactical-deck-icon">⌨️</span>
+                <span class="tactical-deck-title">COMMAND CONTROLS</span>
+              </div>
+              <button id="game-tactical-lab-btn" class="tactical-deck-lab-btn" title="Open Tactical Sandbox Lab & Modifiers">⚙️ Tactical Lab</button>
             </div>
             <div class="keybinds-grid">
               <div class="keybind-item"><kbd>Space</kbd> <span>Launch Wave</span></div>
@@ -571,10 +573,16 @@
           <span class="bottom-nav-label">Tower</span>
         </button>
         
-        <button id="start" class="bottom-nav-primary-btn" aria-label="Start Stage">
-          <span class="start-btn-icon">▶</span>
-          <span class="start-btn-text">START</span>
-        </button>
+        <div class="launch-wave-cluster">
+          <button id="start" class="bottom-nav-primary-btn" aria-label="Start Stage">
+            <span id="start-btn-icon" class="start-btn-icon">▶</span>
+            <span id="start-btn-text" class="start-btn-text">START</span>
+          </button>
+          <button id="btn-auto-wave" class="btn-auto-wave-toggle" title="Toggle Auto-Start Waves (Key: A)" aria-label="Auto Next Wave">
+            <span id="auto-wave-dot" class="auto-wave-dot"></span>
+            <span id="auto-wave-text" class="auto-wave-text">AUTO: OFF</span>
+          </button>
+        </div>
         
         <button id="game-techtree-btn" class="bottom-nav-item" data-tab="techtree">
           <span class="bottom-nav-icon">📜</span>
