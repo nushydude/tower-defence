@@ -1988,7 +1988,7 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 
   #game.active {
     display: grid;
-    grid-template-columns: 1fr minmax(360px, 420px);
+    grid-template-columns: 1fr minmax(380px, 440px);
     grid-template-rows: auto auto auto 1fr auto;
     height: 100vh;
     height: 100dvh;
@@ -2219,7 +2219,7 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     overflow-x: hidden;
     border-top: none;
     border-bottom: 1px solid #1a273b;
-    padding: 12px 14px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -2264,8 +2264,8 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .turret-dock {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    overflow-x: visible;
+    gap: 6px;
+    overflow-x: hidden;
     width: 100%;
     margin-bottom: 4px;
   }
@@ -2273,8 +2273,10 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   .turret-dock-card {
     flex: none;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     height: 52px;
-    padding: 6px 12px;
+    padding: 6px 10px;
     border-radius: 8px;
     background: linear-gradient(135deg, #152338 0%, #0d1726 100%);
     border: 1px solid #233857;
@@ -2285,12 +2287,12 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     justify-content: space-between;
     transition: all 0.15s ease;
     cursor: pointer;
+    overflow: hidden;
   }
 
   .turret-dock-card:hover {
     border-color: #38bdf8;
     background: linear-gradient(135deg, #1c3250 0%, #112034 100%);
-    transform: translateX(3px);
     box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
   }
 
@@ -2331,13 +2333,12 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     border-color: #38bdf8 !important;
     background: linear-gradient(135deg, #1e4170 0%, #0e2646 100%) !important;
     box-shadow: 0 0 24px rgba(56, 189, 248, 0.7), inset 0 0 10px rgba(56, 189, 248, 0.25) !important;
-    transform: translateX(4px);
   }
 
   /* Desktop Leading Box */
   .dock-card-leading {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     flex-shrink: 0;
     background: #091220;
     border: 1px solid #1c304d;
@@ -2350,7 +2351,7 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   }
 
   .dock-card-icon {
-    font-size: 20px;
+    font-size: 19px;
     line-height: 1;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
@@ -2377,15 +2378,17 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
     flex-direction: column;
     justify-content: center;
     min-width: 0;
-    padding: 0 10px;
+    padding: 0 8px;
     gap: 2px;
     text-align: left;
+    overflow: hidden;
   }
 
   .dock-card-title-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    min-width: 0;
   }
 
   .dock-card-name {
@@ -2403,31 +2406,35 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
 
   .dock-card-role {
     display: inline-block;
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 750;
     color: #7dd3fc;
     background: rgba(56, 189, 248, 0.14);
     border: 1px solid rgba(56, 189, 248, 0.3);
-    padding: 1px 6px;
+    padding: 1px 5px;
     border-radius: 4px;
     letter-spacing: 0.3px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .dock-card-stats-preview {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 11px;
+    gap: 5px;
+    font-size: 10px;
     font-weight: 700;
     color: #cbd5e1;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .micro-stat {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 1.5px;
+    flex-shrink: 0;
   }
 
   .stat-dmg { color: #f87171; }
@@ -2438,23 +2445,27 @@ button.btn-upgrade-railgun:hover:not(:disabled) {
   /* Desktop Trailing */
   .dock-card-trailing {
     flex-shrink: 0;
+    margin-left: auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
   }
 
   .dock-card-cost {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 900;
     color: #fbbf24;
     background: rgba(251, 191, 36, 0.2);
     border: 1px solid rgba(251, 191, 36, 0.45);
-    padding: 4px 12px;
+    padding: 3px 8px;
     border-radius: 6px;
-    min-width: 64px;
+    min-width: 52px;
     text-align: center;
     letter-spacing: 0.2px;
     line-height: 1.2;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
   }
 
   /* Desktop Tactical Deck (Keys & Live Intel, dynamically fills vertical space) */

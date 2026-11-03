@@ -732,10 +732,10 @@ function renderShop() {
           <span class="dock-card-role">${meta.branch}</span>
         </div>
         <div class="dock-card-stats-preview">
-          <span class="micro-stat stat-dmg" title="Damage">💥 ${def.dmg}</span>
-          <span class="micro-stat stat-rng" title="Range">🎯 ${def.range}</span>
-          <span class="micro-stat stat-rate" title="Attack Period">⏱️ ${def.rate}s</span>
-          <span class="micro-stat stat-dps" title="Damage Per Second">⚡ ${dps}/s</span>
+          <span class="micro-stat stat-dmg" title="Damage">💥${def.dmg}</span>
+          <span class="micro-stat stat-rng" title="Range">🎯${def.range}</span>
+          <span class="micro-stat stat-rate" title="Attack Period">⏱️${def.rate}s</span>
+          <span class="micro-stat stat-dps" title="Damage Per Second">⚡${dps}/s</span>
         </div>
       </div>
       <div class="dock-card-trailing">
